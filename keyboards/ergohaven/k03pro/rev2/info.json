@@ -1,12 +1,12 @@
 {
     "manufacturer": "Ergohaven",
-    "keyboard_name": "K:03 PRO 65mm",
+    "keyboard_name": "K:03 PRO v2",
     "maintainer": "Ergohaven",
     "bootloader": "rp2040",
     "diode_direction": "COL2ROW",
     "matrix_pins": {
-        "cols": ["GP9", "GP10", "GP11", "GP12", "GP13", "GP14"],
-        "rows": ["GP4", "GP5", "GP6", "GP7", "GP8"]
+        "cols": ["GP10", "GP11", "GP12", "GP13", "GP14", "GP15"],
+        "rows": ["GP5", "GP6", "GP7", "GP8", "GP9"]
     },
     "processor": "RP2040",
     "url": "https://ergohaven.xyz",
@@ -19,6 +19,13 @@
         "pin": "GP17",
         "levels": 10,
         "breathing": false
+    },
+    "encoder": {
+        "rotary": [
+            {"pin_a": "GP27", "pin_b": "GP26", "resolution": 2},
+            {"pin_a": "GP25", "pin_b": "GP24", "resolution": 2},
+            {"pin_a": "GP23", "pin_b": "GP22", "resolution": 2}
+        ]
     },
     "rgb_matrix": {
         "driver": "ws2812"

@@ -1,6 +1,6 @@
 {
     "manufacturer": "Ergohaven",
-    "keyboard_name": "K:03 PRO 43mm",
+    "keyboard_name": "K:03 PRO v1 43mm",
     "maintainer": "Ergohaven",
     "bootloader": "rp2040",
     "diode_direction": "COL2ROW",
