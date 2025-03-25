@@ -462,6 +462,7 @@ skip:
 #endif
     // Return the same buffer, optionally with values changed
     // (i.e. returning state to the host, or the unhandled state).
+    if (*((uint64_t*)data) == VIAL_HID_MAGIC) return;
     raw_hid_send(data, length);
 }
 

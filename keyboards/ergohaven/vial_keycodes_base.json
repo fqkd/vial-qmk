@@ -1,0 +1,8 @@
+ {"name": "EH_PRINF", "shortName": "Print\nInfo", "title": "Print information about firmware and modes"}
+,{"name": "WRD_NXT", "shortName": "Next\nWord", "title": "Jump to next word"}
+,{"name": "WRD_PRV", "shortName": "Prev\nWord", "title": "Jump to previous word"}
+,{"name": "WNEXT", "shortName": "Next\nWin", "title": "Holds Alt and taps Tab, then waits for 650ms, if the key is tapped again, it will send another Tab; if there is no tap, Alt will turn off. This allows you to cycle through windows with only one key"}
+,{"name": "WPREV", "shortName": "Prev\nWin", "title": "Holds Alt and taps Shift+Tab. See Alt Tab description"}
+,{"name": "LNEXT", "shortName": "Next\nLayer", "title": "Switch to the next layer"}
+,{"name": "LPREV", "shortName": "Prev\nLayer", "title": "Switch to the previous layer"}
+,{"name": "EH_RSRV1", "shortName": "", "title": "Not using"}

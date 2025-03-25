@@ -178,6 +178,10 @@ void adns9800_init(void) {
     adns9800_write(REG_LASER_CTRL0, laser_ctrl0 & 0xf0);
 
     adns9800_set_cpi(ADNS9800_CPI);
+
+    // enable rest mode
+    uint8_t config_rest = adns9800_read(REG_Configuration_II);
+    adns9800_write(REG_Configuration_II, config_rest | 0x20);
 }
 
 config_adns9800_t adns9800_get_config(void) {

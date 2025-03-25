@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+
+  build-ergohaven:
+    uses: ./.github/workflows/build-ergohaven.yml
+
+  pre-release:
+    name: Pre-Release
+    needs:
+      - build-ergohaven
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+      packages: 'write'
+      pull-requests: 'read'
+
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ergohaven_fw
+
+      - name: Configure
+        run: |
+          sudo apt-get install rename
+
+      - name: Rename
+        run: |
+          cd ergohaven_fw/ergohaven_fw
+          rename 's/(rev\d_)//; s/ergohaven_/'${GITHUB_REF_NAME}'_'/ *.uf2
+
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: '${{ secrets.GITHUB_TOKEN }}'
+          prerelease: false
+          files: |
+            ergohaven_fw/**/*.uf2

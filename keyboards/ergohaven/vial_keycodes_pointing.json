@@ -1,0 +1,13 @@
+,{"name": "EH_RSRV2", "shortName": "", "title": "Not using"}
+,{"name": "EH_RSRV3", "shortName": "", "title": "Not using"}
+,{"name": "EH_RSRV4", "shortName": "", "title": "Not using"}
+,{"name": "EH_RSRV5", "shortName": "", "title": "Not using"}
+,{"name": "EH_RSRV6", "shortName": "", "title": "Not using"}
+,{"name": "EH_RSRV7", "shortName": "", "title": "Not using"}
+,{"name": "EH_LED_BL", "shortName": "Tg Led\nBlinks", "title": "Enable/disable special protocol for Ergohaven Trackball Mini with led blinking"}
+,{"name": "EH_SNP", "shortName": "Sniper\nmode", "title": "Sniper mode for trackball / touchpad"}
+,{"name": "EH_SCR", "shortName": "Scroll\nmode", "title": "Scroll mode for trackball / touchpad"}
+,{"name": "EH_TXT", "shortName": "Text\nmode", "title": "Text mode for trackball / touchpad"}
+,{"name": "EH_USR1", "shortName": "Mode\nUser 1", "title": "First user define mode for trackball"}
+,{"name": "EH_USR2", "shortName": "Mode\nUser 2", "title": "Second user define mode for trackball"}
+,{"name": "EH_USR3", "shortName": "Mode\nUser 3", "title": "Third user define mode for trackball"}

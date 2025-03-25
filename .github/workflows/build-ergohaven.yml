@@ -1,0 +1,57 @@
+name: Build Ergohaven
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+
+  build-ergohaven:
+    name: Build Ergohaven keymaps
+    runs-on: ubuntu-latest
+    # fixme: delete sha256 when upstream works
+    container: ghcr.io/qmk/qmk_cli:latest@sha256:cd048bb28902adbde8c950b65ede93d058b398b380c6d28556c5f104b35f8840
+
+    steps:
+    - name: (actions) Checkout Vial repo
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+        submodules: recursive
+
+    - name: Build
+      id: build
+      run: |
+        git config --global --add safe.directory $(pwd)
+        qmk compile -kb ergohaven/k03/rev1 -km v1_v2
+        qmk compile -kb ergohaven/k03/rev3 -km v3
+        qmk compile -kb ergohaven/imperial44/rev1 -km v1_v2
+        qmk compile -kb ergohaven/imperial44/rev3 -km v3
+        qmk compile -kb ergohaven/velvet/rev1 -km v1
+        qmk compile -kb ergohaven/velvet/rev2 -km v2
+        qmk compile -kb ergohaven/velvet/rev3 -km v3
+        qmk compile -kb ergohaven/hpd/rev1 -km v1
+        qmk compile -kb ergohaven/hpd/rev2 -km v2
+        qmk compile -kb ergohaven/hpd/rev2 -km v2_enc_ball
+        qmk compile -kb ergohaven/hpd/rev2 -km v2_enc_touch
+        qmk compile -kb ergohaven/k02 -km v1
+        qmk compile -kb ergohaven/remnant -km v1
+        qmk compile -kb ergohaven/planeta/rev1 -km v1
+        qmk compile -kb ergohaven/planeta -km v2
+        qmk compile -kb ergohaven/macropad/rev1 -km v1
+        qmk compile -kb ergohaven/macropad/rev2 -km v2
+        qmk compile -kb ergohaven/macropad/rev2 -km v2_ccw
+        qmk compile -kb ergohaven/trackball -km v1
+        qmk compile -kb ergohaven/trackball -km v2
+        qmk compile -kb ergohaven/k03pro/rev1/43mm -km v1
+        qmk compile -kb ergohaven/k03pro/rev1/65mm -km v1
+        qmk compile -kb ergohaven/k03pro/rev2 -km v2
+
+    - uses: actions/upload-artifact@v4
+      name: Upload
+      id: upload
+      with:
+        path: "*.uf2"
+        name: ergohaven_fw
