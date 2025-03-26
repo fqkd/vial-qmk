@@ -45,10 +45,9 @@ jobs:
         qmk compile -kb ergohaven/macropad/rev2 -km v2_ccw
         qmk compile -kb ergohaven/trackball -km v1
         qmk compile -kb ergohaven/trackball -km v2
-        qmk compile -kb ergohaven/k03pro/43mm -km v1
-        qmk compile -kb ergohaven/k03pro/65mm -km v1
-        qmk compile -kb ergohaven/k03pro/43mm -km v1_no_zoom
-        qmk compile -kb ergohaven/k03pro/65mm -km v1_no_zoom
+        qmk compile -kb ergohaven/k03pro/rev1/43mm -km v1
+        qmk compile -kb ergohaven/k03pro/rev1/65mm -km v1
+        qmk compile -kb ergohaven/k03pro/rev2 -km v2
 
     - uses: actions/upload-artifact@v4
       name: Upload
