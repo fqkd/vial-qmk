@@ -11,8 +11,7 @@ jobs:
   build-ergohaven:
     name: Build Ergohaven keymaps
     runs-on: ubuntu-latest
-    # fixme: delete sha256 when upstream works
-    container: ghcr.io/qmk/qmk_cli:latest@sha256:cd048bb28902adbde8c950b65ede93d058b398b380c6d28556c5f104b35f8840
+    container: ghcr.io/qmk/qmk_cli:latest
 
     steps:
     - name: (actions) Checkout Vial repo
