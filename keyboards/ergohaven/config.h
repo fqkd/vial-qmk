@@ -22,6 +22,8 @@
 #define OLED_TIMEOUT 0
 #define EH_TIMEOUT (10 * 60 * 1000) // 10 minutes
 
+#define TAPPING_TOGGLE 5
+
 #ifdef CONSOLE_ENABLE
 #    undef NO_DEBUG
 #endif
