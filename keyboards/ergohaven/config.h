@@ -24,6 +24,9 @@
 
 #define TAPPING_TOGGLE 5
 
+#define MOUSE_EXTENDED_REPORT
+#define WHEEL_EXTENDED_REPORT
+
 #ifdef CONSOLE_ENABLE
 #    undef NO_DEBUG
 #endif
