@@ -1,22 +1,14 @@
-#include "display.h"
-#include "ergohaven.h"
-#include "ergohaven_display.h"
+// Copyright 2022 Ergohaven (@ergohaven)
+// SPDX-License-Identifier: GPL-2.0-or-later
 #include QMK_KEYBOARD_H
+#include "ergohaven.h"
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT(
 'L', 'L', 'L', 'L', 'L', 'L',                       'R', 'R', 'R', 'R', 'R', 'R',
 'L', 'L', 'L', 'L', 'L', 'L',                       'R', 'R', 'R', 'R', 'R', 'R',
 'L', 'L', 'L', 'L', 'L', 'L',                       'R', 'R', 'R', 'R', 'R', 'R',
 'L', 'L', 'L', 'L', 'L', 'L',                       'R', 'R', 'R', 'R', 'R', 'R',
-          'L', 'L', 'L', 'L', 'L', 'L',   'R', 'R', 'R', 'R', 'R', 'R'
+          'L', 'L', 'L', 'L', 'L', 'L',   'R', 'R', 'R', 'R', 'R', 'R',
+                                   '*',   '*'
+
 );
-
-void housekeeping_task_user(void) {
-    if (is_display_enabled()) {
-        display_housekeeping_task();
-    }
-}
-
-void keyboard_post_init_user(void) {
-    display_init_kb();
-}
