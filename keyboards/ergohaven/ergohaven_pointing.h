@@ -33,8 +33,6 @@ void set_sniper_sens(int32_t sens);
 
 void set_text_sens(int32_t sens);
 
-void set_automouse(uint8_t layer);
-
 void set_invert_scroll(bool invert);
 
 void set_acceleration(bool acc);

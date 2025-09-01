@@ -38,15 +38,6 @@ void set_acceleration(bool acc) {
 
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
-void set_automouse(uint8_t layer) {
-    if (layer == 0) {
-        set_auto_mouse_enable(false);
-    } else {
-        set_auto_mouse_layer(layer);
-        set_auto_mouse_enable(true);
-    }
-}
-
 bool is_mouse_active = false;
 
 bool auto_mouse_activation(report_mouse_t mouse_report) {
