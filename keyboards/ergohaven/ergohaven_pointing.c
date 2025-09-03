@@ -30,16 +30,13 @@ void set_orientation(orientation_t o) {
     orientation = o;
 }
 
-#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+static bool acceleration = false;
 
-void set_automouse(uint8_t layer) {
-    if (layer == 0) {
-        set_auto_mouse_enable(false);
-    } else {
-        set_auto_mouse_layer(layer);
-        set_auto_mouse_enable(true);
-    }
+void set_acceleration(bool acc) {
+    acceleration = acc;
 }
+
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
 bool is_mouse_active = false;
 
@@ -262,6 +259,15 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
             mrpt.x = -mrpt.y;
             mrpt.y = tmp;
             break;
+    }
+
+    if (acceleration)
+    {
+        mouse_xy_report_t x = mrpt.x;
+        mouse_xy_report_t y = mrpt.y;
+
+        mrpt.x = (mouse_xy_report_t)(x > 0 ? x * x / 16 + x : -x * x / 16 + x);
+        mrpt.y = (mouse_xy_report_t)(y > 0 ? y * y / 16 + y : -y * y / 16 + y);
     }
 
     static int32_t accumulated_h = 0;
