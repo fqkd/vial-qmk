@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - { kb: ergohaven/k03/rev1, km: v1_v2}
-          - { kb: ergohaven/k03/rev3, km: v3}
+          - { kb: ergohaven/k03/rev3, km: v3_v4}
           - { kb: ergohaven/imperial44/rev1, km: v1_v2}
           - { kb: ergohaven/imperial44/rev3, km: v3}
           - { kb: ergohaven/velvet/rev1, km: v1}
