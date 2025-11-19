@@ -20,7 +20,7 @@ jobs:
           - { kb: ergohaven/k03/rev1, km: v1_v2}
           - { kb: ergohaven/k03/rev3, km: v3_v4}
           - { kb: ergohaven/imperial44/rev1, km: v1_v2}
-          - { kb: ergohaven/imperial44/rev3, km: v3}
+          - { kb: ergohaven/imperial44/rev3, km: v3_v4}
           - { kb: ergohaven/velvet/rev1, km: v1}
           - { kb: ergohaven/velvet/rev2, km: v2}
           - { kb: ergohaven/velvet/rev3, km: v3}
@@ -44,7 +44,7 @@ jobs:
           - { kb: ergohaven/trackball, km: v2}
           - { kb: ergohaven/k03pro/rev1/43mm, km: v1}
           - { kb: ergohaven/k03pro/rev1/65mm, km: v1}
-          - { kb: ergohaven/k03pro/rev2, km: v2}
+          - { kb: ergohaven/k03pro/rev2, km: v2_v3}
 
     steps:
     - name: (actions) Checkout Vial repo
