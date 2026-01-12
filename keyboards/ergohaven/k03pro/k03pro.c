@@ -3,7 +3,7 @@
 #include "ergohaven.h"
 #include "ergohaven_ruen.h"
 #include "ergohaven_rgb.h"
-#include "ergohaven_display.h"
+#include "src/display/eh_display.h"
 #include "ergohaven_pointing.h"
 #include QMK_KEYBOARD_H
 

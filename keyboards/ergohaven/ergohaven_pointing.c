@@ -24,7 +24,7 @@ void set_invert_scroll(bool invert) {
     invert_scroll = invert;
 }
 
-static orientation_t orientation;
+static orientation_t orientation = ROT_0;
 
 void set_orientation(orientation_t o) {
     orientation = o;

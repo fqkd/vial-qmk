@@ -51,3 +51,6 @@
 
 #define EH_POINTING_KEYCODES
 #define EH_HPD_LAYERS
+
+#undef PRODUCT
+#define PRODUCT "HPD v2 enc/joy"
