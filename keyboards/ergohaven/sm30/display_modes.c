@@ -62,7 +62,7 @@ void display_housekeeping_task(void) {
             case SCREEN_LAYOUT:
                 if (activity_elapsed > EH_TIMEOUT) {
                     change_screen_state = SCREEN_OFF;
-                } else if (activity_elapsed > 5000) {
+                } else if (activity_elapsed > 10000) {
                     change_screen_state = SCREEN_ANIM;
                 }
                 break;

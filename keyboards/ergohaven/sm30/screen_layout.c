@@ -164,6 +164,7 @@ void screen_layout_housekeep(void) {
         lv_label_set_text_static(key_labels[lbl_idx], label_text[lbl_idx]);
         label_kc[lbl_idx] = keycode;
         update_timer      = timer_read32();
+        set_activity_timestamps(update_timer, update_timer, update_timer);
     }
     lbl_idx += 1;
 }
