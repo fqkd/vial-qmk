@@ -22,7 +22,7 @@
     },
     "encoder": {
         "rotary": [
-            {"pin_a": "GP14", "pin_b": "GP15"}
+            {"pin_a": "GP14", "pin_b": "GP15", "resolution": 2}
         ]
     },
     "ws2812": {
