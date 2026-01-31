@@ -4,11 +4,7 @@
         "rows": 12,
         "cols": 7
     },
-    "customKeycodes": [
-        #include "keyboards/ergohaven/vial_keycodes_base.json"
-        #include "keyboards/ergohaven/vial_keycodes_ruen.json"
-        #include "keyboards/ergohaven/vial_keycodes_pointing.json"
-    ],
+#include "keyboards/ergohaven/src/json/keycodes_all.json"
     "layouts": {
         "keymap":[
             [{"y":0.4},"0,0","0,1",{"y":-0.45},"0,2",{"y":-0.1},"0,3",{"y":0.1},"0,4","0,5"],

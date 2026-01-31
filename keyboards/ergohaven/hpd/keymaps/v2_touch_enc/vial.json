@@ -4,11 +4,7 @@
         "rows": 12,
         "cols": 7
     },
-    "customKeycodes": [
-        #include "keyboards/ergohaven/vial_keycodes_base.json"
-        #include "keyboards/ergohaven/vial_keycodes_ruen.json"
-        #include "keyboards/ergohaven/vial_keycodes_pointing.json"
-    ],
+#include "keyboards/ergohaven/src/json/keycodes_all.json"
     "layouts": {
         "labels": [
             [ "Auto mouse layer", "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ],

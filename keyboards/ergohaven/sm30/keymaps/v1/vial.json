@@ -4,7 +4,7 @@
         "rows": 5,
         "cols": 6
     },
-#include "keyboards/ergohaven/vial_custom_keycodes.json"
+#include "keyboards/ergohaven/src/json/keycodes_all.json"
     "layouts": {
         "keymap": [
             [{"y":0.1,"x":0.5},"0,4",{"y":-0.1},"0,3","0,2",{"y":0.1},"0,1",{"y":0.1},"0,0"],
