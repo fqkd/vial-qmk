@@ -4,6 +4,9 @@
         "cols": 6
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
+    "settings": [
+#include "keyboards/ergohaven/src/json/settings_ruen.json"
+    ],
   "layouts": {
     "labels": [
         [ "OLED Master", "Status (classic)", "Splash screen", "Status (modern)", "Status (minimalistic)", "Bongo cat", "Clock & Volume (qmk-hid-host)", "Media (qmk-hid-host)", "Disabled" ],

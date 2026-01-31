@@ -8,6 +8,9 @@
         "cols": 6
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
+    "settings": [
+#include "keyboards/ergohaven/src/json/settings_ruen.json"
+    ],
     "layouts": {
         "keymap":
 [

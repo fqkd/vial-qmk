@@ -5,6 +5,9 @@
         "cols": 7
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
+    "settings": [
+#include "keyboards/ergohaven/src/json/settings_ruen.json"
+    ],
     "layouts": {
         "labels": [
             [ "Auto mouse layer", "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ],
