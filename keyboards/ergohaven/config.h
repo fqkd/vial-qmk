@@ -19,7 +19,7 @@
 
 #define EECONFIG_KB_DATA_SIZE (4 + 16 * 16)
 #define KB_SETTINGS
-#define KB_SETTINGS_NPROTOS (2 + 16)
+#define KB_SETTINGS_NPROTOS (3 + 16)
 
 #define OLED_FONT_H "src/oled/eh_oled_font.c"
 #define OLED_TIMEOUT 0

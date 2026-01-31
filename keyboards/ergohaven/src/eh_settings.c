@@ -76,7 +76,8 @@ void kb_settings_init(void) {
         eeconfig_read_kb_datablock(layer_names[i], KB_CFG_SIZE + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
 }
 
-#define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) {.qsid = id, .get = _get, .set = _set, .notify = _notify}
+#define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) \
+    { .qsid = id, .get = _get, .set = _set, .notify = _notify }
 #define DECLARE_SETTING(id, _get, _set) DECLARE_SETTING_NOTIFY(id, _get, _set, NULL)
 
 static int ruen_toggle_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
@@ -106,6 +107,55 @@ static int ruen_macos_set(const qmk_settings_proto_t *proto, const void *setting
     if (maxsz < sizeof(mac)) return -1;
     memcpy(&mac, setting, sizeof(mac));
     set_ruen_mac_layout(mac);
+    return 0;
+}
+
+// should match with json/settings_ruen.json
+// and UNICODE_SELECTED_MODES in config.h
+static int unicode_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t unicode_mode = get_unicode_input_mode();
+    uint8_t mode         = 0;
+    switch (unicode_mode) {
+        case UNICODE_MODE_MACOS:
+            mode = 0;
+            break;
+        case UNICODE_MODE_LINUX:
+            mode = 1;
+            break;
+        case UNICODE_MODE_WINDOWS:
+            mode = 2;
+            break;
+        case UNICODE_MODE_WINCOMPOSE:
+            mode = 3;
+            break;
+        default:
+            return -1;
+    }
+    if (maxsz < sizeof(mode)) return -1;
+    memcpy(setting, &mode, sizeof(mode));
+    return 0;
+}
+
+static int unicode_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t mode = 0;
+    if (maxsz < sizeof(mode)) return -1;
+    memcpy(&mode, setting, sizeof(mode));
+    switch (mode) {
+        case 0:
+            set_unicode_input_mode(UNICODE_MODE_MACOS);
+            break;
+        case 1:
+            set_unicode_input_mode(UNICODE_MODE_LINUX);
+            break;
+        case 2:
+            set_unicode_input_mode(UNICODE_MODE_WINDOWS);
+            break;
+        case 3:
+            set_unicode_input_mode(UNICODE_MODE_WINCOMPOSE);
+            break;
+        default:
+            return -1;
+    }
     return 0;
 }
 
@@ -139,6 +189,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
     DECLARE_SETTING(101, ruen_macos_get, ruen_macos_set),
+    DECLARE_SETTING(102, unicode_get, unicode_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),
