@@ -1,7 +1,7 @@
 #include "display.h"
 #include "transactions.h"
 #include "ergohaven.h"
-#include "ergohaven_ruen.h"
+#include "src/eh_ruen.h"
 #include "ergohaven_rgb.h"
 #include "src/display/eh_display.h"
 #include "ergohaven_pointing.h"

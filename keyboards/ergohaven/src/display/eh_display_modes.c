@@ -1,6 +1,6 @@
 #include "display.h"
 #include "qp.h"
-#include "ergohaven_ruen.h"
+#include "src/eh_ruen.h"
 #include "hid.h"
 #include "ergohaven.h"
 #include "eh_symbols.h"

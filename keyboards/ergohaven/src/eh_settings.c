@@ -1,5 +1,5 @@
 #include "eh_settings.h"
-#include "ergohaven_ruen.h"
+#include "eh_ruen.h"
 #include <eeconfig.h>
 #include <debug.h>
 #include <qmk_settings.h>

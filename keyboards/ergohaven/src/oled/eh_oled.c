@@ -1,7 +1,7 @@
 #include "ergohaven.h"
 #include "src/eh_settings.h"
 #include "info_config.h"
-#include "ergohaven_ruen.h"
+#include "src/eh_ruen.h"
 #include "hid.h"
 #include "transactions.h"
 #include <string.h>

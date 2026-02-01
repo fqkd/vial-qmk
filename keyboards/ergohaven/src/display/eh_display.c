@@ -3,7 +3,7 @@
 #include "hid.h"
 #include "lvgl_helpers.h"
 #include "qp.h"
-#include "ergohaven_ruen.h"
+#include "src/eh_ruen.h"
 #include "eh_symbols.h"
 #include "src/eh_settings.h"
 #include "ergohaven.h"

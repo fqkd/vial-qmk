@@ -4,7 +4,7 @@
 #include "display.h"
 #include "ergohaven_pointing.h"
 #include "src/display/eh_display.h"
-#include "ergohaven_ruen.h"
+#include "src/eh_ruen.h"
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
