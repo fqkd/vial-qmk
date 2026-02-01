@@ -1,6 +1,6 @@
 #include QMK_KEYBOARD_H
 #include "ergohaven.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {

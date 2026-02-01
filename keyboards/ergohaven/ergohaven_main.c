@@ -4,7 +4,7 @@
 #include "src/oled/eh_oled.h"
 #include "ergohaven_rgb.h"
 #include "src/display/eh_display.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 #include "hid.h"
 #include "version.h"
 

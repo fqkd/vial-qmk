@@ -1,6 +1,6 @@
 #include QMK_KEYBOARD_H
 #include "ergohaven.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 
 #undef LAYOUT
 #define LAYOUT(k0A, k0B, k0C, k0D, k0E, k0F, k6F, k6E, k6D, k6C, k6B, k6A, k1A, k1B, k1C, k1D, k1E, k1F, k7F, k7E, k7D, k7C, k7B, k7A, k2A, k2B, k2C, k2D, k2E, k2F, k8F, k8E, k8D, k8C, k8B, k8A, k3A, k3B, k3C, k3D, k3E, k3F, k9F, k9E, k9D, k9C, k9B, k9A, k4C, k4D, k4E, k4F, k4A, k4B, kAB, kAA, kAF, kAE, kAD, kAC, k5G, kBA, kBB, kBG, kBC, kBD) { \

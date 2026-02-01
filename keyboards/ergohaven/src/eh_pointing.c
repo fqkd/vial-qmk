@@ -1,4 +1,4 @@
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 #include "quantum.h"
 #include "hid.h"
 

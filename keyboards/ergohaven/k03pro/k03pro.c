@@ -4,7 +4,7 @@
 #include "src/eh_ruen.h"
 #include "ergohaven_rgb.h"
 #include "src/display/eh_display.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 #include QMK_KEYBOARD_H
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT(

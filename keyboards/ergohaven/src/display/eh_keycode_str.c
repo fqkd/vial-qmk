@@ -4,7 +4,7 @@
 #include "ergohaven.h"
 #include "eh_symbols.h"
 #include "src/eh_ruen.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 
 const char *basic_keycode_to_str(uint16_t keycode) {
     static char buf[16];

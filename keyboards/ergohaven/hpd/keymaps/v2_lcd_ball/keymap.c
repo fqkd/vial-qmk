@@ -2,7 +2,7 @@
 #include "transactions.h"
 #include "ergohaven.h"
 #include "display.h"
-#include "ergohaven_pointing.h"
+#include "src/eh_pointing.h"
 #include "src/display/eh_display.h"
 #include "src/eh_ruen.h"
 
