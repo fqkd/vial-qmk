@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LAYER_LABEL_SIZE 16
-
 void kb_settings_init(void);
 
 /* should override if needed */

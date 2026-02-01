@@ -1,5 +1,6 @@
 #include "eh_settings.h"
 #include "eh_ruen.h"
+#include "eh_pointing.h"
 #include <eeconfig.h>
 #include <debug.h>
 #include <qmk_settings.h>
@@ -28,6 +29,7 @@ void kb_settings_layer_labels_init(void) {
 void kb_settings_reset(void) {
     kb_settings_ruen_reset();
     kb_settings_layer_labels_reset();
+    kb_settings_pointing_reset();
     kb_settings_init();
 }
 
@@ -39,6 +41,7 @@ void eeconfig_init_kb(void) {
 void kb_settings_init(void) {
     kb_settings_ruen_init();
     kb_settings_layer_labels_init();
+    kb_settings_pointing_init();
 }
 
 #define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) \
@@ -150,11 +153,93 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
     return 0;
 }
 
+static int pointing_cpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint16_t cpi = get_cpi();
+    if (maxsz < sizeof(cpi)) return -1;
+    memcpy(setting, &cpi, sizeof(cpi));
+    return 0;
+}
+
+static int pointing_cpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint16_t cpi;
+    if (maxsz < sizeof(cpi)) return -1;
+    memcpy(&cpi, setting, sizeof(cpi));
+    dprintf("pointing_cpi_set %d\n", cpi);
+    set_cpi(cpi);
+    return 0;
+}
+
+static int pointing_sens_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t sens;
+
+    pointing_mode_t pointing_mode = proto->qsid - 120;
+    switch (pointing_mode) {
+        case POINTING_MODE_SNIPER:
+            sens = get_sniper_sens();
+            break;
+        case POINTING_MODE_SCROLL:
+            sens = get_scroll_sens();
+            break;
+        case POINTING_MODE_TEXT ... POINTING_MODE_USR3:
+            sens = get_text_sens();
+            break;
+        default:
+            return -1;
+    }
+    if (maxsz < sizeof(sens)) return -1;
+    memcpy(setting, &sens, sizeof(sens));
+    return 0;
+}
+
+static int pointing_sens_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t sens;
+    if (maxsz < sizeof(sens)) return -1;
+    memcpy(&sens, setting, sizeof(sens));
+
+    pointing_mode_t pointing_mode = proto->qsid - 120;
+    switch (pointing_mode) {
+        case POINTING_MODE_SNIPER:
+            set_sniper_sens(sens);
+            break;
+        case POINTING_MODE_SCROLL:
+            set_scroll_sens(sens);
+            break;
+        case POINTING_MODE_TEXT ... POINTING_MODE_USR3:
+            set_text_sens(sens);
+            break;
+        default:
+            return -1;
+    }
+    return 0;
+}
+
+static int pointing_bits_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t bits = (get_acceleration() << 1) | (get_invert_scroll());
+    if (maxsz < sizeof(bits)) return -1;
+    memcpy(setting, &bits, sizeof(bits));
+    return 0;
+}
+
+static int pointing_bits_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t bits;
+    if (maxsz < sizeof(bits)) return -1;
+    memcpy(&bits, setting, sizeof(bits));
+    dprintf("pointing_bits_set %d\n", bits);
+    set_invert_scroll(bits & 0x01);
+    set_acceleration(bits & 0x02);
+    return 0;
+}
+
 qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
     DECLARE_SETTING(101, ruen_macos_get, ruen_macos_set),
     DECLARE_SETTING(102, unicode_get, unicode_set),
+    DECLARE_SETTING(120, pointing_cpi_get, pointing_cpi_set),
+    DECLARE_SETTING(121, pointing_sens_get, pointing_sens_set),
+    DECLARE_SETTING(122, pointing_sens_get, pointing_sens_set),
+    DECLARE_SETTING(123, pointing_sens_get, pointing_sens_set),
+    DECLARE_SETTING(124, pointing_bits_get, pointing_bits_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),

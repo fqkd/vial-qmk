@@ -25,19 +25,43 @@ enum {
 
 typedef enum { ROT_0, ROT_90, ROT_180, ROT_270 } orientation_t;
 
+typedef union {
+    uint64_t raw;
+    struct {
+        uint8_t      sens[4];
+        uint16_t      dpi;
+        bool          invert_scroll : 1;
+        bool          acceleration : 1;
+        orientation_t orientation : 2;
+        uint8_t       mode : 2; // trackball mini v1/v2 modes
+    };
+} kb_settings_pointing_t;
+
+// should override if needed
+kb_settings_pointing_t get_settings_pointing_default(void);
+
 bool process_record_pointing(uint16_t keycode, keyrecord_t *record);
 
-void set_scroll_sens(int32_t sens);
+void set_cpi(uint16_t dpi);
+uint16_t get_cpi(void);
 
-void set_sniper_sens(int32_t sens);
+void set_scroll_sens(uint8_t sens);
+uint8_t get_scroll_sens(void);
 
-void set_text_sens(int32_t sens);
+void set_sniper_sens(uint8_t sens);
+uint8_t get_sniper_sens(void);
+
+void set_text_sens(uint8_t sens);
+uint8_t get_text_sens(void);
 
 void set_invert_scroll(bool invert);
+bool get_invert_scroll(void);
 
 void set_acceleration(bool acc);
+bool get_acceleration(void);
 
 void set_orientation(orientation_t orientation);
+orientation_t get_orientation(void);
 
 void set_pointing_mode(pointing_mode_t mode);
 
@@ -46,3 +70,7 @@ void set_pointing_mode_from_hid(pointing_mode_t mode);
 void set_led_blinks(bool led);
 
 bool get_led_blinks(void);
+
+void kb_settings_pointing_init(void);
+
+void kb_settings_pointing_reset(void);

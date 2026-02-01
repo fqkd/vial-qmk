@@ -2,38 +2,120 @@
 #include "quantum.h"
 #include "hid.h"
 
+static kb_settings_pointing_t kb_settings_pointing;
+
+static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
+
+__attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void) {
+    kb_settings_pointing_t dflt = {
+        .sens          = {1, 2, 16, 32},
+        .dpi           = 400,
+        .invert_scroll = false,
+        .acceleration  = false,
+        .orientation   = ROT_0,
+        .mode          = 0,
+    };
+    return dflt;
+}
+
+void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
+#ifdef POINTING_DEVICE_ENABLE
+    if (new_config.dpi != kb_settings_pointing.dpi) {
+        pointing_device_set_cpi(new_config.dpi);
+        uint16_t dpi = pointing_device_get_cpi();
+        if (new_config.dpi != dpi) dprintf("set dpi=%d actual dpi=%d\n", new_config.dpi, dpi);
+        new_config.dpi = dpi;
+    }
+#endif
+    if (new_config.raw != kb_settings_pointing.raw) {
+        kb_settings_pointing = new_config;
+        dprintf("dpi=%d s1=%d s2=%d s3=%d acc=%d inv=%d\n", kb_settings_pointing.dpi, kb_settings_pointing.sens[1], kb_settings_pointing.sens[2], kb_settings_pointing.sens[3], kb_settings_pointing.acceleration, kb_settings_pointing.invert_scroll);
+        eeconfig_update_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+    }
+}
+
+void kb_settings_pointing_init(void) {
+    eeconfig_read_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+#ifdef POINTING_DEVICE_ENABLE
+    pointing_device_set_cpi(kb_settings_pointing.dpi);
+#endif
+    dprintf("dpi=%d s1=%d s2=%d s3=%d acc=%d inv=%d\n", kb_settings_pointing.dpi, kb_settings_pointing.sens[1], kb_settings_pointing.sens[2], kb_settings_pointing.sens[3], kb_settings_pointing.acceleration, kb_settings_pointing.invert_scroll);
+}
+
+void kb_settings_pointing_reset(void) {
+    kb_settings_pointing_update(get_settings_pointing_default());
+}
+
 pointing_mode_t pointing_mode = POINTING_MODE_NORMAL;
 
-static int32_t sens[4] = {1, 2, 16, 32};
-
-void set_sniper_sens(int32_t s) {
-    sens[POINTING_MODE_SNIPER] = s;
+void set_cpi(uint16_t cpi) {
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.dpi                    = cpi;
+    kb_settings_pointing_update(new_config);
 }
 
-void set_scroll_sens(int32_t s) {
-    sens[POINTING_MODE_SCROLL] = s;
+uint16_t get_cpi(void) {
+    return kb_settings_pointing.dpi;
 }
 
-void set_text_sens(int32_t s) {
-    sens[POINTING_MODE_TEXT] = s;
+void set_sniper_sens(uint8_t s) {
+    kb_settings_pointing_t new_config     = kb_settings_pointing;
+    new_config.sens[POINTING_MODE_SNIPER] = s;
+    kb_settings_pointing_update(new_config);
 }
 
-static bool invert_scroll = false;
+uint8_t get_sniper_sens(void) {
+    return kb_settings_pointing.sens[POINTING_MODE_SNIPER];
+}
+
+void set_scroll_sens(uint8_t s) {
+    kb_settings_pointing_t new_config     = kb_settings_pointing;
+    new_config.sens[POINTING_MODE_SCROLL] = s;
+    kb_settings_pointing_update(new_config);
+}
+
+uint8_t get_scroll_sens(void) {
+    return kb_settings_pointing.sens[POINTING_MODE_SCROLL];
+}
+
+void set_text_sens(uint8_t s) {
+    kb_settings_pointing_t new_config   = kb_settings_pointing;
+    new_config.sens[POINTING_MODE_TEXT] = s;
+    kb_settings_pointing_update(new_config);
+}
+
+uint8_t get_text_sens(void) {
+    return kb_settings_pointing.sens[POINTING_MODE_TEXT];
+}
 
 void set_invert_scroll(bool invert) {
-    invert_scroll = invert;
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.invert_scroll          = invert;
+    kb_settings_pointing_update(new_config);
 }
 
-static orientation_t orientation = ROT_0;
+bool get_invert_scroll(void) {
+    return kb_settings_pointing.invert_scroll;
+}
 
 void set_orientation(orientation_t o) {
-    orientation = o;
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.orientation            = o;
+    kb_settings_pointing_update(new_config);
 }
 
-static bool acceleration = false;
+orientation_t get_orientation(void) {
+    return kb_settings_pointing.orientation;
+}
 
 void set_acceleration(bool acc) {
-    acceleration = acc;
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.acceleration           = acc;
+    kb_settings_pointing_update(new_config);
+}
+
+bool get_acceleration(void) {
+    return kb_settings_pointing.acceleration;
 }
 
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
@@ -241,7 +323,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
         mrpt.v = 0;
     }
 
-    switch (orientation) {
+    switch (get_orientation()) {
         int8_t tmp;
         case ROT_0:
             break;
@@ -261,8 +343,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
             break;
     }
 
-    if (acceleration)
-    {
+    if (get_acceleration()) {
         mouse_xy_report_t x = mrpt.x;
         mouse_xy_report_t y = mrpt.y;
 
@@ -293,7 +374,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
 #endif
 
     if (pmode != POINTING_MODE_NORMAL) {
-        int32_t divisor = sens[MIN(pmode, POINTING_MODE_TEXT)];
+        int32_t divisor = kb_settings_pointing.sens[MIN(pmode, POINTING_MODE_TEXT)];
 
         accumulated_h += mrpt.x;
         accumulated_v += mrpt.y;
@@ -371,7 +452,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
         accumulated_v = 0;
     }
 
-    if (invert_scroll) {
+    if (get_invert_scroll()) {
         mrpt.v = -mrpt.v;
         mrpt.h = -mrpt.h;
     }
