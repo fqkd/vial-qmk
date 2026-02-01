@@ -4,47 +4,7 @@
 #include <debug.h>
 #include <qmk_settings.h>
 
-typedef union {
-    uint32_t raw;
-    struct {
-        uint8_t ruen_toggle_mode : 2;
-        bool    ruen_mac_layout : 1;
-    };
-} kb_config_t;
-
-kb_config_t kb_config;
-
-#define KB_CFG_SIZE (sizeof(kb_config))
-
 char layer_names[DYNAMIC_KEYMAP_LAYER_COUNT][LAYER_LABEL_SIZE];
-
-void kb_config_update(kb_config_t new_config) {
-    if (new_config.raw != kb_config.raw) {
-        kb_config = new_config;
-        dprintf("kb_config_update %ld \n", kb_config.raw);
-        eeconfig_update_kb_datablock(&kb_config, 0, sizeof(kb_config_t));
-    }
-}
-
-void kb_settings_ruen_toggle_mode_set(uint8_t mode) {
-    kb_config_t new_config      = kb_config;
-    new_config.ruen_toggle_mode = mode;
-    kb_config_update(new_config);
-}
-
-void kb_settings_ruen_mac_layout_set(bool mac_layout) {
-    kb_config_t new_config     = kb_config;
-    new_config.ruen_mac_layout = mac_layout;
-    kb_config_update(new_config);
-}
-
-uint8_t kb_settings_ruen_toggle_mode() {
-    return kb_config.ruen_toggle_mode;
-}
-
-bool kb_settings_ruen_mac_layout() {
-    return kb_config.ruen_mac_layout;
-}
 
 __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
@@ -53,15 +13,21 @@ __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
     return default_layer_labels[layer];
 }
 
-void kb_settings_reset_layer_labels(void) {
+void kb_settings_layer_labels_reset(void) {
     for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i) {
-        eeconfig_update_kb_datablock(default_layer_label(i), KB_CFG_SIZE + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
+        eeconfig_update_kb_datablock(default_layer_label(i), KB_SETTINGS_LAYER_LABELS_OFFSET + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
     }
     layer_name_updated = true;
 }
 
+void kb_settings_layer_labels_init(void) {
+    for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i)
+        eeconfig_read_kb_datablock(layer_names[i], KB_SETTINGS_LAYER_LABELS_OFFSET + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
+}
+
 void kb_settings_reset(void) {
-    kb_settings_reset_layer_labels();
+    kb_settings_ruen_reset();
+    kb_settings_layer_labels_reset();
     kb_settings_init();
 }
 
@@ -71,9 +37,8 @@ void eeconfig_init_kb(void) {
 }
 
 void kb_settings_init(void) {
-    eeconfig_read_kb_datablock(&kb_config, 0, sizeof(kb_config_t));
-    for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i)
-        eeconfig_read_kb_datablock(layer_names[i], KB_CFG_SIZE + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
+    kb_settings_ruen_init();
+    kb_settings_layer_labels_init();
 }
 
 #define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) \
@@ -180,7 +145,7 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
     if (layer < 0 || layer >= DYNAMIC_KEYMAP_LAYER_COUNT) return -1;
     dprintf("layer_name_set %d %s\n", layer, (const char *)setting);
     snprintf(layer_names[layer], sizeof(layer_names[layer]), (const char *)setting);
-    eeconfig_update_kb_datablock(layer_names[layer], KB_CFG_SIZE + LAYER_LABEL_SIZE * layer, LAYER_LABEL_SIZE);
+    eeconfig_update_kb_datablock(layer_names[layer], KB_SETTINGS_LAYER_LABELS_OFFSET + LAYER_LABEL_SIZE * layer, LAYER_LABEL_SIZE);
     layer_name_updated = true;
     return 0;
 }

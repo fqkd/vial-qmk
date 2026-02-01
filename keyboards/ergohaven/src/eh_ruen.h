@@ -83,3 +83,7 @@ uint8_t get_ruen_toggle_mode(void);
 void set_ruen_mac_layout(bool mac_layout);
 
 bool get_ruen_mac_layout(void);
+
+void kb_settings_ruen_init(void);
+
+void kb_settings_ruen_reset(void);
