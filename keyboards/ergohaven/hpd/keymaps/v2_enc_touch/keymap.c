@@ -53,51 +53,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 #ifdef ENCODER_MAP_ENABLE
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
-    [0] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
-    [1] = {ENCODER_CCW_CW(_______, _______)},
-    [2] = {ENCODER_CCW_CW(_______, _______)},
-    [3] = {ENCODER_CCW_CW(_______, _______)},
-    [4] = {ENCODER_CCW_CW(_______, _______)},
+    [0] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)}, //
+    [1] = {ENCODER_CCW_CW(_______, _______)}, //
+    [2] = {ENCODER_CCW_CW(_______, _______)}, //
+    [3] = {ENCODER_CCW_CW(_______, _______)}, //
+    [4] = {ENCODER_CCW_CW(_______, _______)}, //
 };
 #endif
-
-typedef union {
-    uint32_t raw;
-    struct {
-        uint8_t text_mode : 3;
-        uint8_t scroll_mode : 3;
-        uint8_t sniper_mode : 2;
-        uint8_t dpi_mode : 3;
-        bool    invert_scroll : 1;
-    };
-} vial_config_t;
-
-static vial_config_t vial_config;
-
-static const uint16_t DPI_TABLE[]      = {320, 400, 500, 630, 800, 1000};
-const int32_t         SNIPER_TABLE[15] = {2, 3, 4, 5};
-const int32_t         SCROLL_TABLE[15] = {6, 8, 11, 16, 23, 32, 45, 64};
-const int32_t         TEXT_TABLE[15]   = {6, 8, 11, 16, 23, 32, 45, 64};
-
-uint16_t get_dpi(uint8_t dpi_mode) {
-    if (dpi_mode < ARRAY_SIZE(DPI_TABLE))
-        return DPI_TABLE[dpi_mode];
-    else
-        return DPI_TABLE[0];
-}
-
-void via_set_layout_options_kb(uint32_t value) {
-    dprintf("via_set_layout_options_kb %lx\n", value);
-    vial_config.raw = value;
-    pointing_device_set_cpi(get_dpi(vial_config.dpi_mode));
-    set_scroll_sens(SCROLL_TABLE[vial_config.scroll_mode]);
-    set_sniper_sens(SNIPER_TABLE[vial_config.sniper_mode]);
-    set_text_sens(TEXT_TABLE[vial_config.text_mode]);
-    set_invert_scroll(vial_config.invert_scroll);
-}
-
-void keyboard_post_init_user(void) {
-    vial_config.raw = via_get_layout_options();
-    via_set_layout_options_kb(vial_config.raw);
-    set_led_blinks(false);
-}

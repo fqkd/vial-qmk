@@ -21,9 +21,15 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
 void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
 #ifdef POINTING_DEVICE_ENABLE
     if (new_config.dpi != kb_settings_pointing.dpi) {
-        pointing_device_set_cpi(new_config.dpi);
-        uint16_t dpi = pointing_device_get_cpi();
-        if (new_config.dpi != dpi) dprintf("set dpi=%d actual dpi=%d\n", new_config.dpi, dpi);
+        uint16_t dpi;
+        for (int i = 0; i < 5; ++i) { // bug in touchpad driver
+            pointing_device_set_cpi(new_config.dpi);
+            dpi = pointing_device_get_cpi();
+            if (new_config.dpi != dpi)
+                dprintf("set dpi=%d actual dpi=%d\n", new_config.dpi, dpi);
+            else
+                break;
+        }
         new_config.dpi = dpi;
     }
 #endif
