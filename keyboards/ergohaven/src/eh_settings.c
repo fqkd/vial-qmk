@@ -44,8 +44,7 @@ void kb_settings_init(void) {
     kb_settings_pointing_init();
 }
 
-#define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) \
-    { .qsid = id, .get = _get, .set = _set, .notify = _notify }
+#define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) {.qsid = id, .get = _get, .set = _set, .notify = _notify}
 #define DECLARE_SETTING(id, _get, _set) DECLARE_SETTING_NOTIFY(id, _get, _set, NULL)
 
 static int ruen_toggle_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
@@ -214,7 +213,7 @@ static int pointing_sens_set(const qmk_settings_proto_t *proto, const void *sett
 }
 
 static int pointing_bits_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint8_t bits = (get_acceleration() << 1) | (get_invert_scroll());
+    uint8_t bits = (get_sticky_mode() << 2) | (get_acceleration() << 1) | (get_invert_scroll());
     if (maxsz < sizeof(bits)) return -1;
     memcpy(setting, &bits, sizeof(bits));
     return 0;
@@ -227,6 +226,7 @@ static int pointing_bits_set(const qmk_settings_proto_t *proto, const void *sett
     dprintf("pointing_bits_set %d\n", bits);
     set_invert_scroll(bits & 0x01);
     set_acceleration(bits & 0x02);
+    set_sticky_mode(bits & 0x04);
     return 0;
 }
 

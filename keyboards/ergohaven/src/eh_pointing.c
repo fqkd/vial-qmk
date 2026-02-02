@@ -14,6 +14,7 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
         .acceleration  = false,
         .orientation   = ROT_0,
         .mode          = 0,
+        .sticky_mode   = true,
     };
     return dflt;
 }
@@ -122,6 +123,16 @@ void set_acceleration(bool acc) {
 
 bool get_acceleration(void) {
     return kb_settings_pointing.acceleration;
+}
+
+void set_sticky_mode(bool sticky_mode) {
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.sticky_mode            = sticky_mode;
+    kb_settings_pointing_update(new_config);
+}
+
+bool get_sticky_mode(void) {
+    return kb_settings_pointing.sticky_mode;
 }
 
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
@@ -295,7 +306,7 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
                 set_pointing_mode(NEW_MODE);
                 press_timer = timer_read();
             } else {
-                if (timer_elapsed(press_timer) < get_tapping_term(keycode, record)) {
+                if (get_sticky_mode() && timer_elapsed(press_timer) < get_tapping_term(keycode, record)) {
                     if (prev_pointing_mode == NEW_MODE)
                         set_pointing_mode(POINTING_MODE_NORMAL);
                     else
