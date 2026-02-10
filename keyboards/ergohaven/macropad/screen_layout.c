@@ -9,7 +9,7 @@ LV_FONT_DECLARE(eh_font_montserrat_28);
 
 const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
-        "NUM", "NAV", "MOUSE", "MEDIA", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN",
+        "Numbers", "Navigation", "Mouse", "Media", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
     };
     return default_layer_labels[layer];
 }
