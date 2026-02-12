@@ -32,10 +32,9 @@ static lv_obj_t *screen_layout;
 
 #define NLABELS 15
 static lv_obj_t *key_labels[NLABELS];
-static bool      label_big[NLABELS];
 static uint16_t  label_kc[NLABELS];
 static char      label_text[NLABELS][24];
-static lv_obj_t *label_layer_small;
+static lv_obj_t *label_layer;
 
 void screen_layout_init(void) {
     screen_layout = lv_obj_create(NULL);
@@ -43,18 +42,14 @@ void screen_layout_init(void) {
     use_flex_column(screen_layout);
     lv_obj_set_scrollbar_mode(screen_layout, LV_SCROLLBAR_MODE_OFF);
 
-    label_layer_small = lv_label_create(screen_layout);
-    lv_label_set_text(label_layer_small, "");
-    lv_obj_set_style_pad_top(label_layer_small, 25, 0);
-    lv_obj_set_style_pad_bottom(label_layer_small, 25, 0);
-    lv_obj_set_style_text_color(label_layer_small, accent_color_blue, 0);
-    lv_obj_set_style_text_font(label_layer_small, &eh_font_montserrat_28, LV_PART_MAIN);
+    label_layer = lv_label_create(screen_layout);
+    lv_label_set_text(label_layer, "");
+    lv_obj_set_style_pad_top(label_layer, 25, 0);
+    lv_obj_set_style_pad_bottom(label_layer, 25, 0);
+    lv_obj_set_style_text_color(label_layer, accent_color_blue, 0);
+    lv_obj_set_style_text_font(label_layer, &eh_font_montserrat_28, LV_PART_MAIN);
 
     lv_obj_t *cont = lv_obj_create(screen_layout);
-    // lv_obj_set_style_pad_top(screen_layout, 15, 0);
-    // lv_obj_set_style_pad_bottom(screen_layout, 10, 0);
-    // lv_obj_set_style_pad_right(screen_layout, 5, 0);
-
     lv_obj_set_size(cont, 232, 250);
     lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW_WRAP);
     int32_t v = 0;
@@ -79,11 +74,10 @@ void screen_layout_init(void) {
 
         key_labels[i] = lv_label_create(obj);
         lv_obj_center(key_labels[i]);
-        lv_obj_set_style_text_font(key_labels[i], &eh_font_montserrat_28, LV_PART_MAIN);
+        lv_obj_set_style_text_font(key_labels[i], &eh_font_montserrat_20, LV_PART_MAIN);
         lv_obj_set_style_text_align(key_labels[i], LV_TEXT_ALIGN_CENTER, 0);
         lv_label_set_text_static(key_labels[i], "");
-        label_big[i] = true;
-        label_kc[i]  = 0;
+        label_kc[i] = 0;
 
         if (i >= 12) {
             lv_obj_set_style_border_opa(obj, 0, 0);
@@ -101,27 +95,6 @@ void screen_layout_load(void) {
     lv_scr_load(screen_layout);
 }
 
-size_t visible_len(const char *s) {
-    size_t len = 0;
-    while (*s != '\0') {
-        unsigned char p = (unsigned char)(*s);
-        if (p < 0x80) { // 1-byte ASCII
-            len += 1;
-            s++;
-        } else if (p < 0xE0) { // 2-byte
-            len += 1;
-            s += 2;
-        } else if (p < 0xF0) { // 3-byte
-            len += 2;
-            s += 3;
-        } else { // 4-byte (simplified, assumes valid input)
-            len += 2;
-            s += 4;
-        }
-    }
-    return len;
-}
-
 void screen_layout_housekeep(void) {
     static uint32_t update_timer = 0;
     if (timer_elapsed32(update_timer) < 5) // prevent long display updates
@@ -130,7 +103,7 @@ void screen_layout_housekeep(void) {
     uint8_t layer = get_current_layer();
     if (layer != prev_layer || layer_name_updated) {
         prev_layer = layer;
-        lv_label_set_text(label_layer_small, get_layer_label(layer));
+        lv_label_set_text(label_layer, get_layer_label(layer));
         update_timer       = timer_read32();
         lbl_idx            = 0;
         layer_name_updated = false;
@@ -159,16 +132,6 @@ void screen_layout_housekeep(void) {
         keycode = get_encoder_keycode(layer, 0, true);
     if (keycode != label_kc[lbl_idx]) {
         get_keycode_str(label_text[lbl_idx], keycode);
-        int len = visible_len(label_text[lbl_idx]);
-        bool small = len <= 3;
-
-        if (small && !label_big[lbl_idx]) {
-            label_big[lbl_idx] = true;
-            lv_obj_set_style_text_font(key_labels[lbl_idx], &eh_font_montserrat_28, LV_PART_MAIN);
-        } else if (!small && label_big[lbl_idx]) {
-            label_big[lbl_idx] = false;
-            lv_obj_set_style_text_font(key_labels[lbl_idx], &eh_font_montserrat_20, LV_PART_MAIN);
-        }
         lv_label_set_text_static(key_labels[lbl_idx], label_text[lbl_idx]);
         label_kc[lbl_idx] = keycode;
         update_timer      = timer_read32();
