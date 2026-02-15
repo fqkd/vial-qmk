@@ -20,7 +20,7 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
 }
 
 void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
-#ifdef POINTING_DEVICE_ENABLE
+#if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
     if (new_config.dpi != kb_settings_pointing.dpi) {
         uint16_t dpi;
         for (int i = 0; i < 5; ++i) { // bug in touchpad driver
@@ -43,7 +43,7 @@ void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
 
 void kb_settings_pointing_init(void) {
     eeconfig_read_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
-#ifdef POINTING_DEVICE_ENABLE
+#if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
     pointing_device_set_cpi(kb_settings_pointing.dpi);
 #endif
     dprintf("dpi=%d s1=%d s2=%d s3=%d acc=%d inv=%d\n", kb_settings_pointing.dpi, kb_settings_pointing.sens[1], kb_settings_pointing.sens[2], kb_settings_pointing.sens[3], kb_settings_pointing.acceleration, kb_settings_pointing.invert_scroll);

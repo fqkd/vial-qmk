@@ -86,32 +86,3 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [4] = {ENCODER_CCW_CW(_______, _______)},
 };
 #endif
-
-typedef union {
-    uint32_t raw;
-    struct {
-        uint8_t text_mode : 3;
-        uint8_t scroll_mode : 3;
-        uint8_t sniper_mode : 2;
-    };
-} vial_config_t;
-
-static vial_config_t vial_config;
-
-const int32_t SNIPER_TABLE[15] = {2, 3, 4, 5};
-const int32_t SCROLL_TABLE[15] = {6, 8, 11, 16, 23, 32, 45, 64};
-const int32_t TEXT_TABLE[15]   = {32, 45, 64, 90, 128, 180, 250, 360};
-
-void via_set_layout_options_kb(uint32_t value) {
-    dprintf("via_set_layout_options_kb %lx\n", value);
-    vial_config.raw = value;
-    set_scroll_sens(SCROLL_TABLE[vial_config.scroll_mode]);
-    set_sniper_sens(SNIPER_TABLE[vial_config.sniper_mode]);
-    set_text_sens(TEXT_TABLE[vial_config.text_mode]);
-}
-
-void keyboard_post_init_user(void) {
-    vial_config.raw = via_get_layout_options();
-    via_set_layout_options_kb(vial_config.raw);
-    set_led_blinks(false);
-}
