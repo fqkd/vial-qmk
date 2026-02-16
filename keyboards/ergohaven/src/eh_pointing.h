@@ -35,6 +35,7 @@ typedef union {
         orientation_t orientation : 2;
         uint8_t       mode : 2; // trackball mini v1/v2 modes
         bool          sticky_mode : 1;
+        bool          led_blinks : 1;
     };
 } kb_settings_pointing_t;
 

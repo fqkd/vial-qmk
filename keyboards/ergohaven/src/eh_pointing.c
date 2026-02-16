@@ -15,6 +15,7 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
         .orientation   = ROT_0,
         .mode          = 0,
         .sticky_mode   = true,
+        .led_blinks    = false,
     };
     return dflt;
 }
@@ -135,6 +136,16 @@ bool get_sticky_mode(void) {
     return kb_settings_pointing.sticky_mode;
 }
 
+void set_led_blinks(bool led) {
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.led_blinks             = led;
+    kb_settings_pointing_update(new_config);
+}
+
+bool get_led_blinks(void) {
+    return kb_settings_pointing.led_blinks;
+}
+
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
 bool is_mouse_active = false;
@@ -161,16 +172,6 @@ bool is_mouse_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 #endif // POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
-static bool led_blinks = true;
-
-void set_led_blinks(bool led) {
-    led_blinks = led;
-}
-
-bool get_led_blinks(void) {
-    return led_blinks;
-}
-
 void set_pointing_mode_from_hid(pointing_mode_t mode) {
     pointing_mode = mode;
 }
@@ -180,7 +181,7 @@ void set_pointing_mode(pointing_mode_t mode) {
         pointing_mode = mode;
         if (is_hid_active()) {
             hid_send_pointing_mode(mode);
-        } else if (led_blinks) {
+        } else if (get_led_blinks()) {
             switch (pointing_mode) {
                 case POINTING_MODE_NORMAL:
                     register_code(KC_NUM_LOCK);
@@ -318,7 +319,7 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
         }
 
         case EH_LED_BL:
-            if (record->event.pressed) led_blinks = !led_blinks;
+            if (record->event.pressed) set_led_blinks(!get_led_blinks());
             return false;
     }
 
