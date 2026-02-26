@@ -288,11 +288,12 @@ bool process_record_ruen(uint16_t keycode, keyrecord_t *record) {
             return false;
 
         case LG_EN_START ... LG_QUOTE: {
-            uint8_t lang = cur_lang;
-            set_lang(LANG_EN);
+            if (cur_lang == LANG_RU) {
+                set_lang(LANG_EN);
+                should_revert_ru = true;
+            }
             tap_code16(en_table[keycode - LG_EN_START]);
-            should_revert_ru = should_revert_ru || (cur_lang != lang);
-            revert_time      = timer_read32();
+            revert_time = timer_read32();
             return false;
         }
 
