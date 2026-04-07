@@ -28,8 +28,23 @@ RAW_ENABLE = yes
 UNICODE_COMMON = yes
 UNICODE_ENABLE = yes
 
+ENCODER_ENABLE = yes
+ENCODER_MAP_ENABLE = yes
+
+POINTING_DEVICE_ENABLE = yes
+POINTING_DEVICE_DRIVER = custom
+I2C_DRIVER_REQUIRED = yes
+
+RGBLIGHT_ENABLE = yes
+RGBLIGHT_DRIVER = ws2812
+WS2812_DRIVER = vendor
+
 SRC += keyboards/ergohaven/ergohaven_main.c
+SRC += keyboards/ergohaven/ergohaven_rgb.c
 SRC += keyboards/ergohaven/src/eh_settings.c
 SRC += keyboards/ergohaven/src/eh_ruen.c
 SRC += keyboards/ergohaven/hid.c
 SRC += keyboards/ergohaven/src/eh_pointing.c
+SRC += keyboards/ergohaven/hpd/rev3/pointing.c
+SRC += drivers/sensors/azoteq_iqs5xx.c
+SRC += drivers/sensors/pmw3610.c

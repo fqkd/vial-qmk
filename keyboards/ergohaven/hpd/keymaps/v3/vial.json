@@ -1,5 +1,5 @@
 {
-    "matri": {
+    "matrix": {
         "rows": 10,
         "cols": 8
     },
@@ -8,7 +8,23 @@
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
     ],
     "layouts": {
-        "keymap":[
+        "labels": [
+            "Hide left encoder",
+            "Hide right encoder",
+            ["Left module: Auto", "Left module: None", "Left module: Trackball", "Left module: Touchpad"],
+            ["Right module: Auto", "Right module: None", "Right module: Trackball", "Right module: Touchpad"],
+            ["Left axis: 0°", "Left axis: 90°", "Left axis: 180°", "Left axis: 270°"],
+            ["Right axis: 0°", "Right axis: 90°", "Right axis: 180°", "Right axis: 270°"],
+            ["Trackball DPI: 200", "Trackball DPI: 400", "Trackball DPI: 600", "Trackball DPI: 800", "Trackball DPI: 1000", "Trackball DPI: 1200", "Trackball DPI: 1600", "Trackball DPI: 2000", "Trackball DPI: 2400", "Trackball DPI: 3200"],
+            ["Touchpad DPI: 200", "Touchpad DPI: 400", "Touchpad DPI: 600", "Touchpad DPI: 800", "Touchpad DPI: 1000"],
+            ["Sniper sens: 1", "Sniper sens: 2", "Sniper sens: 4", "Sniper sens: 8", "Sniper sens: 12", "Sniper sens: 16", "Sniper sens: 24", "Sniper sens: 32"],
+            ["Scroll sens: 2", "Scroll sens: 4", "Scroll sens: 8", "Scroll sens: 16", "Scroll sens: 24", "Scroll sens: 32", "Scroll sens: 48", "Scroll sens: 64"],
+            ["Text sens: 1", "Text sens: 2", "Text sens: 4", "Text sens: 8", "Text sens: 16", "Text sens: 24", "Text sens: 32", "Text sens: 48"],
+            "Invert scroll",
+            "Acceleration",
+            "LED blinks"
+        ],
+        "keymap": [
             [{"y":0.4},"0,5","0,4",{"y":-0.45},"0,3",{"y":-0.1},"0,2",{"y":0.1},"0,1","0,0"],
             [{"y":0.45},"1,5","1,4",{"y":-0.45},"1,3",{"y":-0.1},"1,2",{"y":0.1},"1,1","1,0"],
             [{"y":0.45},"2,5","2,4",{"y":-0.45},"2,3",{"y":-0.1},"2,2",{"y":0.1},"2,1","2,0"],
