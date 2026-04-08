@@ -4,7 +4,7 @@
 
 const rgblight_segment_t PROGMEM layer0_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_WHITE});
 const rgblight_segment_t PROGMEM layer1_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_RED});
-const rgblight_segment_t PROGMEM layer2_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_CYAN});
+const rgblight_segment_t PROGMEM layer2_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_BLUE});
 const rgblight_segment_t PROGMEM layer3_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_GOLDENROD});
 const rgblight_segment_t PROGMEM layer4_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_GREEN});
 const rgblight_segment_t PROGMEM layer5_rgb[]  = RGBLIGHT_LAYER_SEGMENTS({0, 2, HSV_PURPLE});
@@ -32,6 +32,7 @@ void keyboard_post_init_rgb(void) {
 }
 
 void layer_state_set_rgb(layer_state_t state) {
+    rgblight_set_layer_state(0, get_highest_layer(state) == 0);
     for (int layer = 1; layer <= _FIFTEEN; ++layer)
         rgblight_set_layer_state(layer, layer_state_cmp(state, layer));
 }
