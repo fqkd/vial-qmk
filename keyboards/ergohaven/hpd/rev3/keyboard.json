@@ -15,6 +15,12 @@
         "pid": "0x0052",
         "device_version": "1.0.0"
     },
+    "encoder": {
+        "rotary": [
+            { "pin_a": "GP24", "pin_b": "GP23", "resolution": 4 },
+            { "pin_a": "GP24", "pin_b": "GP23", "resolution": 4 }
+        ]
+    },
     "layouts": {
         "LAYOUT": {
             "layout": [
