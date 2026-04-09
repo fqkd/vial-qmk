@@ -48,24 +48,24 @@ static const uint8_t  hpd3_text_table[]          = {1, 2, 4, 8, 16, 24, 32, 48};
 
 static hpd3_via_config_t hpd3_via_config = {.raw = VIA_EEPROM_LAYOUT_OPTIONS_DEFAULT};
 static uint32_t          hpd3_synced_raw = VIA_EEPROM_LAYOUT_OPTIONS_DEFAULT;
+static uint32_t          hpd3_applied_raw = UINT32_MAX;
 
 static bool          hpd3_touchpad_available    = false;
 static bool          hpd3_touchpad_initialized  = false;
 static bool          hpd3_trackball_available   = false;
 static bool          hpd3_trackball_initialized = false;
 static hpd3_module_t hpd3_detected_module       = HPD3_MODULE_NONE;
-static uint32_t      hpd3_applied_raw           = UINT32_MAX;
 
 static uint8_t hpd3_clamp_index(uint8_t index, uint8_t max) {
     return index < max ? index : (max - 1);
 }
 
 static orientation_t hpd3_get_local_orientation(void) {
-    return is_keyboard_left() ? (orientation_t)hpd3_via_config.left_orientation : (orientation_t)hpd3_via_config.right_orientation;
+    return (orientation_t)hpd3_via_config.right_orientation;
 }
 
 static hpd3_module_t hpd3_get_override_module(void) {
-    return is_keyboard_left() ? (hpd3_module_t)hpd3_via_config.left_module : (hpd3_module_t)hpd3_via_config.right_module;
+    return (hpd3_module_t)hpd3_via_config.right_module;
 }
 
 static hpd3_module_t hpd3_get_active_module(void) {
@@ -103,19 +103,24 @@ static report_mouse_t hpd3_rotate_report(report_mouse_t report, orientation_t or
 }
 
 static bool hpd3_detect_touchpad(void) {
+    dprintf("hpd3_detect_touchpad: start\n");
     azoteq_iqs5xx_init();
+    wait_ms(50);
     uint16_t product = azoteq_iqs5xx_get_product();
     if (product == AZOTEQ_IQS5XX_UNKNOWN) {
+        dprintf("hpd3 right touchpad not detected (product unknown)\n");
         return false;
     }
-    dprintf("hpd3 touchpad detected on %s half, product=%u\n", is_keyboard_left() ? "left" : "right", product);
+    dprintf("hpd3 right touchpad detected, product=%u\n", product);
     return true;
 }
 
 static bool hpd3_detect_trackball(void) {
     bool ok = pmw3610_init(0);
     if (ok) {
-        dprintf("hpd3 trackball detected on %s half\n", is_keyboard_left() ? "left" : "right");
+        dprintf("hpd3 right trackball detected\n");
+    } else {
+        dprintf("hpd3 right trackball not detected\n");
     }
     return ok;
 }
@@ -127,18 +132,25 @@ static void hpd3_detect_modules(void) {
     hpd3_trackball_initialized = false;
     hpd3_detected_module       = HPD3_MODULE_NONE;
 
+    dprintf("hpd3_detect_modules: start\n");
     hpd3_touchpad_available   = hpd3_detect_touchpad();
     hpd3_touchpad_initialized = hpd3_touchpad_available;
-    if (hpd3_touchpad_available) {
-        hpd3_detected_module = HPD3_MODULE_TOUCHPAD;
-        return;
-    }
+    dprintf("  touchpad_available=%d\n", hpd3_touchpad_available);
 
     hpd3_trackball_available   = hpd3_detect_trackball();
     hpd3_trackball_initialized = hpd3_trackball_available;
-    if (hpd3_trackball_available) {
+    dprintf("  trackball_available=%d\n", hpd3_trackball_available);
+
+    if (hpd3_touchpad_available) {
+        hpd3_detected_module = HPD3_MODULE_TOUCHPAD;
+    } else if (hpd3_trackball_available) {
         hpd3_detected_module = HPD3_MODULE_TRACKBALL;
     }
+    dprintf("  detected_module=%u\n", hpd3_detected_module);
+
+    // Debug I2C status
+    dprintf("  I2C status after detect: touchpad=%d trackball=%d\n",
+            hpd3_touchpad_available, hpd3_trackball_available);
 }
 
 static void hpd3_ensure_selected_module_ready(void) {
@@ -165,6 +177,9 @@ static void hpd3_apply_device_config(void) {
         return;
     }
 
+    dprintf("hpd3_apply_device_config raw=0x%08lX\n", (unsigned long)hpd3_via_config.raw);
+    dprintf("  right_module=%u, trackball_dpi=%u, touchpad_dpi=%u\n", (unsigned int)hpd3_via_config.right_module, (unsigned int)hpd3_via_config.trackball_dpi, (unsigned int)hpd3_via_config.touchpad_dpi);
+
     set_sniper_sens(hpd3_sniper_table[hpd3_clamp_index(hpd3_via_config.sniper_sens, ARRAY_SIZE(hpd3_sniper_table))]);
     set_scroll_sens(hpd3_scroll_table[hpd3_clamp_index(hpd3_via_config.scroll_sens, ARRAY_SIZE(hpd3_scroll_table))]);
     set_text_sens(hpd3_text_table[hpd3_clamp_index(hpd3_via_config.text_sens, ARRAY_SIZE(hpd3_text_table))]);
@@ -173,16 +188,22 @@ static void hpd3_apply_device_config(void) {
     set_led_blinks(hpd3_via_config.led_blinks);
 
     if (hpd3_trackball_initialized) {
-        pmw3610_set_cpi(0, hpd3_trackball_cpi_table[hpd3_clamp_index(hpd3_via_config.trackball_dpi, ARRAY_SIZE(hpd3_trackball_cpi_table))]);
+        uint16_t cpi = hpd3_trackball_cpi_table[hpd3_clamp_index(hpd3_via_config.trackball_dpi, ARRAY_SIZE(hpd3_trackball_cpi_table))];
+        dprintf("  trackball CPI=%u\n", cpi);
+        pmw3610_set_cpi(0, cpi);
     }
     if (hpd3_touchpad_initialized) {
-        azoteq_iqs5xx_set_cpi(hpd3_touchpad_cpi_table[hpd3_clamp_index(hpd3_via_config.touchpad_dpi, ARRAY_SIZE(hpd3_touchpad_cpi_table))]);
+        uint16_t cpi = hpd3_touchpad_cpi_table[hpd3_clamp_index(hpd3_via_config.touchpad_dpi, ARRAY_SIZE(hpd3_touchpad_cpi_table))];
+        dprintf("  touchpad CPI=%u\n", cpi);
+        azoteq_iqs5xx_set_cpi(cpi);
     }
 
     hpd3_applied_raw = hpd3_via_config.raw;
 }
 
 void via_set_layout_options_kb(uint32_t value) {
+    dprintf("via_set_layout_options_kb raw=0x%08lX\n", (unsigned long)value);
+    dprintf("  left_module=%lu, right_module=%lu\n", (unsigned long)((value >> 2) & 3), (unsigned long)((value >> 4) & 3));
     hpd3_via_config.raw = value;
     hpd3_synced_raw     = value;
     hpd3_apply_device_config();
@@ -197,8 +218,16 @@ static void hpd3_sync_config_rpc(uint8_t in_len, const void *in_data, uint8_t ou
 }
 
 void keyboard_post_init_user(void) {
+#ifdef CONSOLE_ENABLE
+    debug_enable = true;
+    dprintf("keyboard_post_init_user: HPD3 right-side debug\n");
+#endif
     transaction_register_rpc(RPC_HPD3_CONFIG, hpd3_sync_config_rpc);
     via_set_layout_options_kb(via_get_layout_options());
+    // force default right orientation to ROT_90 (90° clockwise)
+    hpd3_via_config.right_orientation = 1; // ROT_90
+    hpd3_synced_raw = hpd3_via_config.raw;
+    dprintf("forced right_orientation=%u\n", (unsigned int)hpd3_via_config.right_orientation);
 }
 
 void housekeeping_task_user(void) {
@@ -219,12 +248,31 @@ void housekeeping_task_user(void) {
 }
 
 void pointing_device_driver_init(void) {
+    dprintf("pointing_device_driver_init: entry, is_keyboard_left()=%d\n", is_keyboard_left());
+    if (is_keyboard_left()) {
+        dprintf("pointing_device_driver_init: left half, skip\n");
+        return;
+    }
+
+    dprintf("pointing_device_driver_init: right half\n");
     hpd3_detect_modules();
+    dprintf("  detected_module=%u, touchpad_avail=%d, trackball_avail=%d\n", (unsigned int)hpd3_detected_module, hpd3_touchpad_available, hpd3_trackball_available);
     hpd3_ensure_selected_module_ready();
     hpd3_apply_device_config();
 }
 
 report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
+    if (is_keyboard_left()) {
+        return mouse_report;
+    }
+
+    static uint32_t last_log = 0;
+    if (timer_elapsed32(last_log) > 1000) {
+        dprintf("pointing_device_driver_get_report: active_module=%u, touchpad_avail=%d, trackball_avail=%d\n",
+                (unsigned int)hpd3_get_active_module(), hpd3_touchpad_available, hpd3_trackball_available);
+        last_log = timer_read32();
+    }
+
     hpd3_ensure_selected_module_ready();
     hpd3_apply_device_config();
 
