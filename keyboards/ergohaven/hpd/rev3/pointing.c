@@ -55,9 +55,18 @@ static uint8_t hpd3_clamp_index(uint8_t index, uint8_t max) {
     return index < max ? index : (max - 1);
 }
 
+// hpd3-axis-indep-v0.0.5, read side-specific fields from raw, not C bitfields.
+static uint32_t hpd3_field_mask(uint8_t width) {
+    return width >= 32 ? 0xFFFFFFFFu : ((1u << width) - 1u);
+}
+
 static hpd3_via_config_t hpd3_via_config = {.raw = VIA_EEPROM_LAYOUT_OPTIONS_DEFAULT};
 static uint32_t          hpd3_synced_raw = VIA_EEPROM_LAYOUT_OPTIONS_DEFAULT;
 static uint32_t          hpd3_applied_raw = UINT32_MAX;
+
+static uint32_t hpd3_get_field(uint8_t shift, uint8_t width) {
+    return (hpd3_via_config.raw >> shift) & hpd3_field_mask(width);
+}
 
 static bool          hpd3_touchpad_available    = false;
 static bool          hpd3_touchpad_initialized  = false;
@@ -67,17 +76,17 @@ static hpd3_module_t hpd3_detected_module       = HPD3_MODULE_NONE;
 
 static orientation_t hpd3_get_local_orientation(void) {
     if (is_keyboard_left()) {
-        return (orientation_t)hpd3_via_config.left_orientation;
+        return (orientation_t)hpd3_get_field(6, 2);
     } else {
-        return (orientation_t)hpd3_via_config.right_orientation;
+        return (orientation_t)hpd3_get_field(8, 2);
     }
 }
 
 static hpd3_module_t hpd3_get_override_module(void) {
     if (is_keyboard_left()) {
-        return (hpd3_module_t)hpd3_via_config.left_module;
+        return (hpd3_module_t)hpd3_get_field(2, 2);
     } else {
-        return (hpd3_module_t)hpd3_via_config.right_module;
+        return (hpd3_module_t)hpd3_get_field(4, 2);
     }
 }
 
@@ -194,27 +203,27 @@ static void hpd3_apply_device_config(void) {
     }
 
     dprintf("hpd3_apply_device_config raw=0x%08lX\n", (unsigned long)hpd3_via_config.raw);
-    dprintf("  left_module=%u right_module=%u\n", (unsigned int)hpd3_via_config.left_module, (unsigned int)hpd3_via_config.right_module);
-    dprintf("  left_orientation=%u right_orientation=%u\n", (unsigned int)hpd3_via_config.left_orientation, (unsigned int)hpd3_via_config.right_orientation);
-    dprintf("  trackball_dpi=%u touchpad_dpi=%u\n", (unsigned int)hpd3_via_config.trackball_dpi, (unsigned int)hpd3_via_config.touchpad_dpi);
-    dprintf("  sniper_sens=%u scroll_sens=%u text_sens=%u\n", (unsigned int)hpd3_via_config.sniper_sens, (unsigned int)hpd3_via_config.scroll_sens, (unsigned int)hpd3_via_config.text_sens);
-    dprintf("  invert_scroll=%u acceleration=%u led_blinks=%u\n", (unsigned int)hpd3_via_config.invert_scroll, (unsigned int)hpd3_via_config.acceleration, (unsigned int)hpd3_via_config.led_blinks);
+    dprintf("  left_module=%lu right_module=%lu\n", (unsigned long)hpd3_get_field(2, 2), (unsigned long)hpd3_get_field(4, 2));
+    dprintf("  left_orientation=%lu right_orientation=%lu\n", (unsigned long)hpd3_get_field(6, 2), (unsigned long)hpd3_get_field(8, 2));
+    dprintf("  trackball_dpi=%lu touchpad_dpi=%lu\n", (unsigned long)hpd3_get_field(10, 4), (unsigned long)hpd3_get_field(14, 3));
+    dprintf("  sniper_sens=%lu scroll_sens=%lu text_sens=%lu\n", (unsigned long)hpd3_get_field(17, 3), (unsigned long)hpd3_get_field(20, 3), (unsigned long)hpd3_get_field(23, 3));
+    dprintf("  invert_scroll=%lu acceleration=%lu led_blinks=%lu\n", (unsigned long)hpd3_get_field(26, 1), (unsigned long)hpd3_get_field(27, 1), (unsigned long)hpd3_get_field(28, 1));
 
-    set_sniper_sens(hpd3_sniper_table[hpd3_clamp_index(hpd3_via_config.sniper_sens, ARRAY_SIZE(hpd3_sniper_table))]);
-    set_scroll_sens(hpd3_scroll_table[hpd3_clamp_index(hpd3_via_config.scroll_sens, ARRAY_SIZE(hpd3_scroll_table))]);
-    set_text_sens(hpd3_text_table[hpd3_clamp_index(hpd3_via_config.text_sens, ARRAY_SIZE(hpd3_text_table))]);
-    set_invert_scroll(hpd3_via_config.invert_scroll);
-    set_acceleration(hpd3_via_config.acceleration);
-    set_led_blinks(hpd3_via_config.led_blinks);
+    set_sniper_sens(hpd3_sniper_table[hpd3_clamp_index((uint8_t)hpd3_get_field(17, 3), ARRAY_SIZE(hpd3_sniper_table))]);
+    set_scroll_sens(hpd3_scroll_table[hpd3_clamp_index((uint8_t)hpd3_get_field(20, 3), ARRAY_SIZE(hpd3_scroll_table))]);
+    set_text_sens(hpd3_text_table[hpd3_clamp_index((uint8_t)hpd3_get_field(23, 3), ARRAY_SIZE(hpd3_text_table))]);
+    set_invert_scroll(hpd3_get_field(26, 1));
+    set_acceleration(hpd3_get_field(27, 1));
+    set_led_blinks(hpd3_get_field(28, 1));
 
     if (hpd3_trackball_initialized) {
-        uint8_t idx = hpd3_clamp_index(hpd3_via_config.trackball_dpi, ARRAY_SIZE(hpd3_trackball_cpi_table));
+        uint8_t idx = hpd3_clamp_index((uint8_t)hpd3_get_field(10, 4), ARRAY_SIZE(hpd3_trackball_cpi_table));
         uint16_t cpi = hpd3_trackball_cpi_table[idx];
         dprintf("  trackball CPI=%u (idx=%u)\n", cpi, idx);
         pmw3610_set_cpi(0, cpi);
     }
     if (hpd3_touchpad_initialized) {
-        uint8_t idx = hpd3_clamp_index(hpd3_via_config.touchpad_dpi, ARRAY_SIZE(hpd3_touchpad_cpi_table));
+        uint8_t idx = hpd3_clamp_index((uint8_t)hpd3_get_field(14, 3), ARRAY_SIZE(hpd3_touchpad_cpi_table));
         uint16_t cpi = hpd3_touchpad_cpi_table[idx];
         dprintf("  touchpad CPI=%u (idx=%u)\n", cpi, idx);
         azoteq_iqs5xx_set_cpi(cpi);
@@ -313,9 +322,9 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
 uint16_t pointing_device_driver_get_cpi(void) {
     switch (hpd3_get_active_module()) {
         case HPD3_MODULE_TRACKBALL:
-            return hpd3_trackball_cpi_table[hpd3_clamp_index(hpd3_via_config.trackball_dpi, ARRAY_SIZE(hpd3_trackball_cpi_table))];
+            return hpd3_trackball_cpi_table[hpd3_clamp_index((uint8_t)hpd3_get_field(10, 4), ARRAY_SIZE(hpd3_trackball_cpi_table))];
         case HPD3_MODULE_TOUCHPAD:
-            return hpd3_touchpad_cpi_table[hpd3_clamp_index(hpd3_via_config.touchpad_dpi, ARRAY_SIZE(hpd3_touchpad_cpi_table))];
+            return hpd3_touchpad_cpi_table[hpd3_clamp_index((uint8_t)hpd3_get_field(14, 3), ARRAY_SIZE(hpd3_touchpad_cpi_table))];
         default:
             return 0;
     }
