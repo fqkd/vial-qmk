@@ -3,6 +3,7 @@
 #include "hid.h"
 
 static kb_settings_pointing_t kb_settings_pointing;
+pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
 
@@ -35,6 +36,7 @@ void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
 
 void kb_settings_pointing_init(void) {
     eeconfig_read_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+    pointing_mode = kb_settings_pointing.mode;
 #if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
     pointing_device_set_cpi(kb_settings_pointing.dpi);
 #endif
@@ -44,8 +46,6 @@ void kb_settings_pointing_init(void) {
 void kb_settings_pointing_reset(void) {
     kb_settings_pointing_update(get_settings_pointing_default());
 }
-
-pointing_mode_t pointing_mode = POINTING_MODE_NORMAL;
 
 void set_cpi(uint16_t cpi) {
 #if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
@@ -178,7 +178,14 @@ void set_pointing_mode_from_hid(pointing_mode_t mode) {
     pointing_mode = mode;
 }
 
+pointing_mode_t get_pointing_mode(void) {
+    return kb_settings_pointing.mode;
+}
+
 void set_pointing_mode(pointing_mode_t mode) {
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.mode                   = mode;
+    kb_settings_pointing_update(new_config);
     if (mode != pointing_mode) {
         pointing_mode = mode;
         if (is_hid_active()) {

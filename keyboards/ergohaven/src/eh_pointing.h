@@ -69,6 +69,7 @@ void set_sticky_mode(bool invert);
 bool get_sticky_mode(void);
 
 void set_pointing_mode(pointing_mode_t mode);
+pointing_mode_t get_pointing_mode(void);
 
 void set_pointing_mode_from_hid(pointing_mode_t mode);
 

@@ -5,24 +5,14 @@
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
     "settings": [
+#include "keyboards/ergohaven/src/json/settings_modules.json"
+,
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
     ],
     "layouts": {
         "labels": [
             "Hide left encoder",
-            "Hide right encoder",
-            ["Left module", "Auto", "None", "Trackball", "Touchpad"],
-            ["Right module", "Auto", "None", "Trackball", "Touchpad"],
-            ["Left axis", "0°", "90°", "180°", "270°"],
-            ["Right axis", "0°", "90°", "180°", "270°"],
-            ["Trackball DPI", "200", "400", "600", "800", "1000", "1200", "1600", "2000", "2400", "3200"],
-            ["Touchpad DPI", "200", "400", "600", "800", "1000"],
-            ["Sniper sens", "1", "2", "4", "8", "12", "16", "24", "32"],
-            ["Scroll sens", "2", "4", "8", "16", "24", "32", "48", "64"],
-            ["Text sens", "1", "2", "4", "8", "16", "24", "32", "48"],
-            "Invert scroll",
-            "Acceleration",
-            "LED blinks"
+            "Hide right encoder"
         ],
         "keymap": [
             [{"y":0.4},"0,5","0,4",{"y":-0.45},"0,3",{"y":-0.1},"0,2",{"y":0.1},"0,1","0,0"],

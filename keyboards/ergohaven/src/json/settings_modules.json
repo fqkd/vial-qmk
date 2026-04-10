@@ -1,0 +1,16 @@
+{
+    "name": "Modules settings",
+    "fields": [
+        { "type": "select", "title": "Left axis", "qsid": 131, "variants": ["0°", "90°", "180°", "270°"] },
+        { "type": "select", "title": "Right axis", "qsid": 132, "variants": ["0°", "90°", "180°", "270°"] },
+        { "type": "integer", "title": "Left DPI", "qsid": 120, "min": 100, "max": 16000, "width": 2 },
+        { "type": "integer", "title": "Right DPI", "qsid": 121, "min": 100, "max": 16000, "width": 2 },
+        { "type": "integer", "title": "Sniper sens", "qsid": 122, "min": 1, "max": 255, "width": 1 },
+        { "type": "integer", "title": "Scroll sens", "qsid": 123, "min": 1, "max": 255, "width": 1 },
+        { "type": "integer", "title": "Text sens", "qsid": 124, "min": 1, "max": 255, "width": 1 },
+        { "type": "boolean", "title": "Invert scroll", "qsid": 125, "bit": 0 },
+        { "type": "boolean", "title": "Acceleration", "qsid": 126, "bit": 0 },
+        { "type": "boolean", "title": "Sticky mode", "qsid": 127, "bit": 0 },
+        { "type": "boolean", "title": "LED blinks", "qsid": 128, "bit": 0 }
+    ]
+}
