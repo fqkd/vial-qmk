@@ -161,19 +161,36 @@ static const uint16_t hpd3_touchpad_cpi_table[]  = {200, 400, 600, 800, 1000};
 static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
     switch (qsid) {
         case 120:
-        case 129:
+        case 130:
             return HPD3_DEVICE_LEFT_BALL;
         case 121:
-        case 130:
+        case 131:
             return HPD3_DEVICE_RIGHT_BALL;
         case 122:
-        case 131:
+        case 132:
             return HPD3_DEVICE_LEFT_TOUCH;
         case 123:
-        case 132:
+        case 133:
             return HPD3_DEVICE_RIGHT_TOUCH;
         default:
             return HPD3_DEVICE_LEFT_BALL;
+    }
+}
+
+static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
+    switch (qsid) {
+        case 124:
+        case 125:
+        case 126:
+        case 134:
+            return HPD3_SIDE_LEFT;
+        case 127:
+        case 128:
+        case 129:
+        case 135:
+            return HPD3_SIDE_RIGHT;
+        default:
+            return HPD3_SIDE_LEFT;
     }
 }
 
@@ -236,13 +253,16 @@ static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, si
     uint8_t sens = 0;
     switch (proto->qsid) {
         case 124:
-            sens = get_sniper_sens();
+        case 127:
+            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER);
             break;
         case 125:
-            sens = get_scroll_sens();
+        case 128:
+            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL);
             break;
         case 126:
-            sens = get_text_sens();
+        case 129:
+            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_TEXT);
             break;
         default:
             return -1;
@@ -258,13 +278,16 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
     memcpy(&sens, setting, sizeof(sens));
     switch (proto->qsid) {
         case 124:
-            set_sniper_sens(sens);
+        case 127:
+            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER, sens);
             break;
         case 125:
-            set_scroll_sens(sens);
+        case 128:
+            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL, sens);
             break;
         case 126:
-            set_text_sens(sens);
+        case 129:
+            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_TEXT, sens);
             break;
         default:
             return -1;
@@ -275,10 +298,10 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
 static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     bool value = false;
     switch (proto->qsid) {
-        case 127: value = get_invert_scroll(); break;
-        case 128: value = get_acceleration(); break;
-        case 133: value = get_sticky_mode(); break;
-        case 134: value = get_led_blinks(); break;
+        case 136: value = get_invert_scroll(); break;
+        case 137: value = get_acceleration(); break;
+        case 138: value = get_sticky_mode(); break;
+        case 139: value = get_led_blinks(); break;
         default: return -1;
     }
     if (maxsz < sizeof(value)) return -1;
@@ -291,10 +314,10 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
     switch (proto->qsid) {
-        case 127: set_invert_scroll(value); break;
-        case 128: set_acceleration(value); break;
-        case 133: set_sticky_mode(value); break;
-        case 134: set_led_blinks(value); break;
+        case 136: set_invert_scroll(value); break;
+        case 137: set_acceleration(value); break;
+        case 138: set_sticky_mode(value); break;
+        case 139: set_led_blinks(value); break;
         default: return -1;
     }
     return 0;
@@ -303,13 +326,16 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
 static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t v = 0;
     switch (proto->qsid) {
-        case 129:
         case 130:
         case 131:
         case 132:
+        case 133:
             v = (uint8_t)get_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid));
             break;
-        case 135: v = (uint8_t)get_pointing_mode(); break;
+        case 134:
+        case 135:
+            v = (uint8_t)get_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid));
+            break;
         default: return -1;
     }
     if (maxsz < sizeof(v)) return -1;
@@ -322,13 +348,16 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     if (maxsz < sizeof(v)) return -1;
     memcpy(&v, setting, sizeof(v));
     switch (proto->qsid) {
-        case 129:
         case 130:
         case 131:
         case 132:
+        case 133:
             set_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid), (orientation_t)v);
             break;
-        case 135: set_pointing_mode((pointing_mode_t)v); break;
+        case 134:
+        case 135:
+            set_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid), (pointing_mode_t)v);
+            break;
         default: return -1;
     }
     return 0;
@@ -346,15 +375,19 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
-    DECLARE_SETTING(127, modules_bool_get, modules_bool_set),
-    DECLARE_SETTING(128, modules_bool_get, modules_bool_set),
-    DECLARE_SETTING(129, modules_select_get, modules_select_set),
+    DECLARE_SETTING(127, modules_sens_get, modules_sens_set),
+    DECLARE_SETTING(128, modules_sens_get, modules_sens_set),
+    DECLARE_SETTING(129, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(130, modules_select_get, modules_select_set),
     DECLARE_SETTING(131, modules_select_get, modules_select_set),
     DECLARE_SETTING(132, modules_select_get, modules_select_set),
-    DECLARE_SETTING(133, modules_bool_get, modules_bool_set),
-    DECLARE_SETTING(134, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(133, modules_select_get, modules_select_set),
+    DECLARE_SETTING(134, modules_select_get, modules_select_set),
     DECLARE_SETTING(135, modules_select_get, modules_select_set),
+    DECLARE_SETTING(136, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(137, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(138, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),

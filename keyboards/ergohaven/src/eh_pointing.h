@@ -33,9 +33,17 @@ typedef enum {
     HPD3_DEVICE_COUNT,
 } hpd3_device_id_t;
 
+typedef enum {
+    HPD3_SIDE_LEFT = 0,
+    HPD3_SIDE_RIGHT,
+    HPD3_SIDE_COUNT,
+} hpd3_side_id_t;
+
 typedef struct {
     uint8_t axis[HPD3_DEVICE_COUNT];
     uint8_t dpi_idx[HPD3_DEVICE_COUNT];
+    uint8_t mode[HPD3_SIDE_COUNT];
+    uint8_t sens[HPD3_SIDE_COUNT][3];
 } kb_settings_hpd3_devices_t;
 
 typedef union {
@@ -103,3 +111,7 @@ orientation_t              get_hpd3_device_orientation(hpd3_device_id_t device);
 void                       set_hpd3_device_orientation(hpd3_device_id_t device, orientation_t orientation);
 uint8_t                    get_hpd3_device_dpi_index(hpd3_device_id_t device);
 void                       set_hpd3_device_dpi_index(hpd3_device_id_t device, uint8_t dpi_index);
+pointing_mode_t            get_hpd3_side_mode(hpd3_side_id_t side);
+void                       set_hpd3_side_mode(hpd3_side_id_t side, pointing_mode_t mode);
+uint8_t                    get_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode);
+void                       set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens);
