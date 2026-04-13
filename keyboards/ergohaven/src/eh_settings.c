@@ -31,6 +31,7 @@ void kb_settings_reset(void) {
     kb_settings_ruen_reset();
     kb_settings_layer_labels_reset();
     kb_settings_pointing_reset();
+    kb_settings_hpd3_devices_reset();
     kb_settings_init();
 }
 
@@ -43,6 +44,7 @@ void kb_settings_init(void) {
     kb_settings_ruen_init();
     kb_settings_layer_labels_init();
     kb_settings_pointing_init();
+    kb_settings_hpd3_devices_init();
 }
 
 #define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) {.qsid = id, .get = _get, .set = _set, .notify = _notify}
@@ -155,31 +157,24 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
 
 static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1600, 2000, 2400, 3200};
 static const uint16_t hpd3_touchpad_cpi_table[]  = {200, 400, 600, 800, 1000};
-static const uint8_t  hpd3_sniper_table[]        = {1, 2, 4, 8, 12, 16, 24, 32};
-static const uint8_t  hpd3_scroll_table[]        = {2, 4, 8, 16, 24, 32, 48, 64};
-static const uint8_t  hpd3_text_table[]          = {1, 2, 4, 8, 16, 24, 32, 48};
 
-static uint32_t hpd3_layout_raw(void) {
-    return via_get_layout_options();
-}
-
-static void hpd3_layout_write(uint32_t raw) {
-    via_set_layout_options(raw);
-}
-
-static uint32_t hpd3_field_mask(uint8_t width) {
-    return width >= 32 ? 0xFFFFFFFFu : ((1u << width) - 1u);
-}
-
-static uint32_t hpd3_field_get(uint8_t shift, uint8_t width) {
-    return (hpd3_layout_raw() >> shift) & hpd3_field_mask(width);
-}
-
-static void hpd3_field_set(uint8_t shift, uint8_t width, uint32_t value) {
-    uint32_t raw  = hpd3_layout_raw();
-    uint32_t mask = hpd3_field_mask(width) << shift;
-    raw            = (raw & ~mask) | ((value & hpd3_field_mask(width)) << shift);
-    hpd3_layout_write(raw);
+static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
+    switch (qsid) {
+        case 120:
+        case 129:
+            return HPD3_DEVICE_LEFT_BALL;
+        case 121:
+        case 130:
+            return HPD3_DEVICE_RIGHT_BALL;
+        case 122:
+        case 131:
+            return HPD3_DEVICE_LEFT_TOUCH;
+        case 123:
+        case 132:
+            return HPD3_DEVICE_RIGHT_TOUCH;
+        default:
+            return HPD3_DEVICE_LEFT_BALL;
+    }
 }
 
 static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
@@ -195,37 +190,9 @@ static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, ui
     return best;
 }
 
-static uint8_t hpd3_index_from_value_u8(const uint8_t *table, size_t count, uint8_t value) {
-    uint8_t best    = 0;
-    uint8_t best_d  = UINT8_MAX;
-    for (size_t i = 0; i < count; ++i) {
-        uint8_t d = table[i] > value ? table[i] - value : value - table[i];
-        if (d < best_d) {
-            best_d = d;
-            best   = (uint8_t)i;
-        }
-    }
-    return best;
-}
-
 static uint16_t hpd3_value_from_index_u16(const uint16_t *table, size_t count, uint8_t idx) {
     if (idx >= count) idx = (uint8_t)(count - 1);
     return table[idx];
-}
-
-static uint8_t hpd3_value_from_index_u8(const uint8_t *table, size_t count, uint8_t idx) {
-    if (idx >= count) idx = (uint8_t)(count - 1);
-    return table[idx];
-}
-
-static uint8_t hpd3_dpi_shift_for_qsid(uint16_t qsid) {
-    switch (qsid) {
-        case 120: return 10;
-        case 121: return 14;
-        case 122: return 18;
-        case 123: return 22;
-        default: return 10;
-    }
 }
 
 static const uint16_t *hpd3_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
@@ -248,7 +215,7 @@ static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *se
     size_t count = 0;
     const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
     if (!table) return -1;
-    uint16_t cpi = hpd3_value_from_index_u16(table, count, hpd3_field_get(hpd3_dpi_shift_for_qsid(proto->qsid), 4));
+    uint16_t cpi = hpd3_value_from_index_u16(table, count, get_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid)));
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(setting, &cpi, sizeof(cpi));
     return 0;
@@ -261,7 +228,7 @@ static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const vo
     uint16_t cpi;
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(&cpi, setting, sizeof(cpi));
-    hpd3_field_set(hpd3_dpi_shift_for_qsid(proto->qsid), 4, hpd3_index_from_value_u16(table, count, cpi));
+    set_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid), hpd3_index_from_value_u16(table, count, cpi));
     return 0;
 }
 
@@ -269,13 +236,13 @@ static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, si
     uint8_t sens = 0;
     switch (proto->qsid) {
         case 124:
-            sens = hpd3_value_from_index_u8(hpd3_sniper_table, ARRAY_SIZE(hpd3_sniper_table), hpd3_field_get(17, 3));
+            sens = get_sniper_sens();
             break;
         case 125:
-            sens = hpd3_value_from_index_u8(hpd3_scroll_table, ARRAY_SIZE(hpd3_scroll_table), hpd3_field_get(20, 3));
+            sens = get_scroll_sens();
             break;
         case 126:
-            sens = hpd3_value_from_index_u8(hpd3_text_table, ARRAY_SIZE(hpd3_text_table), hpd3_field_get(23, 3));
+            sens = get_text_sens();
             break;
         default:
             return -1;
@@ -291,13 +258,13 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
     memcpy(&sens, setting, sizeof(sens));
     switch (proto->qsid) {
         case 124:
-            hpd3_field_set(17, 3, hpd3_index_from_value_u8(hpd3_sniper_table, ARRAY_SIZE(hpd3_sniper_table), sens));
+            set_sniper_sens(sens);
             break;
         case 125:
-            hpd3_field_set(20, 3, hpd3_index_from_value_u8(hpd3_scroll_table, ARRAY_SIZE(hpd3_scroll_table), sens));
+            set_scroll_sens(sens);
             break;
         case 126:
-            hpd3_field_set(23, 3, hpd3_index_from_value_u8(hpd3_text_table, ARRAY_SIZE(hpd3_text_table), sens));
+            set_text_sens(sens);
             break;
         default:
             return -1;
@@ -336,10 +303,12 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
 static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t v = 0;
     switch (proto->qsid) {
-        case 129: v = hpd3_field_get(2, 2); break;
-        case 130: v = hpd3_field_get(4, 2); break;
-        case 131: v = hpd3_field_get(6, 2); break;
-        case 132: v = hpd3_field_get(8, 2); break;
+        case 129:
+        case 130:
+        case 131:
+        case 132:
+            v = (uint8_t)get_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid));
+            break;
         case 135: v = (uint8_t)get_pointing_mode(); break;
         default: return -1;
     }
@@ -353,10 +322,12 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     if (maxsz < sizeof(v)) return -1;
     memcpy(&v, setting, sizeof(v));
     switch (proto->qsid) {
-        case 129: hpd3_field_set(2, 2, v); break;
-        case 130: hpd3_field_set(4, 2, v); break;
-        case 131: hpd3_field_set(6, 2, v); break;
-        case 132: hpd3_field_set(8, 2, v); break;
+        case 129:
+        case 130:
+        case 131:
+        case 132:
+            set_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid), (orientation_t)v);
+            break;
         case 135: set_pointing_mode((pointing_mode_t)v); break;
         default: return -1;
     }

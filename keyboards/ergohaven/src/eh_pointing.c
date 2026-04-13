@@ -1,11 +1,14 @@
 #include "src/eh_pointing.h"
 #include "quantum.h"
 #include "hid.h"
+#include <string.h>
 
 static kb_settings_pointing_t kb_settings_pointing;
+static kb_settings_hpd3_devices_t kb_settings_hpd3_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
+static_assert(KB_SETTINGS_HPD3_DEVICES_SIZE == sizeof(kb_settings_hpd3_devices_t), "Invalid KB_SETTINGS_HPD3_DEVICES_SIZE");
 
 __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void) {
     kb_settings_pointing_t dflt = {
@@ -19,6 +22,69 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
         .led_blinks    = false,
     };
     return dflt;
+}
+
+kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
+    kb_settings_hpd3_devices_t dflt = {
+        .axis    = {ROT_90, ROT_90, ROT_180, ROT_0},
+        .dpi_idx = {1, 1, 1, 1},
+    };
+    return dflt;
+}
+
+kb_settings_hpd3_devices_t get_settings_hpd3_devices(void) {
+    return kb_settings_hpd3_devices;
+}
+
+static void kb_settings_hpd3_devices_update(kb_settings_hpd3_devices_t new_config) {
+    if (memcmp(&new_config, &kb_settings_hpd3_devices, sizeof(new_config)) != 0) {
+        kb_settings_hpd3_devices = new_config;
+        eeconfig_update_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+    }
+}
+
+void set_settings_hpd3_devices(kb_settings_hpd3_devices_t config) {
+    kb_settings_hpd3_devices_update(config);
+}
+
+void kb_settings_hpd3_devices_init(void) {
+    eeconfig_read_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+}
+
+void kb_settings_hpd3_devices_reset(void) {
+    kb_settings_hpd3_devices_update(get_settings_hpd3_devices_default());
+}
+
+orientation_t get_hpd3_device_orientation(hpd3_device_id_t device) {
+    if (device >= HPD3_DEVICE_COUNT) {
+        return ROT_0;
+    }
+    return (orientation_t)kb_settings_hpd3_devices.axis[device];
+}
+
+void set_hpd3_device_orientation(hpd3_device_id_t device, orientation_t orientation) {
+    if (device >= HPD3_DEVICE_COUNT) {
+        return;
+    }
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    new_config.axis[device]               = (uint8_t)orientation;
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+uint8_t get_hpd3_device_dpi_index(hpd3_device_id_t device) {
+    if (device >= HPD3_DEVICE_COUNT) {
+        return 0;
+    }
+    return kb_settings_hpd3_devices.dpi_idx[device];
+}
+
+void set_hpd3_device_dpi_index(hpd3_device_id_t device, uint8_t dpi_index) {
+    if (device >= HPD3_DEVICE_COUNT) {
+        return;
+    }
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    new_config.dpi_idx[device]            = dpi_index;
+    kb_settings_hpd3_devices_update(new_config);
 }
 
 void kb_settings_pointing_update(kb_settings_pointing_t new_config) {

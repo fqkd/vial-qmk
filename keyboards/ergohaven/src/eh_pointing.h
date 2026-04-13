@@ -25,6 +25,19 @@ enum {
 
 typedef enum { ROT_0, ROT_90, ROT_180, ROT_270 } orientation_t;
 
+typedef enum {
+    HPD3_DEVICE_LEFT_BALL = 0,
+    HPD3_DEVICE_RIGHT_BALL,
+    HPD3_DEVICE_LEFT_TOUCH,
+    HPD3_DEVICE_RIGHT_TOUCH,
+    HPD3_DEVICE_COUNT,
+} hpd3_device_id_t;
+
+typedef struct {
+    uint8_t axis[HPD3_DEVICE_COUNT];
+    uint8_t dpi_idx[HPD3_DEVICE_COUNT];
+} kb_settings_hpd3_devices_t;
+
 typedef union {
     uint64_t raw;
     struct {
@@ -80,3 +93,13 @@ bool get_led_blinks(void);
 void kb_settings_pointing_init(void);
 
 void kb_settings_pointing_reset(void);
+
+kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void);
+kb_settings_hpd3_devices_t get_settings_hpd3_devices(void);
+void                       kb_settings_hpd3_devices_init(void);
+void                       kb_settings_hpd3_devices_reset(void);
+void                       set_settings_hpd3_devices(kb_settings_hpd3_devices_t config);
+orientation_t              get_hpd3_device_orientation(hpd3_device_id_t device);
+void                       set_hpd3_device_orientation(hpd3_device_id_t device, orientation_t orientation);
+uint8_t                    get_hpd3_device_dpi_index(hpd3_device_id_t device);
+void                       set_hpd3_device_dpi_index(hpd3_device_id_t device, uint8_t dpi_index);
