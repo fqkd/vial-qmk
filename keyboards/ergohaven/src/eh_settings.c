@@ -164,7 +164,7 @@ static uint32_t hpd3_layout_raw(void) {
 }
 
 static void hpd3_layout_write(uint32_t raw) {
-    via_set_layout_options_kb(raw);
+    via_set_layout_options(raw);
 }
 
 static uint32_t hpd3_field_mask(uint8_t width) {
@@ -218,46 +218,63 @@ static uint8_t hpd3_value_from_index_u8(const uint8_t *table, size_t count, uint
     return table[idx];
 }
 
+static uint8_t hpd3_dpi_shift_for_qsid(uint16_t qsid) {
+    switch (qsid) {
+        case 120: return 10;
+        case 121: return 14;
+        case 122: return 18;
+        case 123: return 22;
+        default: return 10;
+    }
+}
+
+static const uint16_t *hpd3_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
+    switch (qsid) {
+        case 120:
+        case 121:
+            *count = ARRAY_SIZE(hpd3_trackball_cpi_table);
+            return hpd3_trackball_cpi_table;
+        case 122:
+        case 123:
+            *count = ARRAY_SIZE(hpd3_touchpad_cpi_table);
+            return hpd3_touchpad_cpi_table;
+        default:
+            *count = 0;
+            return NULL;
+    }
+}
+
 static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint16_t cpi = hpd3_value_from_index_u16(hpd3_trackball_cpi_table, ARRAY_SIZE(hpd3_trackball_cpi_table), hpd3_field_get(10, 4));
+    size_t count = 0;
+    const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
+    if (!table) return -1;
+    uint16_t cpi = hpd3_value_from_index_u16(table, count, hpd3_field_get(hpd3_dpi_shift_for_qsid(proto->qsid), 4));
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(setting, &cpi, sizeof(cpi));
     return 0;
 }
 
 static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    size_t count = 0;
+    const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
+    if (!table) return -1;
     uint16_t cpi;
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(&cpi, setting, sizeof(cpi));
-    hpd3_field_set(10, 4, hpd3_index_from_value_u16(hpd3_trackball_cpi_table, ARRAY_SIZE(hpd3_trackball_cpi_table), cpi));
-    return 0;
-}
-
-static int modules_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint16_t cpi = hpd3_value_from_index_u16(hpd3_touchpad_cpi_table, ARRAY_SIZE(hpd3_touchpad_cpi_table), hpd3_field_get(14, 3));
-    if (maxsz < sizeof(cpi)) return -1;
-    memcpy(setting, &cpi, sizeof(cpi));
-    return 0;
-}
-
-static int modules_touchpad_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
-    uint16_t cpi;
-    if (maxsz < sizeof(cpi)) return -1;
-    memcpy(&cpi, setting, sizeof(cpi));
-    hpd3_field_set(14, 3, hpd3_index_from_value_u16(hpd3_touchpad_cpi_table, ARRAY_SIZE(hpd3_touchpad_cpi_table), cpi));
+    hpd3_field_set(hpd3_dpi_shift_for_qsid(proto->qsid), 4, hpd3_index_from_value_u16(table, count, cpi));
     return 0;
 }
 
 static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t sens = 0;
     switch (proto->qsid) {
-        case 122:
+        case 124:
             sens = hpd3_value_from_index_u8(hpd3_sniper_table, ARRAY_SIZE(hpd3_sniper_table), hpd3_field_get(17, 3));
             break;
-        case 123:
+        case 125:
             sens = hpd3_value_from_index_u8(hpd3_scroll_table, ARRAY_SIZE(hpd3_scroll_table), hpd3_field_get(20, 3));
             break;
-        case 124:
+        case 126:
             sens = hpd3_value_from_index_u8(hpd3_text_table, ARRAY_SIZE(hpd3_text_table), hpd3_field_get(23, 3));
             break;
         default:
@@ -273,13 +290,13 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
     if (maxsz < sizeof(sens)) return -1;
     memcpy(&sens, setting, sizeof(sens));
     switch (proto->qsid) {
-        case 122:
+        case 124:
             hpd3_field_set(17, 3, hpd3_index_from_value_u8(hpd3_sniper_table, ARRAY_SIZE(hpd3_sniper_table), sens));
             break;
-        case 123:
+        case 125:
             hpd3_field_set(20, 3, hpd3_index_from_value_u8(hpd3_scroll_table, ARRAY_SIZE(hpd3_scroll_table), sens));
             break;
-        case 124:
+        case 126:
             hpd3_field_set(23, 3, hpd3_index_from_value_u8(hpd3_text_table, ARRAY_SIZE(hpd3_text_table), sens));
             break;
         default:
@@ -291,10 +308,10 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
 static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     bool value = false;
     switch (proto->qsid) {
-        case 125: value = hpd3_field_get(26, 1); break;
-        case 126: value = hpd3_field_get(27, 1); break;
-        case 127: value = get_sticky_mode(); break;
-        case 128: value = hpd3_field_get(28, 1); break;
+        case 127: value = get_invert_scroll(); break;
+        case 128: value = get_acceleration(); break;
+        case 133: value = get_sticky_mode(); break;
+        case 134: value = get_led_blinks(); break;
         default: return -1;
     }
     if (maxsz < sizeof(value)) return -1;
@@ -307,10 +324,10 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
     switch (proto->qsid) {
-        case 125: hpd3_field_set(26, 1, value); break;
-        case 126: hpd3_field_set(27, 1, value); break;
-        case 127: set_sticky_mode(value); break;
-        case 128: hpd3_field_set(28, 1, value); break;
+        case 127: set_invert_scroll(value); break;
+        case 128: set_acceleration(value); break;
+        case 133: set_sticky_mode(value); break;
+        case 134: set_led_blinks(value); break;
         default: return -1;
     }
     return 0;
@@ -323,7 +340,7 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
         case 130: v = hpd3_field_get(4, 2); break;
         case 131: v = hpd3_field_get(6, 2); break;
         case 132: v = hpd3_field_get(8, 2); break;
-        case 133: v = (uint8_t)get_pointing_mode(); break;
+        case 135: v = (uint8_t)get_pointing_mode(); break;
         default: return -1;
     }
     if (maxsz < sizeof(v)) return -1;
@@ -340,7 +357,7 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
         case 130: hpd3_field_set(4, 2, v); break;
         case 131: hpd3_field_set(6, 2, v); break;
         case 132: hpd3_field_set(8, 2, v); break;
-        case 133: set_pointing_mode((pointing_mode_t)v); break;
+        case 135: set_pointing_mode((pointing_mode_t)v); break;
         default: return -1;
     }
     return 0;
@@ -352,19 +369,21 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(101, ruen_macos_get, ruen_macos_set),
     DECLARE_SETTING(102, unicode_get, unicode_set),
     DECLARE_SETTING(120, modules_trackball_dpi_get, modules_trackball_dpi_set),
-    DECLARE_SETTING(121, modules_touchpad_dpi_get, modules_touchpad_dpi_set),
-    DECLARE_SETTING(122, modules_sens_get, modules_sens_set),
-    DECLARE_SETTING(123, modules_sens_get, modules_sens_set),
+    DECLARE_SETTING(121, modules_trackball_dpi_get, modules_trackball_dpi_set),
+    DECLARE_SETTING(122, modules_trackball_dpi_get, modules_trackball_dpi_set),
+    DECLARE_SETTING(123, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
-    DECLARE_SETTING(125, modules_bool_get, modules_bool_set),
-    DECLARE_SETTING(126, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
+    DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(127, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(128, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(129, modules_select_get, modules_select_set),
     DECLARE_SETTING(130, modules_select_get, modules_select_set),
     DECLARE_SETTING(131, modules_select_get, modules_select_set),
     DECLARE_SETTING(132, modules_select_get, modules_select_set),
-    DECLARE_SETTING(133, modules_select_get, modules_select_set),
+    DECLARE_SETTING(133, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(134, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(135, modules_select_get, modules_select_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),
