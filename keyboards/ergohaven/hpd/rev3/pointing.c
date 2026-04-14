@@ -247,6 +247,14 @@ static void hpd3_apply_device_config(void) {
         azoteq_iqs5xx_set_cpi(cpi);
     }
 
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
+    set_auto_mouse_enable(get_hpd3_auto_mouse_enable());
+    if (!get_hpd3_auto_mouse_enable()) {
+        auto_mouse_layer_off();
+    }
+#endif
+
     hpd3_applied_raw           = hpd3_via_config.raw;
     hpd3_applied_devices       = devices;
     hpd3_applied_devices_valid = true;
@@ -381,6 +389,10 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
     return hpd3_rotate_report(mouse_report, hpd3_get_local_orientation());
 }
 
+static bool hpd3_report_has_motion(report_mouse_t report) {
+    return abs(report.x) >= 1 || abs(report.y) >= 1 || abs(report.h) >= 1 || abs(report.v) >= 1 || report.buttons;
+}
+
 static report_mouse_t hpd3_apply_side_mode(report_mouse_t mrpt, hpd3_side_id_t side) {
     static int32_t accumulated_h[HPD3_SIDE_COUNT] = {0};
     static int32_t accumulated_v[HPD3_SIDE_COUNT] = {0};
@@ -478,6 +490,19 @@ static report_mouse_t hpd3_apply_side_mode(report_mouse_t mrpt, hpd3_side_id_t s
 }
 
 report_mouse_t pointing_device_task_combined_kb(report_mouse_t left_report, report_mouse_t right_report) {
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    bool auto_layer_active = false;
+    if (get_hpd3_auto_mouse_enable()) {
+        if (get_hpd3_side_mode(HPD3_SIDE_LEFT) == POINTING_MODE_NORMAL && hpd3_report_has_motion(left_report)) {
+            auto_layer_active = true;
+        }
+        if (get_hpd3_side_mode(HPD3_SIDE_RIGHT) == POINTING_MODE_NORMAL && hpd3_report_has_motion(right_report)) {
+            auto_layer_active = true;
+        }
+    }
+    set_pointing_auto_mouse_override(true, auto_layer_active);
+#endif
+
     left_report  = hpd3_apply_side_mode(left_report, HPD3_SIDE_LEFT);
     right_report = hpd3_apply_side_mode(right_report, HPD3_SIDE_RIGHT);
     return pointing_device_combine_reports(left_report, right_report);

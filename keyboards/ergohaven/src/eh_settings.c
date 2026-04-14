@@ -383,6 +383,7 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 139: value = get_hpd3_side_acceleration(HPD3_SIDE_RIGHT); break;
         case 140: value = get_sticky_mode(); break;
         case 141: value = get_led_blinks(); break;
+        case 142: value = get_hpd3_auto_mouse_enable(); break;
         default: return -1;
     }
 #else
@@ -392,7 +393,8 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 133:
         case 140: value = get_sticky_mode(); break;
         case 134:
-        case 141: value = get_led_blinks(); break;
+        case 141:
+        case 142: value = get_led_blinks(); break;
         default: return -1;
     }
 #endif
@@ -413,6 +415,7 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 139: set_hpd3_side_acceleration(HPD3_SIDE_RIGHT, value); break;
         case 140: set_sticky_mode(value); break;
         case 141: set_led_blinks(value); break;
+        case 142: set_hpd3_auto_mouse_enable(value); break;
         default: return -1;
     }
 #else
@@ -422,7 +425,8 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 133:
         case 140: set_sticky_mode(value); break;
         case 134:
-        case 141: set_led_blinks(value); break;
+        case 141:
+        case 142: set_led_blinks(value); break;
         default: return -1;
     }
 #endif
@@ -443,6 +447,9 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
         case 135:
             v = (uint8_t)get_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid));
             break;
+        case 143:
+            v = get_hpd3_auto_mouse_layer();
+            break;
         default: return -1;
     }
 #else
@@ -454,6 +461,7 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
             v = (uint8_t)get_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid));
             break;
         case 135:
+        case 143:
             v = (uint8_t)get_pointing_mode();
             break;
         default:
@@ -481,6 +489,9 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
         case 135:
             set_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid), (pointing_mode_t)v);
             break;
+        case 143:
+            set_hpd3_auto_mouse_layer(v);
+            break;
         default: return -1;
     }
 #else
@@ -492,6 +503,7 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
             set_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid), (orientation_t)v);
             break;
         case 135:
+        case 143:
             set_pointing_mode((pointing_mode_t)v);
             break;
         default:
@@ -536,6 +548,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #else
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
@@ -555,6 +569,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #endif
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),

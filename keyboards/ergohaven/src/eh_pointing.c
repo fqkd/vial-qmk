@@ -10,6 +10,10 @@ pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
 static_assert(KB_SETTINGS_HPD3_DEVICES_SIZE == sizeof(kb_settings_hpd3_devices_t), "Invalid KB_SETTINGS_HPD3_DEVICES_SIZE");
 
+#ifndef AUTO_MOUSE_DEFAULT_LAYER
+#    define AUTO_MOUSE_DEFAULT_LAYER 4
+#endif
+
 __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void) {
     kb_settings_pointing_t dflt = {
         .sens          = {1, 2, 16, 32},
@@ -26,14 +30,26 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
 
 kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
     kb_settings_hpd3_devices_t dflt = {
-        .axis          = {ROT_90, ROT_90, ROT_180, ROT_0},
-        .dpi_idx       = {1, 1, 3, 3},
-        .mode          = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
-        .sens          = {{16, 4, 32}, {16, 4, 32}},
-        .invert_scroll = {false, false},
-        .acceleration  = {false, false},
+        .axis              = {ROT_90, ROT_90, ROT_180, ROT_0},
+        .dpi_idx           = {1, 1, 3, 3},
+        .mode              = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
+        .sens              = {{16, 4, 32}, {16, 4, 32}},
+        .invert_scroll     = {false, false},
+        .acceleration      = {false, false},
+        .auto_mouse_enable = true,
+        .auto_mouse_layer  = AUTO_MOUSE_DEFAULT_LAYER,
     };
     return dflt;
+}
+
+static kb_settings_hpd3_devices_t kb_settings_hpd3_devices_sanitize(kb_settings_hpd3_devices_t config) {
+    if (config.auto_mouse_enable > 1) {
+        config.auto_mouse_enable = true;
+    }
+    if (config.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+        config.auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
+    }
+    return config;
 }
 
 kb_settings_hpd3_devices_t get_settings_hpd3_devices(void) {
@@ -53,6 +69,7 @@ void set_settings_hpd3_devices(kb_settings_hpd3_devices_t config) {
 
 void kb_settings_hpd3_devices_init(void) {
     eeconfig_read_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+    kb_settings_hpd3_devices = kb_settings_hpd3_devices_sanitize(kb_settings_hpd3_devices);
 }
 
 void kb_settings_hpd3_devices_reset(void) {
@@ -176,6 +193,32 @@ void set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration) {
 
     kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
     new_config.acceleration[side]         = acceleration;
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+bool get_hpd3_auto_mouse_enable(void) {
+    return kb_settings_hpd3_devices.auto_mouse_enable != 0;
+}
+
+void set_hpd3_auto_mouse_enable(bool enable) {
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    new_config.auto_mouse_enable          = enable;
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+uint8_t get_hpd3_auto_mouse_layer(void) {
+    if (kb_settings_hpd3_devices.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+        return AUTO_MOUSE_DEFAULT_LAYER;
+    }
+    return kb_settings_hpd3_devices.auto_mouse_layer;
+}
+
+void set_hpd3_auto_mouse_layer(uint8_t layer) {
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    if (layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+        layer = AUTO_MOUSE_DEFAULT_LAYER;
+    }
+    new_config.auto_mouse_layer = layer;
     kb_settings_hpd3_devices_update(new_config);
 }
 
@@ -309,9 +352,16 @@ bool get_led_blinks(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
 bool is_mouse_active = false;
+static bool is_mouse_active_override_enabled = false;
+static bool is_mouse_active_override         = false;
+
+void set_pointing_auto_mouse_override(bool enabled, bool active) {
+    is_mouse_active_override_enabled = enabled;
+    is_mouse_active_override         = active;
+}
 
 bool auto_mouse_activation(report_mouse_t mouse_report) {
-    return is_mouse_active;
+    return is_mouse_active_override_enabled ? is_mouse_active_override : is_mouse_active;
 }
 
 bool is_mouse_record_kb(uint16_t keycode, keyrecord_t *record) {
@@ -495,7 +545,9 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
 
 report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
-    is_mouse_active = abs(mrpt.x) >= 1 || abs(mrpt.y) >= 1 || abs(mrpt.v) >= 1 || abs(mrpt.h) >= 1 || mrpt.buttons;
+    if (!is_mouse_active_override_enabled) {
+        is_mouse_active = abs(mrpt.x) >= 1 || abs(mrpt.y) >= 1 || abs(mrpt.v) >= 1 || abs(mrpt.h) >= 1 || mrpt.buttons;
+    }
 #endif
     pointing_mode_t pmode = pointing_mode;
 

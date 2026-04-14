@@ -46,6 +46,8 @@ typedef struct {
     uint8_t sens[HPD3_SIDE_COUNT][3];
     uint8_t invert_scroll[HPD3_SIDE_COUNT];
     uint8_t acceleration[HPD3_SIDE_COUNT];
+    uint8_t auto_mouse_enable;
+    uint8_t auto_mouse_layer;
 } kb_settings_hpd3_devices_t;
 
 typedef union {
@@ -84,6 +86,12 @@ bool get_invert_scroll(void);
 
 void set_acceleration(bool acc);
 bool get_acceleration(void);
+
+bool    get_hpd3_auto_mouse_enable(void);
+void    set_hpd3_auto_mouse_enable(bool enable);
+uint8_t get_hpd3_auto_mouse_layer(void);
+void    set_hpd3_auto_mouse_layer(uint8_t layer);
+void    set_pointing_auto_mouse_override(bool enabled, bool active);
 
 void          set_orientation(orientation_t orientation);
 orientation_t get_orientation(void);
