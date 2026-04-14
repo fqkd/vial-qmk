@@ -9,6 +9,17 @@
 
 char layer_names[DYNAMIC_KEYMAP_LAYER_COUNT][LAYER_LABEL_SIZE];
 
+__attribute__((weak)) void kb_settings_led_colors_init(void) {}
+__attribute__((weak)) void kb_settings_led_colors_reset(void) {}
+__attribute__((weak)) uint8_t get_layer_rgb_color(uint8_t layer) {
+    (void)layer;
+    return 0;
+}
+__attribute__((weak)) void set_layer_rgb_color(uint8_t layer, uint8_t color) {
+    (void)layer;
+    (void)color;
+}
+
 __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
         "BASE", "LOWER", "RAISE", "ADJST", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVN", "TWLVE", "THRTN", "FRTN", "FIFTN",
