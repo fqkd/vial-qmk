@@ -1,6 +1,7 @@
 #include "eh_settings.h"
 #include "eh_ruen.h"
 #include "eh_pointing.h"
+#include "ergohaven_rgb.h"
 #include <eeconfig.h>
 #include <debug.h>
 #include <qmk_settings.h>
@@ -32,6 +33,7 @@ void kb_settings_reset(void) {
     kb_settings_layer_labels_reset();
     kb_settings_pointing_reset();
     kb_settings_hpd3_devices_reset();
+    kb_settings_led_colors_reset();
     kb_settings_init();
 }
 
@@ -45,6 +47,7 @@ void kb_settings_init(void) {
     kb_settings_layer_labels_init();
     kb_settings_pointing_init();
     kb_settings_hpd3_devices_init();
+    kb_settings_led_colors_init();
 }
 
 #define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) {.qsid = id, .get = _get, .set = _set, .notify = _notify}
@@ -513,6 +516,24 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     return 0;
 }
 
+static int leds_color_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t layer = (uint8_t)(proto->qsid - 300);
+    uint8_t value;
+    if (layer >= EH_RGB_LAYER_COUNT || maxsz < sizeof(value)) return -1;
+    value = get_layer_rgb_color(layer);
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int leds_color_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t layer = (uint8_t)(proto->qsid - 300);
+    uint8_t value;
+    if (layer >= EH_RGB_LAYER_COUNT || maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_layer_rgb_color(layer, value);
+    return 0;
+}
+
 qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
@@ -572,6 +593,22 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #endif
+    DECLARE_SETTING(300, leds_color_get, leds_color_set),
+    DECLARE_SETTING(301, leds_color_get, leds_color_set),
+    DECLARE_SETTING(302, leds_color_get, leds_color_set),
+    DECLARE_SETTING(303, leds_color_get, leds_color_set),
+    DECLARE_SETTING(304, leds_color_get, leds_color_set),
+    DECLARE_SETTING(305, leds_color_get, leds_color_set),
+    DECLARE_SETTING(306, leds_color_get, leds_color_set),
+    DECLARE_SETTING(307, leds_color_get, leds_color_set),
+    DECLARE_SETTING(308, leds_color_get, leds_color_set),
+    DECLARE_SETTING(309, leds_color_get, leds_color_set),
+    DECLARE_SETTING(310, leds_color_get, leds_color_set),
+    DECLARE_SETTING(311, leds_color_get, leds_color_set),
+    DECLARE_SETTING(312, leds_color_get, leds_color_set),
+    DECLARE_SETTING(313, leds_color_get, leds_color_set),
+    DECLARE_SETTING(314, leds_color_get, leds_color_set),
+    DECLARE_SETTING(315, leds_color_get, leds_color_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),
