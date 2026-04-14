@@ -155,8 +155,10 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
     return 0;
 }
 
-static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1600, 2000, 2400, 3200};
-static const uint16_t hpd3_touchpad_cpi_table[]  = {200, 400, 600, 800, 1000};
+#if !defined(KEYBOARD_ergohaven_hpd_rev3)
+static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
+static const uint16_t hpd3_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+#endif
 
 static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
 #if defined(KEYBOARD_ergohaven_hpd_rev3)
@@ -219,6 +221,7 @@ static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
 }
 #endif
 
+#if !defined(KEYBOARD_ergohaven_hpd_rev3)
 static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
     uint8_t best    = 0;
     uint16_t best_d = UINT16_MAX;
@@ -273,6 +276,24 @@ static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const vo
     set_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid), hpd3_index_from_value_u16(table, count, cpi));
     return 0;
 }
+#endif
+
+#if defined(KEYBOARD_ergohaven_hpd_rev3)
+static int modules_dpi_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid));
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int modules_dpi_select_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid), value);
+    return 0;
+}
+#endif
 
 static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t sens = 0;
@@ -485,10 +506,17 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
     DECLARE_SETTING(101, ruen_macos_get, ruen_macos_set),
     DECLARE_SETTING(102, unicode_get, unicode_set),
+#if defined(KEYBOARD_ergohaven_hpd_rev3)
+    DECLARE_SETTING(120, modules_dpi_select_get, modules_dpi_select_set),
+    DECLARE_SETTING(121, modules_dpi_select_get, modules_dpi_select_set),
+    DECLARE_SETTING(122, modules_dpi_select_get, modules_dpi_select_set),
+    DECLARE_SETTING(123, modules_dpi_select_get, modules_dpi_select_set),
+#else
     DECLARE_SETTING(120, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(121, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(122, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(123, modules_trackball_dpi_get, modules_trackball_dpi_set),
+#endif
 #if defined(KEYBOARD_ergohaven_hpd_rev3)
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),

@@ -27,7 +27,7 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
 kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
     kb_settings_hpd3_devices_t dflt = {
         .axis          = {ROT_90, ROT_90, ROT_180, ROT_0},
-        .dpi_idx       = {1, 1, 1, 1},
+        .dpi_idx       = {1, 1, 3, 3},
         .mode          = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
         .sens          = {{16, 4, 32}, {16, 4, 32}},
         .invert_scroll = {false, false},

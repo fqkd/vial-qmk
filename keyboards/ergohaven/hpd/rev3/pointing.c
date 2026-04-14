@@ -42,8 +42,8 @@ typedef union {
     } __attribute__((packed));
 } hpd3_via_config_t;
 
-static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1600, 2000, 2400, 3200};
-static const uint16_t hpd3_touchpad_cpi_table[]  = {200, 400, 600, 800, 1000};
+static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
+static const uint16_t hpd3_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 
 #define HPD3_LAYOUT_SCHEMA_V2 (1u << 31)
 #define HPD3_LEFT_BALL_AXIS_SHIFT 2
