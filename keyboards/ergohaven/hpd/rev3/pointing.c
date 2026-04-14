@@ -381,6 +381,97 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
     return hpd3_rotate_report(mouse_report, hpd3_get_local_orientation());
 }
 
+static report_mouse_t hpd3_apply_side_mode(report_mouse_t mrpt, hpd3_side_id_t side) {
+    static int32_t accumulated_h[HPD3_SIDE_COUNT] = {0};
+    static int32_t accumulated_v[HPD3_SIDE_COUNT] = {0};
+
+    pointing_mode_t pmode   = get_hpd3_side_mode(side);
+    int32_t         divisor = get_hpd3_side_sens(side, pmode);
+
+    if (pmode == POINTING_MODE_NORMAL || divisor <= 0) {
+        return mrpt;
+    }
+
+    accumulated_h[side] += mrpt.x;
+    accumulated_v[side] += mrpt.y;
+
+    int shift_x = accumulated_h[side] / divisor;
+    int shift_y = accumulated_v[side] / divisor;
+
+    accumulated_h[side] -= shift_x * divisor;
+    accumulated_v[side] -= shift_y * divisor;
+
+    mrpt.x = 0;
+    mrpt.y = 0;
+
+    if (shift_x == 0 && shift_y == 0) {
+        return mrpt;
+    }
+
+    switch (pmode) {
+        case POINTING_MODE_SNIPER:
+            mrpt.x = shift_x;
+            mrpt.y = shift_y;
+            break;
+
+        case POINTING_MODE_SCROLL:
+            if (abs(shift_x) > abs(shift_y)) {
+                mrpt.h             = shift_x;
+                accumulated_v[side] = 0;
+            } else if (abs(shift_x) < abs(shift_y)) {
+                mrpt.v             = -shift_y;
+                accumulated_h[side] = 0;
+            }
+            break;
+
+        case POINTING_MODE_TEXT:
+        case POINTING_MODE_USR1:
+        case POINTING_MODE_USR2:
+        case POINTING_MODE_USR3: {
+#ifdef EH_TRACKBALL_TEXT_DIR_REMAP
+            static uint16_t kc_up[HPD3_SIDE_COUNT]    = {KC_UP, KC_UP};
+            static uint16_t kc_down[HPD3_SIDE_COUNT]  = {KC_DOWN, KC_DOWN};
+            static uint16_t kc_left[HPD3_SIDE_COUNT]  = {KC_LEFT, KC_LEFT};
+            static uint16_t kc_right[HPD3_SIDE_COUNT] = {KC_RIGHT, KC_RIGHT};
+#ifdef EH_HPD_LAYERS
+            uint8_t layer   = get_current_layer();
+            kc_up[side]     = dynamic_keymap_get_keycode(layer, 0, 0);
+            kc_down[side]   = dynamic_keymap_get_keycode(layer, 0, 1);
+            kc_left[side]   = dynamic_keymap_get_keycode(layer, 0, 2);
+            kc_right[side]  = dynamic_keymap_get_keycode(layer, 0, 3);
+#endif
+
+            if (kc_up[side] != kc_down[side] || kc_up[side] != kc_left[side] || kc_up[side] != kc_right[side] || kc_up[side] != KC_NO) {
+                if (abs(shift_x) > abs(shift_y)) {
+                    shift_y             = 0;
+                    accumulated_v[side] = 0;
+                } else if (abs(shift_x) < abs(shift_y)) {
+                    shift_x             = 0;
+                    accumulated_h[side] = 0;
+                }
+
+                for (; shift_x > 0; shift_x--) tap_code16(kc_right[side]);
+                for (; shift_x < 0; shift_x++) tap_code16(kc_left[side]);
+                for (; shift_y > 0; shift_y--) tap_code16(kc_up[side]);
+                for (; shift_y < 0; shift_y++) tap_code16(kc_down[side]);
+            }
+#endif
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    return mrpt;
+}
+
+report_mouse_t pointing_device_task_combined_kb(report_mouse_t left_report, report_mouse_t right_report) {
+    left_report  = hpd3_apply_side_mode(left_report, HPD3_SIDE_LEFT);
+    right_report = hpd3_apply_side_mode(right_report, HPD3_SIDE_RIGHT);
+    return pointing_device_combine_reports(left_report, right_report);
+}
+
 uint16_t pointing_device_driver_get_cpi(void) {
     switch (hpd3_get_active_module()) {
         case HPD3_MODULE_TRACKBALL:

@@ -5,7 +5,7 @@
     },
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
     "settings": [
-#include "keyboards/ergohaven/src/json/settings_modules.json"
+#include "keyboards/ergohaven/src/json/settings_modules_hpd3.json"
 ,
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
     ],
