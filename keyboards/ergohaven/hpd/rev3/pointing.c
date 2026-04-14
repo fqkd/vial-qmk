@@ -385,6 +385,13 @@ static report_mouse_t hpd3_apply_side_mode(report_mouse_t mrpt, hpd3_side_id_t s
     static int32_t accumulated_h[HPD3_SIDE_COUNT] = {0};
     static int32_t accumulated_v[HPD3_SIDE_COUNT] = {0};
 
+    if (get_hpd3_side_acceleration(side)) {
+        int x = mrpt.x;
+        int y = mrpt.y;
+        mrpt.x = (mouse_xy_report_t)(x > 0 ? x * x / 16 + x : -x * x / 16 + x);
+        mrpt.y = (mouse_xy_report_t)(y > 0 ? y * y / 16 + y : -y * y / 16 + y);
+    }
+
     pointing_mode_t pmode   = get_hpd3_side_mode(side);
     int32_t         divisor = get_hpd3_side_sens(side, pmode);
 
@@ -416,11 +423,15 @@ static report_mouse_t hpd3_apply_side_mode(report_mouse_t mrpt, hpd3_side_id_t s
 
         case POINTING_MODE_SCROLL:
             if (abs(shift_x) > abs(shift_y)) {
-                mrpt.h             = shift_x;
+                mrpt.h              = shift_x;
                 accumulated_v[side] = 0;
             } else if (abs(shift_x) < abs(shift_y)) {
-                mrpt.v             = -shift_y;
+                mrpt.v              = -shift_y;
                 accumulated_h[side] = 0;
+            }
+            if (get_hpd3_side_invert_scroll(side)) {
+                mrpt.h = -mrpt.h;
+                mrpt.v = -mrpt.v;
             }
             break;
 

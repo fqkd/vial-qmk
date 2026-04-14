@@ -203,11 +203,15 @@ static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
         case 125:
         case 126:
         case 134:
+        case 136:
+        case 137:
             return HPD3_SIDE_LEFT;
         case 127:
         case 128:
         case 129:
         case 135:
+        case 138:
+        case 139:
             return HPD3_SIDE_RIGHT;
         default:
             return HPD3_SIDE_LEFT;
@@ -352,18 +356,22 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
     bool value = false;
 #if defined(KEYBOARD_ergohaven_hpd_rev3)
     switch (proto->qsid) {
-        case 136: value = get_invert_scroll(); break;
-        case 137: value = get_acceleration(); break;
-        case 138: value = get_sticky_mode(); break;
-        case 139: value = get_led_blinks(); break;
+        case 136: value = get_hpd3_side_invert_scroll(HPD3_SIDE_LEFT); break;
+        case 137: value = get_hpd3_side_acceleration(HPD3_SIDE_LEFT); break;
+        case 138: value = get_hpd3_side_invert_scroll(HPD3_SIDE_RIGHT); break;
+        case 139: value = get_hpd3_side_acceleration(HPD3_SIDE_RIGHT); break;
+        case 140: value = get_sticky_mode(); break;
+        case 141: value = get_led_blinks(); break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
         case 127: value = get_invert_scroll(); break;
         case 128: value = get_acceleration(); break;
-        case 133: value = get_sticky_mode(); break;
-        case 134: value = get_led_blinks(); break;
+        case 133:
+        case 140: value = get_sticky_mode(); break;
+        case 134:
+        case 141: value = get_led_blinks(); break;
         default: return -1;
     }
 #endif
@@ -378,18 +386,22 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
     memcpy(&value, setting, sizeof(value));
 #if defined(KEYBOARD_ergohaven_hpd_rev3)
     switch (proto->qsid) {
-        case 136: set_invert_scroll(value); break;
-        case 137: set_acceleration(value); break;
-        case 138: set_sticky_mode(value); break;
-        case 139: set_led_blinks(value); break;
+        case 136: set_hpd3_side_invert_scroll(HPD3_SIDE_LEFT, value); break;
+        case 137: set_hpd3_side_acceleration(HPD3_SIDE_LEFT, value); break;
+        case 138: set_hpd3_side_invert_scroll(HPD3_SIDE_RIGHT, value); break;
+        case 139: set_hpd3_side_acceleration(HPD3_SIDE_RIGHT, value); break;
+        case 140: set_sticky_mode(value); break;
+        case 141: set_led_blinks(value); break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
         case 127: set_invert_scroll(value); break;
         case 128: set_acceleration(value); break;
-        case 133: set_sticky_mode(value); break;
-        case 134: set_led_blinks(value); break;
+        case 133:
+        case 140: set_sticky_mode(value); break;
+        case 134:
+        case 141: set_led_blinks(value); break;
         default: return -1;
     }
 #endif
@@ -494,6 +506,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(137, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(138, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
 #else
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
@@ -511,6 +525,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(137, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(138, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
 #endif
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),

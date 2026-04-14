@@ -26,10 +26,12 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
 
 kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
     kb_settings_hpd3_devices_t dflt = {
-        .axis    = {ROT_90, ROT_90, ROT_180, ROT_0},
-        .dpi_idx = {1, 1, 1, 1},
-        .mode    = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
-        .sens    = {{16, 4, 32}, {16, 4, 32}},
+        .axis          = {ROT_90, ROT_90, ROT_180, ROT_0},
+        .dpi_idx       = {1, 1, 1, 1},
+        .mode          = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
+        .sens          = {{16, 4, 32}, {16, 4, 32}},
+        .invert_scroll = {false, false},
+        .acceleration  = {false, false},
     };
     return dflt;
 }
@@ -140,6 +142,40 @@ void set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens)
         default:
             return;
     }
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+bool get_hpd3_side_invert_scroll(hpd3_side_id_t side) {
+    if (side >= HPD3_SIDE_COUNT) {
+        return false;
+    }
+    return kb_settings_hpd3_devices.invert_scroll[side] != 0;
+}
+
+void set_hpd3_side_invert_scroll(hpd3_side_id_t side, bool invert_scroll) {
+    if (side >= HPD3_SIDE_COUNT) {
+        return;
+    }
+
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    new_config.invert_scroll[side]        = invert_scroll;
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+bool get_hpd3_side_acceleration(hpd3_side_id_t side) {
+    if (side >= HPD3_SIDE_COUNT) {
+        return false;
+    }
+    return kb_settings_hpd3_devices.acceleration[side] != 0;
+}
+
+void set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration) {
+    if (side >= HPD3_SIDE_COUNT) {
+        return;
+    }
+
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    new_config.acceleration[side]         = acceleration;
     kb_settings_hpd3_devices_update(new_config);
 }
 

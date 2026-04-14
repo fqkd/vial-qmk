@@ -44,6 +44,8 @@ typedef struct {
     uint8_t dpi_idx[HPD3_DEVICE_COUNT];
     uint8_t mode[HPD3_SIDE_COUNT];
     uint8_t sens[HPD3_SIDE_COUNT][3];
+    uint8_t invert_scroll[HPD3_SIDE_COUNT];
+    uint8_t acceleration[HPD3_SIDE_COUNT];
 } kb_settings_hpd3_devices_t;
 
 typedef union {
@@ -115,3 +117,7 @@ pointing_mode_t            get_hpd3_side_mode(hpd3_side_id_t side);
 void                       set_hpd3_side_mode(hpd3_side_id_t side, pointing_mode_t mode);
 uint8_t                    get_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode);
 void                       set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens);
+bool                       get_hpd3_side_invert_scroll(hpd3_side_id_t side);
+void                       set_hpd3_side_invert_scroll(hpd3_side_id_t side, bool invert_scroll);
+bool                       get_hpd3_side_acceleration(hpd3_side_id_t side);
+void                       set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration);
