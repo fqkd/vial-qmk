@@ -6,6 +6,7 @@
 #include "drivers/sensors/pmw3610.h"
 #include "quantum/split_common/transactions.h"
 #include "src/eh_pointing.h"
+#include "ergohaven_rgb.h"
 #include "via.h"
 #include "pointing_device_internal.h"
 
@@ -93,6 +94,7 @@ static uint32_t                   hpd3_applied_raw          = UINT32_MAX;
 static kb_settings_hpd3_devices_t hpd3_synced_devices;
 static kb_settings_hpd3_devices_t hpd3_applied_devices;
 static bool                       hpd3_applied_devices_valid = false;
+static kb_settings_led_colors_t   hpd3_synced_led_colors;
 
 static hpd3_device_id_t hpd3_get_local_device_id(hpd3_module_t module) {
     bool left = is_keyboard_left();
@@ -301,6 +303,14 @@ static void hpd3_sync_devices_rpc(uint8_t in_len, const void *in_data, uint8_t o
     }
 }
 
+static void hpd3_sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+    if (in_len == sizeof(kb_settings_led_colors_t) && in_data != NULL) {
+        kb_settings_led_colors_t value;
+        memcpy(&value, in_data, sizeof(value));
+        set_settings_led_colors(value);
+    }
+}
+
 void keyboard_post_init_user(void) {
 #ifdef CONSOLE_ENABLE
     debug_enable = true;
@@ -308,6 +318,7 @@ void keyboard_post_init_user(void) {
 #endif
     transaction_register_rpc(RPC_HPD3_CONFIG, hpd3_sync_config_rpc);
     transaction_register_rpc(RPC_HPD3_DEVICES, hpd3_sync_devices_rpc);
+    transaction_register_rpc(RPC_HPD3_LED_COLORS, hpd3_sync_led_colors_rpc);
     hpd3_applied_raw = UINT32_MAX; // force re-apply after early kb_settings_pointing_init may have set CPI=0
     hpd3_applied_devices_valid = false;
 
@@ -320,6 +331,7 @@ void keyboard_post_init_user(void) {
 
     hpd3_synced_raw = hpd3_via_config.raw;
     hpd3_synced_devices = get_settings_hpd3_devices();
+    hpd3_synced_led_colors = get_settings_led_colors();
     dprintf("final raw=0x%08lX\n", (unsigned long)hpd3_synced_raw);
 }
 
@@ -343,6 +355,12 @@ void housekeeping_task_user(void) {
     if (memcmp(&hpd3_synced_devices, &devices, sizeof(devices)) != 0) {
         hpd3_synced_devices = devices;
         transaction_rpc_send(RPC_HPD3_DEVICES, sizeof(hpd3_synced_devices), &hpd3_synced_devices);
+    }
+
+    kb_settings_led_colors_t led_colors = get_settings_led_colors();
+    if (memcmp(&hpd3_synced_led_colors, &led_colors, sizeof(led_colors)) != 0) {
+        hpd3_synced_led_colors = led_colors;
+        transaction_rpc_send(RPC_HPD3_LED_COLORS, sizeof(hpd3_synced_led_colors), &hpd3_synced_led_colors);
     }
 }
 

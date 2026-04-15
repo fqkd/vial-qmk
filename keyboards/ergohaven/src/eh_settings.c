@@ -19,6 +19,12 @@ __attribute__((weak)) void set_layer_rgb_color(uint8_t layer, uint8_t color) {
     (void)layer;
     (void)color;
 }
+__attribute__((weak)) uint8_t get_led_rgb_brightness(void) {
+    return 128;
+}
+__attribute__((weak)) void set_led_rgb_brightness(uint8_t brightness) {
+    (void)brightness;
+}
 
 __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
@@ -545,6 +551,24 @@ static int leds_color_set(const qmk_settings_proto_t *proto, const void *setting
     return 0;
 }
 
+static int leds_brightness_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint16_t value = get_led_rgb_brightness();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int leds_brightness_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint16_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    if (value > 255) value = 255;
+    set_led_rgb_brightness((uint8_t)value);
+    return 0;
+}
+
 qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
@@ -620,6 +644,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(313, leds_color_get, leds_color_set),
     DECLARE_SETTING(314, leds_color_get, leds_color_set),
     DECLARE_SETTING(315, leds_color_get, leds_color_set),
+    DECLARE_SETTING(316, leds_brightness_get, leds_brightness_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),

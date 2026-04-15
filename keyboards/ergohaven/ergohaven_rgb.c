@@ -71,6 +71,7 @@ static const rgblight_segment_t *const my_rgb_layers[] = {
 static kb_settings_led_colors_t get_settings_led_colors_default(void) {
     kb_settings_led_colors_t dflt = {
         .layer_color = {1, 2, 16, 4, 9, 18, 16, 20, 10, 6, 12, 3, 14, 7, 21, 5},
+        .brightness  = 128,
     };
     return dflt;
 }
@@ -95,10 +96,24 @@ static void kb_settings_led_colors_update(kb_settings_led_colors_t new_config) {
 void kb_settings_led_colors_init(void) {
     eeconfig_read_kb_datablock(&kb_settings_led_colors, KB_SETTINGS_LED_COLORS_OFFSET, sizeof(kb_settings_led_colors));
     kb_settings_led_colors = kb_settings_led_colors_sanitize(kb_settings_led_colors);
+    ergohaven_rgb_refresh_layer_colors();
+    layer_state_set_rgb(layer_state | default_layer_state);
 }
 
 void kb_settings_led_colors_reset(void) {
     kb_settings_led_colors_update(get_settings_led_colors_default());
+    ergohaven_rgb_refresh_layer_colors();
+    layer_state_set_rgb(layer_state | default_layer_state);
+}
+
+kb_settings_led_colors_t get_settings_led_colors(void) {
+    return kb_settings_led_colors;
+}
+
+void set_settings_led_colors(kb_settings_led_colors_t config) {
+    kb_settings_led_colors_update(config);
+    ergohaven_rgb_refresh_layer_colors();
+    layer_state_set_rgb(layer_state | default_layer_state);
 }
 
 uint8_t get_layer_rgb_color(uint8_t layer) {
@@ -108,12 +123,25 @@ uint8_t get_layer_rgb_color(uint8_t layer) {
     return kb_settings_led_colors.layer_color[layer];
 }
 
+uint8_t get_led_rgb_brightness(void) {
+    return kb_settings_led_colors.brightness;
+}
+
+void set_led_rgb_brightness(uint8_t brightness) {
+    kb_settings_led_colors_t new_config = kb_settings_led_colors;
+    new_config.brightness               = brightness;
+    kb_settings_led_colors_update(new_config);
+    ergohaven_rgb_refresh_layer_colors();
+    layer_state_set_rgb(layer_state | default_layer_state);
+}
+
 void ergohaven_rgb_refresh_layer_colors(void) {
     for (uint8_t layer = 0; layer < EH_RGB_LAYER_COUNT; ++layer) {
         eh_rgb_palette_color_t color = eh_rgb_palette[get_layer_rgb_color(layer)];
+        uint16_t scaled_val          = ((uint16_t)color.val * (uint16_t)get_led_rgb_brightness()) / 255;
         layer_segments[layer][0].hue = color.hue;
         layer_segments[layer][0].sat = color.sat;
-        layer_segments[layer][0].val = color.val;
+        layer_segments[layer][0].val = (uint8_t)scaled_val;
     }
 }
 
