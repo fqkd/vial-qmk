@@ -508,6 +508,41 @@ void set_pointing_mode(pointing_mode_t mode) {
 
 bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+#ifdef KEYBOARD_ergohaven_hpd_rev3
+        case EH_SCR:
+        case EH_TXT:
+        case EH_SNP:
+        case EH_USR1:
+        case EH_USR2:
+        case EH_USR3: {
+            static uint16_t        press_timer_left  = 0;
+            static uint16_t        press_timer_right = 0;
+            static pointing_mode_t prev_mode_left    = POINTING_MODE_NORMAL;
+            static pointing_mode_t prev_mode_right   = POINTING_MODE_NORMAL;
+
+            const bool left_side             = keycode == EH_SNP || keycode == EH_SCR || keycode == EH_TXT;
+            const hpd3_side_id_t side        = left_side ? HPD3_SIDE_LEFT : HPD3_SIDE_RIGHT;
+            uint16_t *const press_timer      = left_side ? &press_timer_left : &press_timer_right;
+            pointing_mode_t *const prev_mode = left_side ? &prev_mode_left : &prev_mode_right;
+            const pointing_mode_t NEW_MODE   = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_SNP) : (keycode - EH_USR1));
+
+            if (record->event.pressed) {
+                *prev_mode = get_hpd3_side_mode(side);
+                set_hpd3_side_mode(side, NEW_MODE);
+                *press_timer = timer_read();
+            } else {
+                if (get_sticky_mode() && timer_elapsed(*press_timer) < get_tapping_term(keycode, record)) {
+                    if (*prev_mode == NEW_MODE)
+                        set_hpd3_side_mode(side, POINTING_MODE_NORMAL);
+                    else
+                        set_hpd3_side_mode(side, NEW_MODE);
+                } else {
+                    set_hpd3_side_mode(side, POINTING_MODE_NORMAL);
+                }
+            }
+            return false;
+        }
+#else
         case EH_SCR:
         case EH_TXT:
         case EH_SNP:
@@ -528,12 +563,13 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
                     if (prev_pointing_mode == NEW_MODE)
                         set_pointing_mode(POINTING_MODE_NORMAL);
                     else
-                        set_pointing_mode(NEW_MODE);
+                    set_pointing_mode(NEW_MODE);
                 } else
                     set_pointing_mode(POINTING_MODE_NORMAL);
             }
             return false;
         }
+#endif
 
         case EH_LED_BL:
             if (record->event.pressed) set_led_blinks(!get_led_blinks());

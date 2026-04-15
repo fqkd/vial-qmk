@@ -1,5 +1,6 @@
 #include QMK_KEYBOARD_H
 #include "ergohaven.h"
+#include "src/eh_pointing.h"
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -29,6 +30,15 @@ _______,  _______,  KC_ASTR,  KC_COLN,  KC_SLSH,  _______,                      
                     _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,  _______,  _______,
                                                             _______,            _______
     ),
+
+    [_FOUR] = LAYOUT(
+_______,  _______,  _______,  _______,  _______,  _______,                                _______,  _______,  _______,  _______,  _______,  _______,
+_______,  _______,  EH_USR3,  EH_USR1,  EH_USR2,  _______,                                _______,  EH_SCR,  EH_SNP,   EH_TXT,   _______,  _______,
+_______,  _______,  KC_BTN3,  KC_BTN2,  KC_BTN1,  _______,                                _______,  KC_BTN1, KC_BTN2,  KC_BTN3,  _______,  _______,
+_______,  _______,  _______,  _______,  _______,  _______,                                _______,  _______,  _______,  _______,  _______,  _______,
+                    _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,  _______,  _______,
+                                                            _______,            _______
+    ),
 };
 // clang-format on
 
@@ -37,5 +47,6 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [_BASE]  = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
     [_LOWER] = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI), ENCODER_CCW_CW(RGB_VAD, RGB_VAI)},
     [_RAISE] = {ENCODER_CCW_CW(KC_LEFT, KC_RIGHT), ENCODER_CCW_CW(KC_LEFT, KC_RIGHT)},
+    [_FOUR]  = {ENCODER_CCW_CW(KC_WH_D, KC_WH_U), ENCODER_CCW_CW(KC_WH_D, KC_WH_U)},
 };
 #endif

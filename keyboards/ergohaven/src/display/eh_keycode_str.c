@@ -513,6 +513,26 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
         case EH_LED_BL:
             sprintf(buf, "Led\nBlnk");
             return true;
+#ifdef KEYBOARD_ergohaven_hpd_rev3
+        case EH_SNP:
+            sprintf(buf, "Left\nSnpr");
+            return true;
+        case EH_SCR:
+            sprintf(buf, "Left\nScrl");
+            return true;
+        case EH_TXT:
+            sprintf(buf, "Left\nText");
+            return true;
+        case EH_USR1:
+            sprintf(buf, "Rght\nSnpr");
+            return true;
+        case EH_USR2:
+            sprintf(buf, "Rght\nScrl");
+            return true;
+        case EH_USR3:
+            sprintf(buf, "Rght\nText");
+            return true;
+#else
         case EH_SNP:
             sprintf(buf, "Snpr\nMode");
             return true;
@@ -531,6 +551,7 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
         case EH_USR3:
             sprintf(buf, "Mode\nUsr3");
             return true;
+#endif
         case EH_RSRV1:
         case EH_RSRV2 ... EH_RSRV7:
             sprintf(buf, "Rsrv");
