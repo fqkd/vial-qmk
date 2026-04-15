@@ -25,6 +25,15 @@ __attribute__((weak)) uint8_t get_led_rgb_brightness(void) {
 __attribute__((weak)) void set_led_rgb_brightness(uint8_t brightness) {
     (void)brightness;
 }
+__attribute__((weak)) uint8_t get_led_rgb_timeout_mins(void) {
+    return 10;
+}
+__attribute__((weak)) void set_led_rgb_timeout_mins(uint8_t timeout_mins) {
+    (void)timeout_mins;
+}
+__attribute__((weak)) uint32_t get_led_rgb_timeout_ms(void) {
+    return 10 * 60 * 1000;
+}
 
 __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
