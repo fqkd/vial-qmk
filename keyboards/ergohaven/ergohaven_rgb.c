@@ -70,18 +70,21 @@ static const rgblight_segment_t *const my_rgb_layers[] = {
 
 static kb_settings_led_colors_t get_settings_led_colors_default(void) {
     kb_settings_led_colors_t dflt = {
-        .layer_color = {1, 2, 16, 4, 9, 18, 16, 20, 10, 6, 12, 3, 14, 7, 21, 5},
-        .brightness  = 128,
+        .layer_color  = {1, 2, 16, 4, 9, 18, 16, 20, 10, 6, 12, 3, 14, 7, 21, 5},
+        .brightness   = 128,
+        .timeout_mins = 10,
     };
     return dflt;
 }
 
 static kb_settings_led_colors_t kb_settings_led_colors_sanitize(kb_settings_led_colors_t config) {
+    kb_settings_led_colors_t dflt = get_settings_led_colors_default();
     for (uint8_t i = 0; i < EH_RGB_LAYER_COUNT; ++i) {
         if (config.layer_color[i] >= EH_RGB_PALETTE_SIZE) {
-            config.layer_color[i] = get_settings_led_colors_default().layer_color[i];
+            config.layer_color[i] = dflt.layer_color[i];
         }
     }
+    /* timeout_mins is uint8_t, full 0..255 range is allowed */
     return config;
 }
 
@@ -133,6 +136,24 @@ void set_led_rgb_brightness(uint8_t brightness) {
     kb_settings_led_colors_update(new_config);
     ergohaven_rgb_refresh_layer_colors();
     layer_state_set_rgb(layer_state | default_layer_state);
+}
+
+uint8_t get_led_rgb_timeout_mins(void) {
+    return kb_settings_led_colors.timeout_mins;
+}
+
+void set_led_rgb_timeout_mins(uint8_t timeout_mins) {
+    kb_settings_led_colors_t new_config = kb_settings_led_colors;
+    new_config.timeout_mins             = timeout_mins;
+    kb_settings_led_colors_update(new_config);
+}
+
+uint32_t get_led_rgb_timeout_ms(void) {
+    uint8_t timeout_mins = get_led_rgb_timeout_mins();
+    if (timeout_mins == 0) {
+        return 0;
+    }
+    return (uint32_t)timeout_mins * 60 * 1000;
 }
 
 void ergohaven_rgb_refresh_layer_colors(void) {

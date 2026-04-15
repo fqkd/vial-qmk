@@ -8,6 +8,7 @@
 typedef struct {
     uint8_t layer_color[EH_RGB_LAYER_COUNT];
     uint8_t brightness;
+    uint8_t timeout_mins;
 } kb_settings_led_colors_t;
 
 void keyboard_post_init_rgb(void);
@@ -23,4 +24,7 @@ uint8_t get_layer_rgb_color(uint8_t layer);
 void set_layer_rgb_color(uint8_t layer, uint8_t color);
 uint8_t get_led_rgb_brightness(void);
 void set_led_rgb_brightness(uint8_t brightness);
+uint8_t get_led_rgb_timeout_mins(void);
+void set_led_rgb_timeout_mins(uint8_t timeout_mins);
+uint32_t get_led_rgb_timeout_ms(void);
 void ergohaven_rgb_refresh_layer_colors(void);

@@ -274,7 +274,8 @@ void housekeeping_task_kb(void) {
 
     uint32_t activity_elapsed = last_input_activity_elapsed();
 
-    if (activity_elapsed > EH_TIMEOUT) {
+    uint32_t led_timeout_ms = get_led_rgb_timeout_ms();
+    if (led_timeout_ms > 0 && activity_elapsed > led_timeout_ms) {
 #ifdef RGBLIGHT_ENABLE
         rgb_off();
 #endif

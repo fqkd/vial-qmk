@@ -569,6 +569,24 @@ static int leds_brightness_set(const qmk_settings_proto_t *proto, const void *se
     return 0;
 }
 
+static int leds_timeout_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_led_rgb_timeout_mins();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int leds_timeout_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    /* uint8_t, allowed range is 0..255 */
+    set_led_rgb_timeout_mins(value);
+    return 0;
+}
+
 qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
@@ -645,6 +663,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(314, leds_color_get, leds_color_set),
     DECLARE_SETTING(315, leds_color_get, leds_color_set),
     DECLARE_SETTING(316, leds_brightness_get, leds_brightness_set),
+    DECLARE_SETTING(317, leds_timeout_get, leds_timeout_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),
