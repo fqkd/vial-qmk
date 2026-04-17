@@ -11,6 +11,8 @@ char layer_names[DYNAMIC_KEYMAP_LAYER_COUNT][LAYER_LABEL_SIZE];
 
 __attribute__((weak)) void kb_settings_led_colors_init(void) {}
 __attribute__((weak)) void kb_settings_led_colors_reset(void) {}
+__attribute__((weak)) void kb_settings_lcd_init(void) {}
+__attribute__((weak)) void kb_settings_lcd_reset(void) {}
 __attribute__((weak)) uint8_t get_layer_rgb_color(uint8_t layer) {
     (void)layer;
     return 0;
@@ -33,6 +35,27 @@ __attribute__((weak)) void set_led_rgb_timeout_mins(uint8_t timeout_mins) {
 }
 __attribute__((weak)) uint32_t get_led_rgb_timeout_ms(void) {
     return 10 * 60 * 1000;
+}
+__attribute__((weak)) uint8_t get_lcd_brightness(void) {
+    return 10;
+}
+__attribute__((weak)) void set_lcd_brightness(uint8_t brightness) {
+    (void)brightness;
+}
+__attribute__((weak)) uint8_t get_lcd_timeout_mins(void) {
+    return 10;
+}
+__attribute__((weak)) void set_lcd_timeout_mins(uint8_t timeout_mins) {
+    (void)timeout_mins;
+}
+__attribute__((weak)) uint32_t get_lcd_timeout_ms(void) {
+    return 10 * 60 * 1000;
+}
+__attribute__((weak)) uint8_t get_split_lcd_brightness(void) {
+    return get_lcd_brightness();
+}
+__attribute__((weak)) uint32_t get_split_lcd_timeout_ms(void) {
+    return get_lcd_timeout_ms();
 }
 
 __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
@@ -60,6 +83,7 @@ void kb_settings_reset(void) {
     kb_settings_pointing_reset();
     kb_settings_hpd3_devices_reset();
     kb_settings_led_colors_reset();
+    kb_settings_lcd_reset();
     kb_settings_init();
 }
 
@@ -74,6 +98,7 @@ void kb_settings_init(void) {
     kb_settings_pointing_init();
     kb_settings_hpd3_devices_init();
     kb_settings_led_colors_init();
+    kb_settings_lcd_init();
 }
 
 #define DECLARE_SETTING_NOTIFY(id, _get, _set, _notify) {.qsid = id, .get = _get, .set = _set, .notify = _notify}
@@ -184,13 +209,13 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
     return 0;
 }
 
-#if !defined(KEYBOARD_ergohaven_hpd_rev3)
+#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
 static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
 static const uint16_t hpd3_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 #endif
 
 static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (qsid) {
         case 120:
         case 130:
@@ -227,7 +252,7 @@ static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
 #endif
 }
 
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
 static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
     switch (qsid) {
         case 124:
@@ -250,7 +275,7 @@ static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
 }
 #endif
 
-#if !defined(KEYBOARD_ergohaven_hpd_rev3)
+#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
 static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
     uint8_t best    = 0;
     uint16_t best_d = UINT16_MAX;
@@ -307,7 +332,7 @@ static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const vo
 }
 #endif
 
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
 static int modules_dpi_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t value = get_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid));
     if (maxsz < sizeof(value)) return -1;
@@ -326,7 +351,7 @@ static int modules_dpi_select_set(const qmk_settings_proto_t *proto, const void 
 
 static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t sens = 0;
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 124:
         case 127:
@@ -367,7 +392,7 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
     uint8_t sens;
     if (maxsz < sizeof(sens)) return -1;
     memcpy(&sens, setting, sizeof(sens));
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 124:
         case 127:
@@ -404,7 +429,7 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
 
 static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     bool value = false;
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 136: value = get_hpd3_side_invert_scroll(HPD3_SIDE_LEFT); break;
         case 137: value = get_hpd3_side_acceleration(HPD3_SIDE_LEFT); break;
@@ -436,7 +461,7 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
     bool value;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 136: set_hpd3_side_invert_scroll(HPD3_SIDE_LEFT, value); break;
         case 137: set_hpd3_side_acceleration(HPD3_SIDE_LEFT, value); break;
@@ -464,7 +489,7 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
 
 static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t v = 0;
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 130:
         case 131:
@@ -506,7 +531,7 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     uint8_t v;
     if (maxsz < sizeof(v)) return -1;
     memcpy(&v, setting, sizeof(v));
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
         case 130:
         case 131:
@@ -541,6 +566,119 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
 #endif
     return 0;
 }
+
+#ifdef EH_QMK_SETTINGS_SIMPLE_TOUCHPAD
+static const uint16_t simple_touchpad_cpi_table[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+
+static int simple_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t  value = 0;
+    uint16_t cpi   = get_cpi();
+    (void)proto;
+    for (uint8_t i = 0; i < ARRAY_SIZE(simple_touchpad_cpi_table); ++i) {
+        if (simple_touchpad_cpi_table[i] == cpi) {
+            value = i;
+            break;
+        }
+    }
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_touchpad_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    if (value >= ARRAY_SIZE(simple_touchpad_cpi_table)) {
+        value = ARRAY_SIZE(simple_touchpad_cpi_table) - 1;
+    }
+    set_cpi(simple_touchpad_cpi_table[value]);
+    return 0;
+}
+
+static int simple_touchpad_sens_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value;
+    switch (proto->qsid) {
+        case 121: value = get_sniper_sens(); break;
+        case 122: value = get_scroll_sens(); break;
+        case 123: value = get_text_sens(); break;
+        default: return -1;
+    }
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_touchpad_sens_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    switch (proto->qsid) {
+        case 121: set_sniper_sens(value); break;
+        case 122: set_scroll_sens(value); break;
+        case 123: set_text_sens(value); break;
+        default: return -1;
+    }
+    return 0;
+}
+
+static int simple_touchpad_flags_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = 0;
+    (void)proto;
+    value |= get_invert_scroll() ? (1 << 0) : 0;
+    value |= get_acceleration() ? (1 << 1) : 0;
+    value |= get_sticky_mode() ? (1 << 2) : 0;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_touchpad_flags_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_invert_scroll(value & (1 << 0));
+    set_acceleration(value & (1 << 1));
+    set_sticky_mode(value & (1 << 2));
+    return 0;
+}
+
+static int simple_touchpad_auto_layer_enable_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    bool value = get_hpd3_auto_mouse_enable();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_touchpad_auto_layer_enable_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    bool value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_hpd3_auto_mouse_enable(value);
+    return 0;
+}
+
+static int simple_touchpad_auto_layer_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_hpd3_auto_mouse_layer();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_touchpad_auto_layer_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_hpd3_auto_mouse_layer(value);
+    return 0;
+}
+#endif
 
 static int leds_color_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t layer = (uint8_t)(proto->qsid - 300);
@@ -596,23 +734,64 @@ static int leds_timeout_set(const qmk_settings_proto_t *proto, const void *setti
     return 0;
 }
 
+static int lcd_brightness_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_lcd_brightness();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int lcd_brightness_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_lcd_brightness(value);
+    return 0;
+}
+
+static int lcd_timeout_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_lcd_timeout_mins();
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int lcd_timeout_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    set_lcd_timeout_mins(value);
+    return 0;
+}
+
 qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     // clang-format off
     DECLARE_SETTING(100, ruen_toggle_get, ruen_toggle_set),
     DECLARE_SETTING(101, ruen_macos_get, ruen_macos_set),
     DECLARE_SETTING(102, unicode_get, unicode_set),
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     DECLARE_SETTING(120, modules_dpi_select_get, modules_dpi_select_set),
     DECLARE_SETTING(121, modules_dpi_select_get, modules_dpi_select_set),
     DECLARE_SETTING(122, modules_dpi_select_get, modules_dpi_select_set),
     DECLARE_SETTING(123, modules_dpi_select_get, modules_dpi_select_set),
 #else
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+    DECLARE_SETTING(120, simple_touchpad_dpi_get, simple_touchpad_dpi_set),
+    DECLARE_SETTING(121, simple_touchpad_sens_get, simple_touchpad_sens_set),
+    DECLARE_SETTING(122, simple_touchpad_sens_get, simple_touchpad_sens_set),
+    DECLARE_SETTING(123, simple_touchpad_sens_get, simple_touchpad_sens_set),
+#    else
     DECLARE_SETTING(120, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(121, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(122, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(123, modules_trackball_dpi_get, modules_trackball_dpi_set),
+#    endif
 #endif
-#if defined(KEYBOARD_ergohaven_hpd_rev3)
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
@@ -634,9 +813,15 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #else
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+    DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),
+    DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
+    DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
+#    else
     DECLARE_SETTING(124, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
+#    endif
     DECLARE_SETTING(127, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(128, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(129, modules_select_get, modules_select_set),
@@ -652,8 +837,13 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+    DECLARE_SETTING(142, simple_touchpad_auto_layer_enable_get, simple_touchpad_auto_layer_enable_set),
+    DECLARE_SETTING(143, simple_touchpad_auto_layer_get, simple_touchpad_auto_layer_set),
+#    else
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
+#    endif
 #endif
     DECLARE_SETTING(300, leds_color_get, leds_color_set),
     DECLARE_SETTING(301, leds_color_get, leds_color_set),
@@ -673,6 +863,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(315, leds_color_get, leds_color_set),
     DECLARE_SETTING(316, leds_brightness_get, leds_brightness_set),
     DECLARE_SETTING(317, leds_timeout_get, leds_timeout_set),
+    DECLARE_SETTING(318, lcd_brightness_get, lcd_brightness_set),
+    DECLARE_SETTING(319, lcd_timeout_get, lcd_timeout_set),
     DECLARE_SETTING(200, layer_name_get, layer_name_set),
     DECLARE_SETTING(201, layer_name_get, layer_name_set),
     DECLARE_SETTING(202, layer_name_get, layer_name_set),

@@ -9,16 +9,16 @@ KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,                         
 KC_ESC,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,                                   KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_BSLS,
 KC_TAB,   KC_A,     KC_S,     KC_D,     KC_F,     KC_G,                                   KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,
 KC_LSFT,  KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,                                   KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,  KC_RSFT,
-                    KC_LGUI,  KC_LALT,  KC_LCTL,  LOWER,    KC_SPC,             KC_ENT,   RAISE,    KC_RCTL,  KC_RALT,  KC_RGUI,
+                    KC_DEL,   KC_LGUI,  KC_LCTL,  LOWER,    KC_SPC,             KC_ENT,   RAISE,    KC_RALT,  KC_LBRC,  KC_RBRC,
                                                             KC_MUTE,            KC_MUTE
     ),
 
     [_LOWER] = LAYOUT(
 KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,                                  KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,
-KC_VOLU,  KC_MNXT,  KC_HOME,  KC_UP,    KC_END,   KC_INS,                                 _______,  KC_7,     KC_8,     KC_9,     _______,  _______,
-KC_MUTE,  KC_MPLY,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_ENT,                                 _______,  KC_4,     KC_5,     KC_6,     _______,  _______,
-KC_VOLD,  KC_MPRV,  PREVWRD,  _______,  NEXTWRD,  KC_DEL,                                 KC_PSCR,  KC_1,     KC_2,     KC_3,     _______,  _______,
-                    _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,  KC_0,     _______,
+KC_MPRV,  KC_MNXT,  KC_HOME,  KC_UP,    KC_END,   KC_INS,                                 _______,  KC_7,     KC_8,     KC_9,     _______,  KC_CAPS,
+KC_MUTE,  KC_MPLY,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_ENT,                                 _______,  KC_4,     KC_5,     KC_6,     _______,  CW_TOGG,
+KC_VOLD,  KC_VOLU,  _______,  _______,  _______,  KC_DEL,                                 KC_PSCR,  KC_1,     KC_2,     KC_3,     _______,  _______,
+                    KC_PGDN,  KC_PGUP,  _______,  _______,  _______,            _______,  _______,  _______,  KC_0,     _______,
                                                             _______,            _______
     ),
 

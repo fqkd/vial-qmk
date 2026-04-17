@@ -1,7 +1,7 @@
 // Copyright 2022 Ergohaven (@ergohaven)
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "rev3.h"
+#include "rev1.h"
 
 bool vial_unlock_combo_active(void) {
     const bool left_unlock  = matrix_is_on(1, 5) && matrix_is_on(1, 4);  // Esc + Q

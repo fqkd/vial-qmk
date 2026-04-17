@@ -45,6 +45,6 @@ SRC += keyboards/ergohaven/src/eh_settings.c
 SRC += keyboards/ergohaven/src/eh_ruen.c
 SRC += keyboards/ergohaven/hid.c
 SRC += keyboards/ergohaven/src/eh_pointing.c
-SRC += keyboards/ergohaven/hpd/rev3/pointing.c
+SRC += keyboards/ergohaven/phenom/rev1/pointing.c
 SRC += drivers/sensors/azoteq_iqs5xx.c
 SRC += drivers/sensors/pmw3610.c

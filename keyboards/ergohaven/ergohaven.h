@@ -7,6 +7,10 @@
 #    define EH_SHORT_PRODUCT_NAME PRODUCT
 #endif
 
+#if defined(KEYBOARD_ergohaven_hpd_rev3) || defined(KEYBOARD_ergohaven_phenom_rev1)
+#    define EH_KEYBOARD_SPLIT_POINTING_V2
+#endif
+
 #define _BASE 0
 #define _LOWER 1
 #define _RAISE 2

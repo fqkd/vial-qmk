@@ -1,5 +1,7 @@
 #pragma once
 
+#define EH_SHORT_PRODUCT_NAME "Phenom"
+
 #define BOOTMAGIC_LITE_ROW          0
 #define BOOTMAGIC_LITE_COLUMN       0
 #define BOOTMAGIC_LITE_ROW_RIGHT    6

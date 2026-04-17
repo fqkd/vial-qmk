@@ -18,28 +18,28 @@ static const eh_rgb_palette_color_t eh_rgb_palette[EH_RGB_PALETTE_SIZE] = {
     {0, 0, 0},        // Off
     {0, 0, 255},      // White
     {0, 255, 255},    // Red
-    {21, 255, 255},   // Orange
-    {30, 255, 255},   // Goldenrod
-    {43, 255, 255},   // Gold
-    {64, 255, 255},   // Yellow
-    {85, 255, 255},   // Chartreuse
-    {96, 255, 255},   // Lime
-    {128, 255, 255},  // Green
-    {106, 255, 255},  // Spring Green
-    {117, 255, 255},  // Turquoise
-    {128, 255, 170},  // Teal
-    {128, 255, 255},  // Cyan
-    {149, 255, 255},  // Azure
-    {160, 255, 255},  // Sky
+    {16, 255, 255},   // Orange
+    {27, 255, 255},   // Goldenrod
+    {38, 255, 255},   // Gold
+    {53, 255, 255},   // Yellow
+    {74, 255, 255},   // Chartreuse
+    {90, 255, 255},   // Lime
+    {106, 255, 255},  // Green
+    {117, 255, 255},  // Spring Green
+    {128, 255, 255},  // Turquoise
+    {138, 255, 170},  // Teal
+    {149, 255, 255},  // Cyan
+    {160, 255, 255},  // Azure
+    {165, 255, 255},  // Sky
     {170, 255, 255},  // Blue
-    {191, 255, 255},  // Indigo
-    {191, 255, 255},  // Purple
+    {186, 255, 255},  // Indigo
+    {202, 255, 255},  // Purple
     {213, 255, 255},  // Magenta
     {234, 180, 255},  // Pink
-    {11, 176, 255},   // Coral
-    {15, 128, 255},   // Salmon
+    {8, 176, 255},    // Coral
+    {14, 128, 255},   // Salmon
     {32, 64, 255},    // Warm White
-    {16, 255, 255},   // Amber
+    {22, 255, 255},   // Amber
 };
 
 static rgblight_segment_t layer_segments[EH_RGB_LAYER_COUNT][2] = {
@@ -70,7 +70,11 @@ static const rgblight_segment_t *const my_rgb_layers[] = {
 
 static kb_settings_led_colors_t get_settings_led_colors_default(void) {
     kb_settings_led_colors_t dflt = {
+#if defined(KEYBOARD_ergohaven_phenom_rev1)
+        .layer_color  = {1, 2, 16, 24, 6, 8, 10, 11, 15, 19, 20, 21, 22, 23, 3, 17},
+#else
         .layer_color  = {1, 2, 16, 4, 9, 18, 16, 20, 10, 6, 12, 3, 14, 7, 21, 5},
+#endif
         .brightness   = 128,
         .timeout_mins = 10,
     };
@@ -117,6 +121,9 @@ void set_settings_led_colors(kb_settings_led_colors_t config) {
     kb_settings_led_colors_update(config);
     ergohaven_rgb_refresh_layer_colors();
     layer_state_set_rgb(layer_state | default_layer_state);
+    if (get_led_rgb_brightness() > 0) {
+        rgb_on();
+    }
 }
 
 uint8_t get_layer_rgb_color(uint8_t layer) {
@@ -136,6 +143,11 @@ void set_led_rgb_brightness(uint8_t brightness) {
     kb_settings_led_colors_update(new_config);
     ergohaven_rgb_refresh_layer_colors();
     layer_state_set_rgb(layer_state | default_layer_state);
+    if (brightness > 0) {
+        rgb_on();
+    } else {
+        rgb_off();
+    }
 }
 
 uint8_t get_led_rgb_timeout_mins(void) {
@@ -175,9 +187,13 @@ void set_layer_rgb_color(uint8_t layer, uint8_t color) {
     kb_settings_led_colors_update(new_config);
     ergohaven_rgb_refresh_layer_colors();
     layer_state_set_rgb(layer_state | default_layer_state);
+    if (get_led_rgb_brightness() > 0) {
+        rgb_on();
+    }
 }
 
 void keyboard_post_init_rgb(void) {
+    rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), 255);
     ergohaven_rgb_refresh_layer_colors();
     rgblight_layers = my_rgb_layers;
     layer_state_set_rgb(layer_state | default_layer_state);
@@ -195,6 +211,7 @@ static bool is_rgb_on = false;
 void rgb_on(void) {
     if (!is_rgb_on) {
         rgblight_wakeup();
+        rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), 255);
         is_rgb_on = true;
     }
 }

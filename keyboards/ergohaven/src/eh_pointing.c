@@ -1,11 +1,21 @@
 #include "src/eh_pointing.h"
 #include "quantum.h"
 #include "hid.h"
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+#    include "pointing_device_auto_mouse.h"
+#endif
 #include <string.h>
 
 static kb_settings_pointing_t kb_settings_pointing;
 static kb_settings_hpd3_devices_t kb_settings_hpd3_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
+
+static void apply_auto_mouse_settings(void) {
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    set_auto_mouse_enable(get_hpd3_auto_mouse_enable());
+    set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
+#endif
+}
 
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
 static_assert(KB_SETTINGS_HPD3_DEVICES_SIZE == sizeof(kb_settings_hpd3_devices_t), "Invalid KB_SETTINGS_HPD3_DEVICES_SIZE");
@@ -42,7 +52,20 @@ kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
     return dflt;
 }
 
+static bool config_all_zero(const void *data, size_t size) {
+    const uint8_t *bytes = (const uint8_t *)data;
+    for (size_t i = 0; i < size; ++i) {
+        if (bytes[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static kb_settings_hpd3_devices_t kb_settings_hpd3_devices_sanitize(kb_settings_hpd3_devices_t config) {
+    if (config_all_zero(&config, sizeof(config))) {
+        return get_settings_hpd3_devices_default();
+    }
     if (config.auto_mouse_enable > 1) {
         config.auto_mouse_enable = true;
     }
@@ -61,6 +84,7 @@ static void kb_settings_hpd3_devices_update(kb_settings_hpd3_devices_t new_confi
         kb_settings_hpd3_devices = new_config;
         eeconfig_update_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
     }
+    apply_auto_mouse_settings();
 }
 
 void set_settings_hpd3_devices(kb_settings_hpd3_devices_t config) {
@@ -68,8 +92,13 @@ void set_settings_hpd3_devices(kb_settings_hpd3_devices_t config) {
 }
 
 void kb_settings_hpd3_devices_init(void) {
-    eeconfig_read_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
-    kb_settings_hpd3_devices = kb_settings_hpd3_devices_sanitize(kb_settings_hpd3_devices);
+    kb_settings_hpd3_devices_t stored;
+    eeconfig_read_kb_datablock(&stored, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(stored));
+    kb_settings_hpd3_devices = kb_settings_hpd3_devices_sanitize(stored);
+    if (memcmp(&stored, &kb_settings_hpd3_devices, sizeof(stored)) != 0) {
+        eeconfig_update_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+    }
+    apply_auto_mouse_settings();
 }
 
 void kb_settings_hpd3_devices_reset(void) {
@@ -222,12 +251,25 @@ void set_hpd3_auto_mouse_layer(uint8_t layer) {
     kb_settings_hpd3_devices_update(new_config);
 }
 
-void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
+static uint16_t apply_pointing_cpi(uint16_t cpi) {
 #if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
-    if (new_config.dpi != kb_settings_pointing.dpi) {
-        pointing_device_set_cpi(new_config.dpi);
+    uint16_t actual_dpi = cpi;
+    for (int i = 0; i < 5; ++i) { // bug in touchpad driver
+        pointing_device_set_cpi(cpi);
+        actual_dpi = pointing_device_get_cpi();
+        dprintf("set dpi=%d actual dpi=%d\n", cpi, actual_dpi);
+        if (actual_dpi == cpi) break;
     }
+    return actual_dpi;
+#else
+    return cpi;
 #endif
+}
+
+void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
+    if (new_config.dpi != kb_settings_pointing.dpi) {
+        new_config.dpi = apply_pointing_cpi(new_config.dpi);
+    }
     if (new_config.raw != kb_settings_pointing.raw) {
         kb_settings_pointing = new_config;
         dprintf("dpi=%d s1=%d s2=%d s3=%d acc=%d inv=%d\n", kb_settings_pointing.dpi, kb_settings_pointing.sens[1], kb_settings_pointing.sens[2], kb_settings_pointing.sens[3], kb_settings_pointing.acceleration, kb_settings_pointing.invert_scroll);
@@ -237,10 +279,18 @@ void kb_settings_pointing_update(kb_settings_pointing_t new_config) {
 
 void kb_settings_pointing_init(void) {
     eeconfig_read_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+    if (config_all_zero(&kb_settings_pointing, sizeof(kb_settings_pointing)) || kb_settings_pointing.dpi < 100 || kb_settings_pointing.dpi > 10000) {
+        kb_settings_pointing = get_settings_pointing_default();
+        eeconfig_update_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+    }
     pointing_mode = kb_settings_pointing.mode;
-#if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
-    pointing_device_set_cpi(kb_settings_pointing.dpi);
-#endif
+    {
+        uint16_t actual_dpi = apply_pointing_cpi(kb_settings_pointing.dpi);
+        if (actual_dpi != kb_settings_pointing.dpi) {
+            kb_settings_pointing.dpi = actual_dpi;
+            eeconfig_update_kb_datablock(&kb_settings_pointing, KB_SETTINGS_POINTING_OFFSET, sizeof(kb_settings_pointing_t));
+        }
+    }
     dprintf("dpi=%d s1=%d s2=%d s3=%d acc=%d inv=%d\n", kb_settings_pointing.dpi, kb_settings_pointing.sens[1], kb_settings_pointing.sens[2], kb_settings_pointing.sens[3], kb_settings_pointing.acceleration, kb_settings_pointing.invert_scroll);
 }
 
@@ -248,18 +298,16 @@ void kb_settings_pointing_reset(void) {
     kb_settings_pointing_update(get_settings_pointing_default());
 }
 
-void set_cpi(uint16_t cpi) {
-#if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
-    uint16_t actual_dpi;
-    for (int i = 0; i < 5; ++i) { // bug in touchpad driver
-        pointing_device_set_cpi(cpi);
-        actual_dpi = pointing_device_get_cpi();
-        dprintf("set dpi=%d actual dpi=%d\n", cpi, actual_dpi);
-        if (actual_dpi == cpi) break;
-    }
-    cpi = actual_dpi;
-#endif
+kb_settings_pointing_t get_settings_pointing(void) {
+    return kb_settings_pointing;
+}
 
+void set_settings_pointing(kb_settings_pointing_t config) {
+    kb_settings_pointing_update(config);
+    pointing_mode = kb_settings_pointing.mode;
+}
+
+void set_cpi(uint16_t cpi) {
     kb_settings_pointing_t new_config = kb_settings_pointing;
     new_config.dpi                    = cpi;
     kb_settings_pointing_update(new_config);
@@ -398,6 +446,7 @@ void set_pointing_mode(pointing_mode_t mode) {
         pointing_mode = mode;
         if (is_hid_active()) {
             hid_send_pointing_mode(mode);
+#if !defined(KEYBOARD_ergohaven_k03pro_rev1) && !defined(KEYBOARD_ergohaven_k03pro_rev2)
         } else if (get_led_blinks()) {
             switch (pointing_mode) {
                 case POINTING_MODE_NORMAL:
@@ -502,13 +551,14 @@ void set_pointing_mode(pointing_mode_t mode) {
                 default:
                     break;
             }
+#endif
         }
     }
 }
 
 bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-#ifdef KEYBOARD_ergohaven_hpd_rev3
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
         case EH_SCR:
         case EH_TXT:
         case EH_SNP:

@@ -513,7 +513,7 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
         case EH_LED_BL:
             sprintf(buf, "Led\nBlnk");
             return true;
-#ifdef KEYBOARD_ergohaven_hpd_rev3
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
         case EH_SNP:
             sprintf(buf, "Left\nSnpr");
             return true;

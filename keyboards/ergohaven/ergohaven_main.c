@@ -3,6 +3,9 @@
 #include "src/eh_ruen.h"
 #include "src/oled/eh_oled.h"
 #include "ergohaven_rgb.h"
+#ifdef EH_SYNC_LED_COLORS
+#    include "transactions.h"
+#endif
 #include "src/display/eh_display.h"
 #include "src/eh_pointing.h"
 #include "hid.h"
@@ -16,6 +19,21 @@ float caps_sound[][2] = SONG(CAPS_LOCK_ON_SOUND);
 
 bool     is_alt_tab_active = false;
 uint16_t alt_tab_timer     = 0;
+
+#ifdef EH_SYNC_LED_COLORS
+static kb_settings_led_colors_t synced_led_colors;
+static bool synced_led_colors_valid = false;
+
+static void sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+    (void)out_len;
+    (void)out_data;
+    if (in_len == sizeof(kb_settings_led_colors_t) && in_data != NULL) {
+        kb_settings_led_colors_t value;
+        memcpy(&value, in_data, sizeof(value));
+        set_settings_led_colors(value);
+    }
+}
+#endif
 
 bool pre_process_record_kb(uint16_t keycode, keyrecord_t* record) {
     return pre_process_record_ruen(keycode, record) && pre_process_record_user(keycode, record);
@@ -225,6 +243,10 @@ void keyboard_post_init_kb(void) {
 #ifdef RGBLIGHT_ENABLE
     keyboard_post_init_rgb();
 #endif
+#ifdef EH_SYNC_LED_COLORS
+    transaction_register_rpc(RPC_SYNC_LED_COLORS, sync_led_colors_rpc);
+    synced_led_colors_valid = false;
+#endif
     keyboard_post_init_hid();
     keyboard_post_init_user();
 }
@@ -284,6 +306,21 @@ void housekeeping_task_kb(void) {
         rgb_on();
 #endif
     }
+
+#ifdef EH_SYNC_LED_COLORS
+    {
+        static uint32_t last_led_sync = 0;
+        if (is_keyboard_master() && timer_elapsed32(last_led_sync) >= 100) {
+            last_led_sync = timer_read32();
+            kb_settings_led_colors_t led_colors = get_settings_led_colors();
+            if (!synced_led_colors_valid || memcmp(&synced_led_colors, &led_colors, sizeof(led_colors)) != 0) {
+                transaction_rpc_send(RPC_SYNC_LED_COLORS, sizeof(led_colors), &led_colors);
+                synced_led_colors = led_colors;
+                synced_led_colors_valid = true;
+            }
+        }
+    }
+#endif
 
 #if defined(OLED_ENABLE) && defined(SPLIT_KEYBOARD)
     housekeeping_task_split_oled();
