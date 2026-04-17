@@ -35,6 +35,41 @@ static void sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint8_t out
 }
 #endif
 
+#if defined(SPLIT_KEYBOARD) && defined(VIAL_ENABLE) && defined(VIAL_UNLOCK_COMBO_ROWS) && defined(VIAL_UNLOCK_COMBO_COLS)
+static const uint8_t ergohaven_vial_unlock_combo_rows[] = VIAL_UNLOCK_COMBO_ROWS;
+static const uint8_t ergohaven_vial_unlock_combo_cols[] = VIAL_UNLOCK_COMBO_COLS;
+#define ERGOHAVEN_VIAL_UNLOCK_NUM_KEYS ((uint8_t)(sizeof(ergohaven_vial_unlock_combo_rows) / sizeof(ergohaven_vial_unlock_combo_rows[0])))
+
+static uint8_t ergohaven_vial_unlock_row_for_current_side(uint8_t row) {
+    if (is_keyboard_left()) {
+        return row;
+    }
+    return row + MATRIX_ROWS / 2;
+}
+
+bool vial_unlock_combo_active(void) {
+    bool holding = true;
+    for (uint8_t i = 0; i < ERGOHAVEN_VIAL_UNLOCK_NUM_KEYS; ++i) {
+        if (!matrix_is_on(ergohaven_vial_unlock_row_for_current_side(ergohaven_vial_unlock_combo_rows[i]), ergohaven_vial_unlock_combo_cols[i])) {
+            holding = false;
+            break;
+        }
+    }
+    return holding;
+}
+
+void vial_get_unlock_combo_coords(uint8_t *rows, uint8_t *cols, size_t count) {
+    if (count < ERGOHAVEN_VIAL_UNLOCK_NUM_KEYS) {
+        return;
+    }
+
+    for (uint8_t i = 0; i < ERGOHAVEN_VIAL_UNLOCK_NUM_KEYS; ++i) {
+        rows[i] = ergohaven_vial_unlock_row_for_current_side(ergohaven_vial_unlock_combo_rows[i]);
+        cols[i] = ergohaven_vial_unlock_combo_cols[i];
+    }
+}
+#endif
+
 bool pre_process_record_kb(uint16_t keycode, keyrecord_t* record) {
     return pre_process_record_ruen(keycode, record) && pre_process_record_user(keycode, record);
 }

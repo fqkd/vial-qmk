@@ -25,4 +25,3 @@ RAW_ENABLE = yes
 
 SRC += keyboards/ergohaven/src/eh_pointing.c
 SRC += keyboards/ergohaven/hid.c
-AUTO_SHIFT_ENABLE = yes
