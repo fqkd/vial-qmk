@@ -142,6 +142,7 @@ void set_led_rgb_brightness(uint8_t brightness) {
     new_config.brightness               = brightness;
     kb_settings_led_colors_update(new_config);
     ergohaven_rgb_refresh_layer_colors();
+    rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), brightness);
     layer_state_set_rgb(layer_state | default_layer_state);
     if (brightness > 0) {
         rgb_on();
@@ -193,7 +194,7 @@ void set_layer_rgb_color(uint8_t layer, uint8_t color) {
 }
 
 void keyboard_post_init_rgb(void) {
-    rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), 255);
+    rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), get_led_rgb_brightness());
     ergohaven_rgb_refresh_layer_colors();
     rgblight_layers = my_rgb_layers;
     layer_state_set_rgb(layer_state | default_layer_state);
@@ -211,7 +212,7 @@ static bool is_rgb_on = false;
 void rgb_on(void) {
     if (!is_rgb_on) {
         rgblight_wakeup();
-        rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), 255);
+        rgblight_sethsv_noeeprom(rgblight_get_hue(), rgblight_get_sat(), get_led_rgb_brightness());
         is_rgb_on = true;
     }
 }
