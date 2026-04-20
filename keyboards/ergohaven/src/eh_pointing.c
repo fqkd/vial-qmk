@@ -1,6 +1,9 @@
 #include "src/eh_pointing.h"
 #include "quantum.h"
 #include "hid.h"
+#ifdef RGBLIGHT_ENABLE
+#    include "ergohaven_rgb.h"
+#endif
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 #    include "pointing_device_auto_mouse.h"
 #endif
@@ -12,8 +15,15 @@ pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
 static void apply_auto_mouse_settings(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
-    set_auto_mouse_enable(get_hpd3_auto_mouse_enable());
+    bool enable = get_hpd3_auto_mouse_enable();
+    if (!enable) {
+        auto_mouse_layer_off();
+    }
+    set_auto_mouse_enable(enable);
     set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
+#    ifdef RGBLIGHT_ENABLE
+    layer_state_set_rgb(layer_state | default_layer_state);
+#    endif
 #endif
 }
 

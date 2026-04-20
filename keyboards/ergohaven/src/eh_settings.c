@@ -209,7 +209,7 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
     return 0;
 }
 
-#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) && !defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
 static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
 static const uint16_t hpd3_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 #endif
@@ -275,7 +275,7 @@ static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
 }
 #endif
 
-#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+#if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) && !defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
 static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
     uint8_t best    = 0;
     uint16_t best_d = UINT16_MAX;
@@ -567,15 +567,26 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     return 0;
 }
 
+#if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
 #ifdef EH_QMK_SETTINGS_SIMPLE_TOUCHPAD
 static const uint16_t simple_touchpad_cpi_table[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+#else
+static const uint16_t simple_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
+#endif
 
 static int simple_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t  value = 0;
     uint16_t cpi   = get_cpi();
     (void)proto;
-    for (uint8_t i = 0; i < ARRAY_SIZE(simple_touchpad_cpi_table); ++i) {
-        if (simple_touchpad_cpi_table[i] == cpi) {
+#ifdef EH_QMK_SETTINGS_SIMPLE_TOUCHPAD
+    const uint16_t *cpi_table = simple_touchpad_cpi_table;
+    const uint8_t cpi_table_size = ARRAY_SIZE(simple_touchpad_cpi_table);
+#else
+    const uint16_t *cpi_table = simple_trackball_cpi_table;
+    const uint8_t cpi_table_size = ARRAY_SIZE(simple_trackball_cpi_table);
+#endif
+    for (uint8_t i = 0; i < cpi_table_size; ++i) {
+        if (cpi_table[i] == cpi) {
             value = i;
             break;
         }
@@ -590,10 +601,17 @@ static int simple_touchpad_dpi_set(const qmk_settings_proto_t *proto, const void
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    if (value >= ARRAY_SIZE(simple_touchpad_cpi_table)) {
-        value = ARRAY_SIZE(simple_touchpad_cpi_table) - 1;
+#ifdef EH_QMK_SETTINGS_SIMPLE_TOUCHPAD
+    const uint16_t *cpi_table = simple_touchpad_cpi_table;
+    const uint8_t cpi_table_size = ARRAY_SIZE(simple_touchpad_cpi_table);
+#else
+    const uint16_t *cpi_table = simple_trackball_cpi_table;
+    const uint8_t cpi_table_size = ARRAY_SIZE(simple_trackball_cpi_table);
+#endif
+    if (value >= cpi_table_size) {
+        value = cpi_table_size - 1;
     }
-    set_cpi(simple_touchpad_cpi_table[value]);
+    set_cpi(cpi_table[value]);
     return 0;
 }
 
@@ -779,7 +797,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(122, modules_dpi_select_get, modules_dpi_select_set),
     DECLARE_SETTING(123, modules_dpi_select_get, modules_dpi_select_set),
 #else
-#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
     DECLARE_SETTING(120, simple_touchpad_dpi_get, simple_touchpad_dpi_set),
     DECLARE_SETTING(121, simple_touchpad_sens_get, simple_touchpad_sens_set),
     DECLARE_SETTING(122, simple_touchpad_sens_get, simple_touchpad_sens_set),
@@ -813,7 +831,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #else
-#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
     DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
@@ -837,7 +855,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
-#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD)
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
     DECLARE_SETTING(142, simple_touchpad_auto_layer_enable_get, simple_touchpad_auto_layer_enable_set),
     DECLARE_SETTING(143, simple_touchpad_auto_layer_get, simple_touchpad_auto_layer_set),
 #    else

@@ -35,6 +35,33 @@ static void sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint8_t out
 }
 #endif
 
+#ifdef EH_SYNC_POINTING_SETTINGS
+static kb_settings_pointing_t synced_pointing_settings;
+static bool synced_pointing_settings_valid = false;
+static kb_settings_hpd3_devices_t synced_hpd3_devices;
+static bool synced_hpd3_devices_valid = false;
+
+static void sync_pointing_settings_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+    (void)out_len;
+    (void)out_data;
+    if (in_len == sizeof(kb_settings_pointing_t) && in_data != NULL) {
+        kb_settings_pointing_t value;
+        memcpy(&value, in_data, sizeof(value));
+        set_settings_pointing(value);
+    }
+}
+
+static void sync_hpd3_devices_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+    (void)out_len;
+    (void)out_data;
+    if (in_len == sizeof(kb_settings_hpd3_devices_t) && in_data != NULL) {
+        kb_settings_hpd3_devices_t value;
+        memcpy(&value, in_data, sizeof(value));
+        set_settings_hpd3_devices(value);
+    }
+}
+#endif
+
 #if defined(SPLIT_KEYBOARD) && defined(VIAL_ENABLE) && defined(VIAL_UNLOCK_COMBO_ROWS) && defined(VIAL_UNLOCK_COMBO_COLS)
 static const uint8_t ergohaven_vial_unlock_combo_rows[] = VIAL_UNLOCK_COMBO_ROWS;
 static const uint8_t ergohaven_vial_unlock_combo_cols[] = VIAL_UNLOCK_COMBO_COLS;
@@ -282,6 +309,12 @@ void keyboard_post_init_kb(void) {
     transaction_register_rpc(RPC_SYNC_LED_COLORS, sync_led_colors_rpc);
     synced_led_colors_valid = false;
 #endif
+#ifdef EH_SYNC_POINTING_SETTINGS
+    transaction_register_rpc(RPC_SYNC_POINTING_SETTINGS, sync_pointing_settings_rpc);
+    transaction_register_rpc(RPC_SYNC_HPD3_DEVICES, sync_hpd3_devices_rpc);
+    synced_pointing_settings_valid = false;
+    synced_hpd3_devices_valid      = false;
+#endif
     keyboard_post_init_hid();
     keyboard_post_init_user();
 }
@@ -352,6 +385,28 @@ void housekeeping_task_kb(void) {
                 transaction_rpc_send(RPC_SYNC_LED_COLORS, sizeof(led_colors), &led_colors);
                 synced_led_colors = led_colors;
                 synced_led_colors_valid = true;
+            }
+        }
+    }
+#endif
+#ifdef EH_SYNC_POINTING_SETTINGS
+    {
+        static uint32_t last_pointing_sync = 0;
+        if (is_keyboard_master() && timer_elapsed32(last_pointing_sync) >= 100) {
+            last_pointing_sync = timer_read32();
+
+            kb_settings_pointing_t pointing_settings = get_settings_pointing();
+            if (!synced_pointing_settings_valid || memcmp(&synced_pointing_settings, &pointing_settings, sizeof(pointing_settings)) != 0) {
+                transaction_rpc_send(RPC_SYNC_POINTING_SETTINGS, sizeof(pointing_settings), &pointing_settings);
+                synced_pointing_settings = pointing_settings;
+                synced_pointing_settings_valid = true;
+            }
+
+            kb_settings_hpd3_devices_t hpd3_devices = get_settings_hpd3_devices();
+            if (!synced_hpd3_devices_valid || memcmp(&synced_hpd3_devices, &hpd3_devices, sizeof(hpd3_devices)) != 0) {
+                transaction_rpc_send(RPC_SYNC_HPD3_DEVICES, sizeof(hpd3_devices), &hpd3_devices);
+                synced_hpd3_devices = hpd3_devices;
+                synced_hpd3_devices_valid = true;
             }
         }
     }

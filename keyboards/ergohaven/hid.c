@@ -152,7 +152,7 @@ static bool process_via_custom_lighting(uint8_t *data, uint8_t length) {
     return false;
 }
 
-#if (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY)) && defined(SPLIT_KEYBOARD)
+#if defined(SPLIT_KEYBOARD) && (defined(OLED_ENABLE) || defined(EH_HAS_DISPLAY) || defined(EH_FORCE_SPLIT_HID_SYNC))
 #    include "transactions.h"
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
@@ -166,7 +166,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 }
 
 void hid_sync(uint8_t in_buflen, const void *in_data, uint8_t out_buflen, void *out_data) {
-    process_raw_hid_data((uint8_t *)in_data, out_buflen);
+    (void)out_buflen;
+    (void)out_data;
+    process_raw_hid_data((uint8_t *)in_data, in_buflen);
 }
 
 void keyboard_post_init_hid(void) {
