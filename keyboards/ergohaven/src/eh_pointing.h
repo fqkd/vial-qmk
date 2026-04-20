@@ -67,6 +67,7 @@ typedef union {
 // should override if needed
 kb_settings_pointing_t get_settings_pointing_default(void);
 kb_settings_pointing_t get_settings_pointing(void);
+void kb_settings_pointing_update(kb_settings_pointing_t new_config);
 void set_settings_pointing(kb_settings_pointing_t config);
 
 bool process_record_pointing(uint16_t keycode, keyrecord_t *record);

@@ -16,9 +16,7 @@ pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 static void apply_auto_mouse_settings(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     bool enable = get_hpd3_auto_mouse_enable();
-    if (!enable) {
-        auto_mouse_layer_off();
-    }
+    auto_mouse_layer_off();
     set_auto_mouse_enable(enable);
     set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
 #    ifdef RGBLIGHT_ENABLE
@@ -315,6 +313,8 @@ kb_settings_pointing_t get_settings_pointing(void) {
 void set_settings_pointing(kb_settings_pointing_t config) {
     kb_settings_pointing_update(config);
     pointing_mode = kb_settings_pointing.mode;
+    apply_pointing_cpi(kb_settings_pointing.dpi);
+    apply_auto_mouse_settings();
 }
 
 void set_cpi(uint16_t cpi) {
@@ -692,16 +692,12 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     static uint16_t kc_left  = KC_LEFT;
     static uint16_t kc_right = KC_RIGHT;
 #ifdef EH_HPD_LAYERS
-    static uint8_t cur_layer = 255;
-    uint8_t        layer     = get_current_layer();
-    if (cur_layer != layer) {
-        kc_up     = dynamic_keymap_get_keycode(layer, 11, 0);
-        kc_left   = dynamic_keymap_get_keycode(layer, 11, 1);
-        kc_right  = dynamic_keymap_get_keycode(layer, 11, 2);
-        kc_down   = dynamic_keymap_get_keycode(layer, 11, 3);
-        cur_layer = layer;
-    }
-    if (kc_up != kc_down || kc_up != kc_left || kc_up != kc_right || kc_up != KC_NO) {
+    uint8_t layer = get_current_layer();
+    kc_up         = dynamic_keymap_get_keycode(layer, 11, 0);
+    kc_left       = dynamic_keymap_get_keycode(layer, 11, 1);
+    kc_right      = dynamic_keymap_get_keycode(layer, 11, 2);
+    kc_down       = dynamic_keymap_get_keycode(layer, 11, 3);
+    if ((kc_up != KC_NO && kc_up != KC_TRNS) || (kc_down != KC_NO && kc_down != KC_TRNS) || (kc_left != KC_NO && kc_left != KC_TRNS) || (kc_right != KC_NO && kc_right != KC_TRNS)) {
         pmode = POINTING_MODE_TEXT;
     }
 #endif
@@ -720,6 +716,8 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
 
         mrpt.x = 0;
         mrpt.y = 0;
+        mrpt.h = 0;
+        mrpt.v = 0;
 
         if (shift_x == 0 && shift_y == 0) return mrpt;
 

@@ -2,6 +2,9 @@
 #include "eh_ruen.h"
 #include "eh_pointing.h"
 #include "ergohaven_rgb.h"
+#ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
+#    include "drivers/sensors/analog_joystick.h"
+#endif
 #include <eeconfig.h>
 #include <debug.h>
 #include <qmk_settings.h>
@@ -97,6 +100,11 @@ void kb_settings_init(void) {
     kb_settings_layer_labels_init();
     kb_settings_pointing_init();
     kb_settings_hpd3_devices_init();
+#ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
+    maxCursorSpeed = get_settings_pointing().sens[POINTING_MODE_NORMAL] ? get_settings_pointing().sens[POINTING_MODE_NORMAL] : ANALOG_JOYSTICK_SPEED_MAX;
+    uint8_t joystick_regulator = (get_settings_pointing().dpi >= 101 && get_settings_pointing().dpi <= 150) ? (uint8_t)(get_settings_pointing().dpi - 100) : ANALOG_JOYSTICK_SPEED_REGULATOR;
+    speedRegulator = joystick_regulator;
+#endif
     kb_settings_led_colors_init();
     kb_settings_lcd_init();
 }
@@ -310,7 +318,7 @@ static const uint16_t *hpd3_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
     }
 }
 
-static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+__attribute__((unused)) static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     size_t count = 0;
     const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
     if (!table) return -1;
@@ -320,7 +328,7 @@ static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *se
     return 0;
 }
 
-static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+__attribute__((unused)) static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
     size_t count = 0;
     const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
     if (!table) return -1;
@@ -567,14 +575,14 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
     return 0;
 }
 
-#if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
+#if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
 #ifdef EH_QMK_SETTINGS_SIMPLE_TOUCHPAD
 static const uint16_t simple_touchpad_cpi_table[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 #else
 static const uint16_t simple_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
 #endif
 
-static int simple_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+__attribute__((unused)) static int simple_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     uint8_t  value = 0;
     uint16_t cpi   = get_cpi();
     (void)proto;
@@ -596,7 +604,7 @@ static int simple_touchpad_dpi_get(const qmk_settings_proto_t *proto, void *sett
     return 0;
 }
 
-static int simple_touchpad_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+__attribute__((unused)) static int simple_touchpad_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
     uint8_t value;
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
@@ -696,6 +704,51 @@ static int simple_touchpad_auto_layer_set(const qmk_settings_proto_t *proto, con
     set_hpd3_auto_mouse_layer(value);
     return 0;
 }
+#endif
+
+#ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
+static int simple_joystick_speed_max_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_settings_pointing().sens[POINTING_MODE_NORMAL] ? get_settings_pointing().sens[POINTING_MODE_NORMAL] : ANALOG_JOYSTICK_SPEED_MAX;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_joystick_speed_max_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    if (value < 1) value = 1;
+    kb_settings_pointing_t config = get_settings_pointing();
+    config.sens[POINTING_MODE_NORMAL] = value;
+    kb_settings_pointing_update(config);
+    maxCursorSpeed = value;
+    return 0;
+}
+
+static int simple_joystick_regulator_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = (get_settings_pointing().dpi >= 101 && get_settings_pointing().dpi <= 150) ? (uint8_t)(get_settings_pointing().dpi - 100) : ANALOG_JOYSTICK_SPEED_REGULATOR;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_joystick_regulator_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    if (value < 1) value = 1;
+    kb_settings_pointing_t config = get_settings_pointing();
+    config.dpi = (uint16_t)(100 + value);
+    kb_settings_pointing_update(config);
+    speedRegulator = value;
+    return 0;
+}
+
 #endif
 
 static int leds_color_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
@@ -802,6 +855,10 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(121, simple_touchpad_sens_get, simple_touchpad_sens_set),
     DECLARE_SETTING(122, simple_touchpad_sens_get, simple_touchpad_sens_set),
     DECLARE_SETTING(123, simple_touchpad_sens_get, simple_touchpad_sens_set),
+#    elif defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
+    DECLARE_SETTING(121, simple_touchpad_sens_get, simple_touchpad_sens_set),
+    DECLARE_SETTING(122, simple_touchpad_sens_get, simple_touchpad_sens_set),
+    DECLARE_SETTING(123, simple_touchpad_sens_get, simple_touchpad_sens_set),
 #    else
     DECLARE_SETTING(120, modules_trackball_dpi_get, modules_trackball_dpi_set),
     DECLARE_SETTING(121, modules_trackball_dpi_get, modules_trackball_dpi_set),
@@ -831,7 +888,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
 #else
-#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),
     DECLARE_SETTING(125, modules_sens_get, modules_sens_set),
     DECLARE_SETTING(126, modules_sens_get, modules_sens_set),
@@ -855,9 +912,13 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(139, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(140, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
-#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
+#    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(142, simple_touchpad_auto_layer_enable_get, simple_touchpad_auto_layer_enable_set),
     DECLARE_SETTING(143, simple_touchpad_auto_layer_get, simple_touchpad_auto_layer_set),
+#        if defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
+    DECLARE_SETTING(144, simple_joystick_speed_max_get, simple_joystick_speed_max_set),
+    DECLARE_SETTING(145, simple_joystick_regulator_get, simple_joystick_regulator_set),
+#        endif
 #    else
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
