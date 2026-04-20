@@ -1,6 +1,7 @@
 {
     "name": "Joystick settings",
     "fields": [
+        { "type": "select", "title": "Joystick mode", "qsid": 146, "variants": ["Cursor", "Buttons"] },
         { "type": "integer", "title": "Joystick max speed", "qsid": 144, "min": 1, "max": 20, "width": 1 },
         { "type": "integer", "title": "Joystick regulator", "qsid": 145, "min": 1, "max": 50, "width": 1 },
         { "type": "integer", "title": "Sniper sens", "qsid": 121, "min": 1, "max": 255, "width": 1 },

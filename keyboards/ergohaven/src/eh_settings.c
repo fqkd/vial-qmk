@@ -749,6 +749,25 @@ static int simple_joystick_regulator_set(const qmk_settings_proto_t *proto, cons
     return 0;
 }
 
+static int simple_joystick_mode_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
+    uint8_t value = get_settings_pointing().mode == POINTING_MODE_TEXT ? 1 : 0;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(setting, &value, sizeof(value));
+    return 0;
+}
+
+static int simple_joystick_mode_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
+    uint8_t value;
+    (void)proto;
+    if (maxsz < sizeof(value)) return -1;
+    memcpy(&value, setting, sizeof(value));
+    kb_settings_pointing_t config = get_settings_pointing();
+    config.mode = value == 1 ? POINTING_MODE_TEXT : POINTING_MODE_NORMAL;
+    set_settings_pointing(config);
+    return 0;
+}
+
 #endif
 
 static int leds_color_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
@@ -918,6 +937,7 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
 #        if defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(144, simple_joystick_speed_max_get, simple_joystick_speed_max_set),
     DECLARE_SETTING(145, simple_joystick_regulator_get, simple_joystick_regulator_set),
+    DECLARE_SETTING(146, simple_joystick_mode_get, simple_joystick_mode_set),
 #        endif
 #    else
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),

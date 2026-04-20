@@ -16,6 +16,11 @@ pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 static void apply_auto_mouse_settings(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     bool enable = get_hpd3_auto_mouse_enable();
+#ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
+    if (get_settings_pointing().mode == POINTING_MODE_TEXT) {
+        enable = false;
+    }
+#endif
     auto_mouse_layer_off();
     set_auto_mouse_enable(enable);
     set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
@@ -687,17 +692,19 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     static int32_t accumulated_h = 0;
     static int32_t accumulated_v = 0;
 
-    static uint16_t kc_up    = KC_UP;
-    static uint16_t kc_down  = KC_DOWN;
-    static uint16_t kc_left  = KC_LEFT;
-    static uint16_t kc_right = KC_RIGHT;
+    static uint16_t kc_up    = KC_NO;
+    static uint16_t kc_down  = KC_NO;
+    static uint16_t kc_left  = KC_NO;
+    static uint16_t kc_right = KC_NO;
 #ifdef EH_HPD_LAYERS
     uint8_t layer = get_current_layer();
     kc_up         = dynamic_keymap_get_keycode(layer, 11, 0);
     kc_left       = dynamic_keymap_get_keycode(layer, 11, 1);
     kc_right      = dynamic_keymap_get_keycode(layer, 11, 2);
     kc_down       = dynamic_keymap_get_keycode(layer, 11, 3);
-    if ((kc_up != KC_NO && kc_up != KC_TRNS) || (kc_down != KC_NO && kc_down != KC_TRNS) || (kc_left != KC_NO && kc_left != KC_TRNS) || (kc_right != KC_NO && kc_right != KC_TRNS)) {
+    if (get_settings_pointing().mode == POINTING_MODE_TEXT) {
+        pmode = POINTING_MODE_TEXT;
+    } else if ((kc_up != KC_NO && kc_up != KC_TRNS) || (kc_down != KC_NO && kc_down != KC_TRNS) || (kc_left != KC_NO && kc_left != KC_TRNS) || (kc_right != KC_NO && kc_right != KC_TRNS)) {
         pmode = POINTING_MODE_TEXT;
     }
 #endif
