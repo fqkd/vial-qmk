@@ -702,11 +702,13 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     kc_left       = dynamic_keymap_get_keycode(layer, 11, 1);
     kc_right      = dynamic_keymap_get_keycode(layer, 11, 2);
     kc_down       = dynamic_keymap_get_keycode(layer, 11, 3);
-    if (get_settings_pointing().mode == POINTING_MODE_TEXT) {
-        pmode = POINTING_MODE_TEXT;
-    } else if ((kc_up != KC_NO && kc_up != KC_TRNS) || (kc_down != KC_NO && kc_down != KC_TRNS) || (kc_left != KC_NO && kc_left != KC_TRNS) || (kc_right != KC_NO && kc_right != KC_TRNS)) {
+#    ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
+    pmode = get_settings_pointing().mode == POINTING_MODE_TEXT ? POINTING_MODE_TEXT : POINTING_MODE_NORMAL;
+#    else
+    if ((kc_up != KC_NO && kc_up != KC_TRNS) || (kc_down != KC_NO && kc_down != KC_TRNS) || (kc_left != KC_NO && kc_left != KC_TRNS) || (kc_right != KC_NO && kc_right != KC_TRNS)) {
         pmode = POINTING_MODE_TEXT;
     }
+#    endif
 #endif
 
     if (pmode != POINTING_MODE_NORMAL) {
