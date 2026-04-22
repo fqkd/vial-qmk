@@ -16,6 +16,15 @@ static kb_settings_pointing_t kb_settings_pointing;
 static kb_settings_hpd3_devices_t kb_settings_hpd3_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
+#define HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK ((1u << POINTING_MODE_NORMAL) | (1u << POINTING_MODE_SNIPER) | (1u << POINTING_MODE_SCROLL) | (1u << POINTING_MODE_TEXT))
+
+static uint8_t hpd3_auto_mouse_mode_mask(pointing_mode_t mode) {
+    if (mode < POINTING_MODE_NORMAL || mode > POINTING_MODE_USR3) {
+        return 0;
+    }
+    return (uint8_t)(1u << (uint8_t)mode);
+}
+
 static void apply_auto_mouse_settings(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     bool enable = get_hpd3_auto_mouse_enable();
@@ -62,7 +71,7 @@ kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
         .sens              = {{16, 4, 32}, {16, 4, 32}},
         .invert_scroll     = {false, false},
         .acceleration      = {false, false},
-        .auto_mouse_enable = true,
+        .auto_mouse_enable = HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK,
         .auto_mouse_layer  = AUTO_MOUSE_DEFAULT_LAYER,
     };
     return dflt;
@@ -82,8 +91,10 @@ static kb_settings_hpd3_devices_t kb_settings_hpd3_devices_sanitize(kb_settings_
     if (config_all_zero(&config, sizeof(config))) {
         return get_settings_hpd3_devices_default();
     }
-    if (config.auto_mouse_enable > 1) {
-        config.auto_mouse_enable = true;
+    if (config.auto_mouse_enable <= 1) {
+        config.auto_mouse_enable = config.auto_mouse_enable ? HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
+    } else if (config.auto_mouse_enable & ~HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
+        config.auto_mouse_enable &= HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK;
     }
     if (config.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
         config.auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
@@ -247,7 +258,30 @@ bool get_hpd3_auto_mouse_enable(void) {
 
 void set_hpd3_auto_mouse_enable(bool enable) {
     kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
-    new_config.auto_mouse_enable          = enable;
+    new_config.auto_mouse_enable          = enable ? HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
+    kb_settings_hpd3_devices_update(new_config);
+}
+
+bool get_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode) {
+    uint8_t mask = hpd3_auto_mouse_mode_mask(mode);
+    if (mask == 0) {
+        return false;
+    }
+    return (kb_settings_hpd3_devices.auto_mouse_enable & mask) != 0;
+}
+
+void set_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled) {
+    uint8_t mask = hpd3_auto_mouse_mode_mask(mode);
+    if (mask == 0) {
+        return;
+    }
+
+    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    if (enabled) {
+        new_config.auto_mouse_enable |= mask;
+    } else {
+        new_config.auto_mouse_enable &= ~mask;
+    }
     kb_settings_hpd3_devices_update(new_config);
 }
 

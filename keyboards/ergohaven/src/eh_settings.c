@@ -445,7 +445,10 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 139: value = get_hpd3_side_acceleration(HPD3_SIDE_RIGHT); break;
         case 140: value = get_sticky_mode(); break;
         case 141: value = get_led_blinks(); break;
-        case 142: value = get_hpd3_auto_mouse_enable(); break;
+        case 142: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_NORMAL); break;
+        case 144: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SNIPER); break;
+        case 145: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SCROLL); break;
+        case 146: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_TEXT); break;
         default: return -1;
     }
 #else
@@ -477,7 +480,10 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 139: set_hpd3_side_acceleration(HPD3_SIDE_RIGHT, value); break;
         case 140: set_sticky_mode(value); break;
         case 141: set_led_blinks(value); break;
-        case 142: set_hpd3_auto_mouse_enable(value); break;
+        case 142: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_NORMAL, value); break;
+        case 144: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SNIPER, value); break;
+        case 145: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SCROLL, value); break;
+        case 146: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_TEXT, value); break;
         default: return -1;
     }
 #else
@@ -906,6 +912,9 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(141, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(142, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(143, modules_select_get, modules_select_set),
+    DECLARE_SETTING(144, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(145, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(146, modules_bool_get, modules_bool_set),
 #else
 #    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),

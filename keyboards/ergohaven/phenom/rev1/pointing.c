@@ -4,6 +4,7 @@
 
 #include "drivers/sensors/azoteq_iqs5xx.h"
 #include "drivers/sensors/pmw3610.h"
+#include "gpio.h"
 #include "quantum/split_common/transactions.h"
 #include "src/eh_pointing.h"
 #include "ergohaven_rgb.h"
@@ -16,6 +17,14 @@
 
 #ifndef ARRAY_SIZE
 #    define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
+#ifndef HPD3_MODULE_PROBE_INTERVAL_MS
+#    define HPD3_MODULE_PROBE_INTERVAL_MS 250
+#endif
+
+#ifndef HPD3_MODULE_PROBE_STREAK_REQUIRED
+#    define HPD3_MODULE_PROBE_STREAK_REQUIRED 2
 #endif
 
 typedef enum {
@@ -113,6 +122,9 @@ static bool          hpd3_touchpad_initialized  = false;
 static bool          hpd3_trackball_available   = false;
 static bool          hpd3_trackball_initialized = false;
 static hpd3_module_t hpd3_detected_module       = HPD3_MODULE_NONE;
+static uint32_t      hpd3_last_probe_time       = 0;
+static hpd3_module_t hpd3_last_probed_module    = HPD3_MODULE_NONE;
+static uint8_t       hpd3_probe_streak          = 0;
 
 static orientation_t hpd3_get_local_orientation(void) {
     return get_hpd3_device_orientation(hpd3_get_local_device_id(hpd3_detected_module));
@@ -151,20 +163,56 @@ static report_mouse_t hpd3_rotate_trackball_report(report_mouse_t report, orient
     return report;
 }
 
+static hpd3_module_t hpd3_pick_module(bool touchpad_available, bool trackball_available) {
+    if (hpd3_detected_module == HPD3_MODULE_TOUCHPAD && touchpad_available) {
+        return HPD3_MODULE_TOUCHPAD;
+    }
+    if (hpd3_detected_module == HPD3_MODULE_TRACKBALL && trackball_available) {
+        return HPD3_MODULE_TRACKBALL;
+    }
+    if (touchpad_available) {
+        return HPD3_MODULE_TOUCHPAD;
+    }
+    if (trackball_available) {
+        return HPD3_MODULE_TRACKBALL;
+    }
+    return HPD3_MODULE_NONE;
+}
+
+static bool hpd3_probe_touchpad_present(void) {
+    pd_dprintf("hpd3_probe_touchpad_present: start (I2C address=0x%02X)\n", AZOTEQ_IQS5XX_ADDRESS);
+    i2c_init();
+    i2c_ping_address(AZOTEQ_IQS5XX_ADDRESS, 1);
+    wait_ms(1);
+    uint16_t product = azoteq_iqs5xx_get_product();
+    bool ok = product != AZOTEQ_IQS5XX_UNKNOWN;
+    pd_dprintf("hpd3_probe_touchpad_present: product=%u ok=%d\n", product, ok);
+    return ok;
+}
+
+static bool hpd3_probe_trackball_present(void) {
+    gpio_set_pin_output(sclk_pin);
+    gpio_set_pin_output(sdio_pin);
+    if (cs_pin != NO_PIN) {
+        gpio_set_pin_output(cs_pin);
+        gpio_write_pin_high(cs_pin);
+    }
+    wait_us(10);
+
+    uint8_t product_id = pmw3610_read(0, PMW3610_REG_PRODUCT_ID);
+    bool    ok         = product_id == PMW3610_PRODUCT_ID;
+    pd_dprintf("hpd3_probe_trackball_present: product_id=0x%02X ok=%d\n", product_id, ok);
+    return ok;
+}
+
 static bool hpd3_detect_touchpad(void) {
-    pd_dprintf("hpd3_detect_touchpad: start (I2C address=0x%02X)\n", AZOTEQ_IQS5XX_ADDRESS);
+    pd_dprintf("hpd3_detect_touchpad: start\n");
     azoteq_iqs5xx_init();
     wait_ms(50);
     uint16_t product = azoteq_iqs5xx_get_product();
-    pd_dprintf("hpd3_detect_touchpad: product=%u\n", product);
-    if (product == AZOTEQ_IQS5XX_UNKNOWN) {
-        pd_dprintf("hpd3 right touchpad not detected (product unknown)\n");
-        // Force touchpad for debugging
-        // return true;
-        return false;
-    }
-    pd_dprintf("hpd3 right touchpad detected, product=%u\n", product);
-    return true;
+    bool     ok      = product != AZOTEQ_IQS5XX_UNKNOWN;
+    pd_dprintf("hpd3_detect_touchpad: product=%u ok=%d\n", product, ok);
+    return ok;
 }
 
 static bool hpd3_detect_trackball(void) {
@@ -177,46 +225,87 @@ static bool hpd3_detect_trackball(void) {
     return ok;
 }
 
-static void hpd3_detect_modules(void) {
-    hpd3_touchpad_available    = false;
-    hpd3_trackball_available   = false;
-    hpd3_touchpad_initialized  = false;
-    hpd3_trackball_initialized = false;
-    hpd3_detected_module       = HPD3_MODULE_NONE;
+static void hpd3_commit_module_probe(bool touchpad_available, bool trackball_available, hpd3_module_t detected_module) {
+    bool module_changed = hpd3_detected_module != detected_module;
+    bool state_changed  = hpd3_touchpad_available != touchpad_available || hpd3_trackball_available != trackball_available;
 
-    pd_dprintf("hpd3_detect_modules: start\n");
-    hpd3_touchpad_available   = hpd3_detect_touchpad();
-    hpd3_touchpad_initialized = hpd3_touchpad_available;
-    pd_dprintf("  touchpad_available=%d\n", hpd3_touchpad_available);
-
-    hpd3_trackball_available   = hpd3_detect_trackball();
-    hpd3_trackball_initialized = hpd3_trackball_available;
-    pd_dprintf("  trackball_available=%d\n", hpd3_trackball_available);
-
-    if (hpd3_touchpad_available) {
-        hpd3_detected_module = HPD3_MODULE_TOUCHPAD;
-    } else if (hpd3_trackball_available) {
-        hpd3_detected_module = HPD3_MODULE_TRACKBALL;
+    if (!module_changed && !state_changed) {
+        return;
     }
-    pd_dprintf("  detected_module=%u\n", hpd3_detected_module);
 
-    // Debug I2C status
-    pd_dprintf("  I2C status after detect: touchpad=%d trackball=%d\n",
-            hpd3_touchpad_available, hpd3_trackball_available);
+    pd_dprintf("hpd3_commit_module_probe: module %u -> %u, touch=%d, trackball=%d\n", hpd3_detected_module, detected_module, touchpad_available, trackball_available);
+
+    hpd3_touchpad_available  = touchpad_available;
+    hpd3_trackball_available = trackball_available;
+    if (!hpd3_touchpad_available) {
+        hpd3_touchpad_initialized = false;
+    }
+    if (!hpd3_trackball_available) {
+        hpd3_trackball_initialized = false;
+    }
+    hpd3_detected_module        = detected_module;
+    hpd3_applied_raw            = UINT32_MAX;
+    hpd3_applied_devices_valid  = false;
+}
+
+static void hpd3_detect_modules(bool force) {
+    if (!force && timer_elapsed32(hpd3_last_probe_time) < HPD3_MODULE_PROBE_INTERVAL_MS) {
+        return;
+    }
+
+    hpd3_last_probe_time = timer_read32();
+
+    bool          touchpad_available  = hpd3_probe_touchpad_present();
+    bool          trackball_available = hpd3_probe_trackball_present();
+    hpd3_module_t detected_module     = hpd3_pick_module(touchpad_available, trackball_available);
+
+    pd_dprintf("hpd3_detect_modules: force=%d probe module=%u touch=%d trackball=%d\n", force, detected_module, touchpad_available, trackball_available);
+
+    if (force || detected_module == hpd3_detected_module) {
+        hpd3_last_probed_module = detected_module;
+        hpd3_probe_streak       = 0;
+        hpd3_commit_module_probe(touchpad_available, trackball_available, detected_module);
+        return;
+    }
+
+    if (detected_module != hpd3_last_probed_module) {
+        hpd3_last_probed_module = detected_module;
+        hpd3_probe_streak       = 1;
+        pd_dprintf("hpd3_detect_modules: new candidate module=%u\n", detected_module);
+        return;
+    }
+
+    if (hpd3_probe_streak < UINT8_MAX) {
+        hpd3_probe_streak++;
+    }
+    pd_dprintf("hpd3_detect_modules: candidate module=%u streak=%u\n", detected_module, hpd3_probe_streak);
+
+    if (hpd3_probe_streak >= HPD3_MODULE_PROBE_STREAK_REQUIRED) {
+        hpd3_commit_module_probe(touchpad_available, trackball_available, detected_module);
+        hpd3_probe_streak = 0;
+    }
 }
 
 static void hpd3_ensure_selected_module_ready(void) {
+    hpd3_detect_modules(false);
+
     switch (hpd3_get_active_module()) {
         case HPD3_MODULE_TRACKBALL:
-            if (!hpd3_trackball_initialized) {
+            if (hpd3_trackball_available && !hpd3_trackball_initialized) {
                 hpd3_trackball_available   = hpd3_detect_trackball();
                 hpd3_trackball_initialized = hpd3_trackball_available;
+                if (!hpd3_trackball_available) {
+                    hpd3_detect_modules(true);
+                }
             }
             break;
         case HPD3_MODULE_TOUCHPAD:
-            if (!hpd3_touchpad_initialized) {
+            if (hpd3_touchpad_available && !hpd3_touchpad_initialized) {
                 hpd3_touchpad_available   = hpd3_detect_touchpad();
                 hpd3_touchpad_initialized = hpd3_touchpad_available;
+                if (!hpd3_touchpad_available) {
+                    hpd3_detect_modules(true);
+                }
             }
             break;
         default:
@@ -367,7 +456,7 @@ void housekeeping_task_user(void) {
 void pointing_device_driver_init(void) {
     pd_dprintf("pointing_device_driver_init: entry, is_keyboard_left()=%d, is_keyboard_master()=%d\n", is_keyboard_left(), is_keyboard_master());
     pd_dprintf("pointing_device_driver_init: both halves\n");
-    hpd3_detect_modules();
+    hpd3_detect_modules(true);
     pd_dprintf("  detected_module=%u, touchpad_avail=%d, trackball_avail=%d\n", (unsigned int)hpd3_detected_module, hpd3_touchpad_available, hpd3_trackball_available);
     hpd3_ensure_selected_module_ready();
     hpd3_apply_device_config();
@@ -511,10 +600,10 @@ report_mouse_t pointing_device_task_combined_kb(report_mouse_t left_report, repo
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     bool auto_layer_active = false;
     if (get_hpd3_auto_mouse_enable()) {
-        if (get_hpd3_side_mode(HPD3_SIDE_LEFT) == POINTING_MODE_NORMAL && hpd3_report_has_motion(left_report)) {
+        if (get_hpd3_auto_mouse_mode_enabled(get_hpd3_side_mode(HPD3_SIDE_LEFT)) && hpd3_report_has_motion(left_report)) {
             auto_layer_active = true;
         }
-        if (get_hpd3_side_mode(HPD3_SIDE_RIGHT) == POINTING_MODE_NORMAL && hpd3_report_has_motion(right_report)) {
+        if (get_hpd3_auto_mouse_mode_enabled(get_hpd3_side_mode(HPD3_SIDE_RIGHT)) && hpd3_report_has_motion(right_report)) {
             auto_layer_active = true;
         }
     }

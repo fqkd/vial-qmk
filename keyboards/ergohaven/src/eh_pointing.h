@@ -132,3 +132,5 @@ bool                       get_hpd3_side_invert_scroll(hpd3_side_id_t side);
 void                       set_hpd3_side_invert_scroll(hpd3_side_id_t side, bool invert_scroll);
 bool                       get_hpd3_side_acceleration(hpd3_side_id_t side);
 void                       set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration);
+bool                       get_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode);
+void                       set_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled);
