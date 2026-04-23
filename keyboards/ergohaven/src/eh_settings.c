@@ -84,7 +84,7 @@ void kb_settings_reset(void) {
     kb_settings_ruen_reset();
     kb_settings_layer_labels_reset();
     kb_settings_pointing_reset();
-    kb_settings_hpd3_devices_reset();
+    kb_settings_split_pointing_reset();
     kb_settings_led_colors_reset();
     kb_settings_lcd_reset();
     kb_settings_init();
@@ -99,7 +99,7 @@ void kb_settings_init(void) {
     kb_settings_ruen_init();
     kb_settings_layer_labels_init();
     kb_settings_pointing_init();
-    kb_settings_hpd3_devices_init();
+    kb_settings_split_pointing_init();
 #ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
     maxCursorSpeed = get_settings_pointing().sens[POINTING_MODE_NORMAL] ? get_settings_pointing().sens[POINTING_MODE_NORMAL] : ANALOG_JOYSTICK_SPEED_MAX;
     uint8_t joystick_regulator = (get_settings_pointing().dpi >= 101 && get_settings_pointing().dpi <= 150) ? (uint8_t)(get_settings_pointing().dpi - 100) : ANALOG_JOYSTICK_SPEED_REGULATOR;
@@ -218,50 +218,50 @@ static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting
 }
 
 #if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) && !defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
-static const uint16_t hpd3_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
-static const uint16_t hpd3_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+static const uint16_t phenom_trackball_cpi_table[] = {200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200};
+static const uint16_t phenom_touchpad_cpi_table[]  = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 #endif
 
-static hpd3_device_id_t hpd3_device_for_qsid(uint16_t qsid) {
+static split_pointing_device_id_t split_pointing_device_for_qsid(uint16_t qsid) {
 #if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (qsid) {
         case 120:
         case 130:
-            return HPD3_DEVICE_LEFT_BALL;
+            return SPLIT_POINTING_DEVICE_LEFT_BALL;
         case 121:
         case 131:
-            return HPD3_DEVICE_RIGHT_BALL;
+            return SPLIT_POINTING_DEVICE_RIGHT_BALL;
         case 122:
         case 132:
-            return HPD3_DEVICE_LEFT_TOUCH;
+            return SPLIT_POINTING_DEVICE_LEFT_TOUCH;
         case 123:
         case 133:
-            return HPD3_DEVICE_RIGHT_TOUCH;
+            return SPLIT_POINTING_DEVICE_RIGHT_TOUCH;
         default:
-            return HPD3_DEVICE_LEFT_BALL;
+            return SPLIT_POINTING_DEVICE_LEFT_BALL;
     }
 #else
     switch (qsid) {
         case 120:
         case 129:
-            return HPD3_DEVICE_LEFT_BALL;
+            return SPLIT_POINTING_DEVICE_LEFT_BALL;
         case 121:
         case 130:
-            return HPD3_DEVICE_RIGHT_BALL;
+            return SPLIT_POINTING_DEVICE_RIGHT_BALL;
         case 122:
         case 131:
-            return HPD3_DEVICE_LEFT_TOUCH;
+            return SPLIT_POINTING_DEVICE_LEFT_TOUCH;
         case 123:
         case 132:
-            return HPD3_DEVICE_RIGHT_TOUCH;
+            return SPLIT_POINTING_DEVICE_RIGHT_TOUCH;
         default:
-            return HPD3_DEVICE_LEFT_BALL;
+            return SPLIT_POINTING_DEVICE_LEFT_BALL;
     }
 #endif
 }
 
 #if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
-static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
+static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
     switch (qsid) {
         case 124:
         case 125:
@@ -269,22 +269,22 @@ static hpd3_side_id_t hpd3_side_for_qsid(uint16_t qsid) {
         case 134:
         case 136:
         case 137:
-            return HPD3_SIDE_LEFT;
+            return SPLIT_POINTING_SIDE_LEFT;
         case 127:
         case 128:
         case 129:
         case 135:
         case 138:
         case 139:
-            return HPD3_SIDE_RIGHT;
+            return SPLIT_POINTING_SIDE_RIGHT;
         default:
-            return HPD3_SIDE_LEFT;
+            return SPLIT_POINTING_SIDE_LEFT;
     }
 }
 #endif
 
 #if !defined(EH_KEYBOARD_SPLIT_POINTING_V2) && !defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) && !defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL)
-static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
+static uint8_t phenom_index_from_value_u16(const uint16_t *table, size_t count, uint16_t value) {
     uint8_t best    = 0;
     uint16_t best_d = UINT16_MAX;
     for (size_t i = 0; i < count; ++i) {
@@ -297,21 +297,21 @@ static uint8_t hpd3_index_from_value_u16(const uint16_t *table, size_t count, ui
     return best;
 }
 
-static uint16_t hpd3_value_from_index_u16(const uint16_t *table, size_t count, uint8_t idx) {
+static uint16_t phenom_value_from_index_u16(const uint16_t *table, size_t count, uint8_t idx) {
     if (idx >= count) idx = (uint8_t)(count - 1);
     return table[idx];
 }
 
-static const uint16_t *hpd3_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
+static const uint16_t *phenom_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
     switch (qsid) {
         case 120:
         case 121:
-            *count = ARRAY_SIZE(hpd3_trackball_cpi_table);
-            return hpd3_trackball_cpi_table;
+            *count = ARRAY_SIZE(phenom_trackball_cpi_table);
+            return phenom_trackball_cpi_table;
         case 122:
         case 123:
-            *count = ARRAY_SIZE(hpd3_touchpad_cpi_table);
-            return hpd3_touchpad_cpi_table;
+            *count = ARRAY_SIZE(phenom_touchpad_cpi_table);
+            return phenom_touchpad_cpi_table;
         default:
             *count = 0;
             return NULL;
@@ -320,9 +320,9 @@ static const uint16_t *hpd3_dpi_table_for_qsid(uint16_t qsid, size_t *count) {
 
 __attribute__((unused)) static int modules_trackball_dpi_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     size_t count = 0;
-    const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
+    const uint16_t *table = phenom_dpi_table_for_qsid(proto->qsid, &count);
     if (!table) return -1;
-    uint16_t cpi = hpd3_value_from_index_u16(table, count, get_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid)));
+    uint16_t cpi = phenom_value_from_index_u16(table, count, get_split_pointing_device_dpi_index(split_pointing_device_for_qsid(proto->qsid)));
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(setting, &cpi, sizeof(cpi));
     return 0;
@@ -330,19 +330,19 @@ __attribute__((unused)) static int modules_trackball_dpi_get(const qmk_settings_
 
 __attribute__((unused)) static int modules_trackball_dpi_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
     size_t count = 0;
-    const uint16_t *table = hpd3_dpi_table_for_qsid(proto->qsid, &count);
+    const uint16_t *table = phenom_dpi_table_for_qsid(proto->qsid, &count);
     if (!table) return -1;
     uint16_t cpi;
     if (maxsz < sizeof(cpi)) return -1;
     memcpy(&cpi, setting, sizeof(cpi));
-    set_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid), hpd3_index_from_value_u16(table, count, cpi));
+    set_split_pointing_device_dpi_index(split_pointing_device_for_qsid(proto->qsid), phenom_index_from_value_u16(table, count, cpi));
     return 0;
 }
 #endif
 
 #if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
 static int modules_dpi_select_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint8_t value = get_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid));
+    uint8_t value = get_split_pointing_device_dpi_index(split_pointing_device_for_qsid(proto->qsid));
     if (maxsz < sizeof(value)) return -1;
     memcpy(setting, &value, sizeof(value));
     return 0;
@@ -352,7 +352,7 @@ static int modules_dpi_select_set(const qmk_settings_proto_t *proto, const void 
     uint8_t value;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    set_hpd3_device_dpi_index(hpd3_device_for_qsid(proto->qsid), value);
+    set_split_pointing_device_dpi_index(split_pointing_device_for_qsid(proto->qsid), value);
     return 0;
 }
 #endif
@@ -363,15 +363,15 @@ static int modules_sens_get(const qmk_settings_proto_t *proto, void *setting, si
     switch (proto->qsid) {
         case 124:
         case 127:
-            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER);
+            sens = get_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER);
             break;
         case 125:
         case 128:
-            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL);
+            sens = get_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL);
             break;
         case 126:
         case 129:
-            sens = get_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_TEXT);
+            sens = get_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_TEXT);
             break;
         default:
             return -1;
@@ -404,15 +404,15 @@ static int modules_sens_set(const qmk_settings_proto_t *proto, const void *setti
     switch (proto->qsid) {
         case 124:
         case 127:
-            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER, sens);
+            set_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_SNIPER, sens);
             break;
         case 125:
         case 128:
-            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL, sens);
+            set_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_SCROLL, sens);
             break;
         case 126:
         case 129:
-            set_hpd3_side_sens(hpd3_side_for_qsid(proto->qsid), POINTING_MODE_TEXT, sens);
+            set_split_pointing_side_sens(split_pointing_side_for_qsid(proto->qsid), POINTING_MODE_TEXT, sens);
             break;
         default:
             return -1;
@@ -439,16 +439,16 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
     bool value = false;
 #if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
-        case 136: value = get_hpd3_side_invert_scroll(HPD3_SIDE_LEFT); break;
-        case 137: value = get_hpd3_side_acceleration(HPD3_SIDE_LEFT); break;
-        case 138: value = get_hpd3_side_invert_scroll(HPD3_SIDE_RIGHT); break;
-        case 139: value = get_hpd3_side_acceleration(HPD3_SIDE_RIGHT); break;
+        case 136: value = get_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_LEFT); break;
+        case 137: value = get_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_LEFT); break;
+        case 138: value = get_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_RIGHT); break;
+        case 139: value = get_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_RIGHT); break;
         case 140: value = get_sticky_mode(); break;
         case 141: value = get_led_blinks(); break;
-        case 142: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_NORMAL); break;
-        case 144: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SNIPER); break;
-        case 145: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SCROLL); break;
-        case 146: value = get_hpd3_auto_mouse_mode_enabled(POINTING_MODE_TEXT); break;
+        case 142: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_NORMAL); break;
+        case 144: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SNIPER); break;
+        case 145: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SCROLL); break;
+        case 146: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT); break;
         default: return -1;
     }
 #else
@@ -474,16 +474,16 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
     memcpy(&value, setting, sizeof(value));
 #if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
     switch (proto->qsid) {
-        case 136: set_hpd3_side_invert_scroll(HPD3_SIDE_LEFT, value); break;
-        case 137: set_hpd3_side_acceleration(HPD3_SIDE_LEFT, value); break;
-        case 138: set_hpd3_side_invert_scroll(HPD3_SIDE_RIGHT, value); break;
-        case 139: set_hpd3_side_acceleration(HPD3_SIDE_RIGHT, value); break;
+        case 136: set_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_LEFT, value); break;
+        case 137: set_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_LEFT, value); break;
+        case 138: set_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_RIGHT, value); break;
+        case 139: set_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_RIGHT, value); break;
         case 140: set_sticky_mode(value); break;
         case 141: set_led_blinks(value); break;
-        case 142: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_NORMAL, value); break;
-        case 144: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SNIPER, value); break;
-        case 145: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_SCROLL, value); break;
-        case 146: set_hpd3_auto_mouse_mode_enabled(POINTING_MODE_TEXT, value); break;
+        case 142: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_NORMAL, value); break;
+        case 144: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SNIPER, value); break;
+        case 145: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SCROLL, value); break;
+        case 146: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT, value); break;
         default: return -1;
     }
 #else
@@ -509,14 +509,14 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
         case 131:
         case 132:
         case 133:
-            v = (uint8_t)get_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid));
+            v = (uint8_t)get_split_pointing_device_orientation(split_pointing_device_for_qsid(proto->qsid));
             break;
         case 134:
         case 135:
-            v = (uint8_t)get_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid));
+            v = (uint8_t)get_split_pointing_side_mode(split_pointing_side_for_qsid(proto->qsid));
             break;
         case 143:
-            v = get_hpd3_auto_mouse_layer();
+            v = get_split_pointing_auto_mouse_layer();
             break;
         default: return -1;
     }
@@ -526,7 +526,7 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
         case 130:
         case 131:
         case 132:
-            v = (uint8_t)get_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid));
+            v = (uint8_t)get_split_pointing_device_orientation(split_pointing_device_for_qsid(proto->qsid));
             break;
         case 135:
         case 143:
@@ -551,14 +551,14 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
         case 131:
         case 132:
         case 133:
-            set_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid), (orientation_t)v);
+            set_split_pointing_device_orientation(split_pointing_device_for_qsid(proto->qsid), (orientation_t)v);
             break;
         case 134:
         case 135:
-            set_hpd3_side_mode(hpd3_side_for_qsid(proto->qsid), (pointing_mode_t)v);
+            set_split_pointing_side_mode(split_pointing_side_for_qsid(proto->qsid), (pointing_mode_t)v);
             break;
         case 143:
-            set_hpd3_auto_mouse_layer(v);
+            set_split_pointing_auto_mouse_layer(v);
             break;
         default: return -1;
     }
@@ -568,7 +568,7 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
         case 130:
         case 131:
         case 132:
-            set_hpd3_device_orientation(hpd3_device_for_qsid(proto->qsid), (orientation_t)v);
+            set_split_pointing_device_orientation(split_pointing_device_for_qsid(proto->qsid), (orientation_t)v);
             break;
         case 135:
         case 143:
@@ -678,7 +678,7 @@ static int simple_touchpad_flags_set(const qmk_settings_proto_t *proto, const vo
 }
 
 static int simple_touchpad_auto_layer_enable_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    bool value = get_hpd3_auto_mouse_enable();
+    bool value = get_split_pointing_auto_mouse_enable();
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(setting, &value, sizeof(value));
@@ -690,12 +690,12 @@ static int simple_touchpad_auto_layer_enable_set(const qmk_settings_proto_t *pro
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    set_hpd3_auto_mouse_enable(value);
+    set_split_pointing_auto_mouse_enable(value);
     return 0;
 }
 
 static int simple_touchpad_auto_layer_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint8_t value = get_hpd3_auto_mouse_layer();
+    uint8_t value = get_split_pointing_auto_mouse_layer();
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(setting, &value, sizeof(value));
@@ -707,7 +707,7 @@ static int simple_touchpad_auto_layer_set(const qmk_settings_proto_t *proto, con
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    set_hpd3_auto_mouse_layer(value);
+    set_split_pointing_auto_mouse_layer(value);
     return 0;
 }
 #endif

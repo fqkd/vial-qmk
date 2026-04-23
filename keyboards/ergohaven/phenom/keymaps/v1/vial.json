@@ -4,9 +4,9 @@
         "cols": 8
     },
     "keycodes": ["qmk_lighting"],
-#include "keyboards/ergohaven/src/json/keycodes_all_hpd3_rev3.json"
+#include "keyboards/ergohaven/src/json/keycodes_all_phenom_rev3.json"
     "settings": [
-#include "keyboards/ergohaven/src/json/settings_modules_hpd3.json"
+#include "keyboards/ergohaven/src/json/settings_phenom_modules.json"
 ,
 #include "keyboards/ergohaven/src/json/settings_leds.json"
 ,

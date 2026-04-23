@@ -13,12 +13,12 @@
 #include <string.h>
 
 static kb_settings_pointing_t kb_settings_pointing;
-static kb_settings_hpd3_devices_t kb_settings_hpd3_devices;
+static kb_settings_split_pointing_t kb_settings_phenom_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
-#define HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK ((1u << POINTING_MODE_NORMAL) | (1u << POINTING_MODE_SNIPER) | (1u << POINTING_MODE_SCROLL) | (1u << POINTING_MODE_TEXT))
+#define PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK ((1u << POINTING_MODE_NORMAL) | (1u << POINTING_MODE_SNIPER) | (1u << POINTING_MODE_SCROLL) | (1u << POINTING_MODE_TEXT))
 
-static uint8_t hpd3_auto_mouse_mode_mask(pointing_mode_t mode) {
+static uint8_t phenom_auto_mouse_mode_mask(pointing_mode_t mode) {
     if (mode < POINTING_MODE_NORMAL || mode > POINTING_MODE_USR3) {
         return 0;
     }
@@ -27,7 +27,7 @@ static uint8_t hpd3_auto_mouse_mode_mask(pointing_mode_t mode) {
 
 static void apply_auto_mouse_settings(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
-    bool enable = get_hpd3_auto_mouse_enable();
+    bool enable = get_split_pointing_auto_mouse_enable();
 #ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
     if (get_settings_pointing().mode == POINTING_MODE_TEXT) {
         enable = false;
@@ -35,7 +35,7 @@ static void apply_auto_mouse_settings(void) {
 #endif
     auto_mouse_layer_off();
     set_auto_mouse_enable(enable);
-    set_auto_mouse_layer(get_hpd3_auto_mouse_layer());
+    set_auto_mouse_layer(get_split_pointing_auto_mouse_layer());
 #    ifdef RGBLIGHT_ENABLE
     layer_state_set_rgb(layer_state | default_layer_state);
 #    endif
@@ -43,7 +43,7 @@ static void apply_auto_mouse_settings(void) {
 }
 
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
-static_assert(KB_SETTINGS_HPD3_DEVICES_SIZE == sizeof(kb_settings_hpd3_devices_t), "Invalid KB_SETTINGS_HPD3_DEVICES_SIZE");
+static_assert(KB_SETTINGS_SPLIT_POINTING_SIZE == sizeof(kb_settings_split_pointing_t), "Invalid KB_SETTINGS_SPLIT_POINTING_SIZE");
 
 #ifndef AUTO_MOUSE_DEFAULT_LAYER
 #    define AUTO_MOUSE_DEFAULT_LAYER 4
@@ -63,15 +63,15 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
     return dflt;
 }
 
-kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void) {
-    kb_settings_hpd3_devices_t dflt = {
+kb_settings_split_pointing_t get_split_pointing_settings_default(void) {
+    kb_settings_split_pointing_t dflt = {
         .axis              = {ROT_90, ROT_90, ROT_180, ROT_0},
         .dpi_idx           = {1, 1, 3, 3},
         .mode              = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL},
         .sens              = {{16, 4, 32}, {16, 4, 32}},
         .invert_scroll     = {false, false},
         .acceleration      = {false, false},
-        .auto_mouse_enable = HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK,
+        .auto_mouse_enable = PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK,
         .auto_mouse_layer  = AUTO_MOUSE_DEFAULT_LAYER,
     };
     return dflt;
@@ -87,14 +87,14 @@ static bool config_all_zero(const void *data, size_t size) {
     return true;
 }
 
-static kb_settings_hpd3_devices_t kb_settings_hpd3_devices_sanitize(kb_settings_hpd3_devices_t config) {
+static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_settings_split_pointing_t config) {
     if (config_all_zero(&config, sizeof(config))) {
-        return get_settings_hpd3_devices_default();
+        return get_split_pointing_settings_default();
     }
     if (config.auto_mouse_enable <= 1) {
-        config.auto_mouse_enable = config.auto_mouse_enable ? HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
-    } else if (config.auto_mouse_enable & ~HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
-        config.auto_mouse_enable &= HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK;
+        config.auto_mouse_enable = config.auto_mouse_enable ? PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
+    } else if (config.auto_mouse_enable & ~PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
+        config.auto_mouse_enable &= PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK;
     }
     if (config.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
         config.auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
@@ -102,106 +102,106 @@ static kb_settings_hpd3_devices_t kb_settings_hpd3_devices_sanitize(kb_settings_
     return config;
 }
 
-kb_settings_hpd3_devices_t get_settings_hpd3_devices(void) {
-    return kb_settings_hpd3_devices;
+kb_settings_split_pointing_t get_split_pointing_settings(void) {
+    return kb_settings_phenom_devices;
 }
 
-static void kb_settings_hpd3_devices_update(kb_settings_hpd3_devices_t new_config) {
-    if (memcmp(&new_config, &kb_settings_hpd3_devices, sizeof(new_config)) != 0) {
-        kb_settings_hpd3_devices = new_config;
-        eeconfig_update_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+static void kb_settings_split_pointing_update(kb_settings_split_pointing_t new_config) {
+    if (memcmp(&new_config, &kb_settings_phenom_devices, sizeof(new_config)) != 0) {
+        kb_settings_phenom_devices = new_config;
+        eeconfig_update_kb_datablock(&kb_settings_phenom_devices, KB_SETTINGS_SPLIT_POINTING_OFFSET, sizeof(kb_settings_phenom_devices));
     }
     apply_auto_mouse_settings();
 }
 
-void set_settings_hpd3_devices(kb_settings_hpd3_devices_t config) {
-    kb_settings_hpd3_devices_update(config);
+void set_split_pointing_settings(kb_settings_split_pointing_t config) {
+    kb_settings_split_pointing_update(config);
 }
 
-void kb_settings_hpd3_devices_init(void) {
-    kb_settings_hpd3_devices_t stored;
-    eeconfig_read_kb_datablock(&stored, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(stored));
-    kb_settings_hpd3_devices = kb_settings_hpd3_devices_sanitize(stored);
-    if (memcmp(&stored, &kb_settings_hpd3_devices, sizeof(stored)) != 0) {
-        eeconfig_update_kb_datablock(&kb_settings_hpd3_devices, KB_SETTINGS_HPD3_DEVICES_OFFSET, sizeof(kb_settings_hpd3_devices));
+void kb_settings_split_pointing_init(void) {
+    kb_settings_split_pointing_t stored;
+    eeconfig_read_kb_datablock(&stored, KB_SETTINGS_SPLIT_POINTING_OFFSET, sizeof(stored));
+    kb_settings_phenom_devices = kb_settings_split_pointing_sanitize(stored);
+    if (memcmp(&stored, &kb_settings_phenom_devices, sizeof(stored)) != 0) {
+        eeconfig_update_kb_datablock(&kb_settings_phenom_devices, KB_SETTINGS_SPLIT_POINTING_OFFSET, sizeof(kb_settings_phenom_devices));
     }
     apply_auto_mouse_settings();
 }
 
-void kb_settings_hpd3_devices_reset(void) {
-    kb_settings_hpd3_devices_update(get_settings_hpd3_devices_default());
+void kb_settings_split_pointing_reset(void) {
+    kb_settings_split_pointing_update(get_split_pointing_settings_default());
 }
 
-orientation_t get_hpd3_device_orientation(hpd3_device_id_t device) {
-    if (device >= HPD3_DEVICE_COUNT) {
+orientation_t get_split_pointing_device_orientation(split_pointing_device_id_t device) {
+    if (device >= SPLIT_POINTING_DEVICE_COUNT) {
         return ROT_0;
     }
-    return (orientation_t)kb_settings_hpd3_devices.axis[device];
+    return (orientation_t)kb_settings_phenom_devices.axis[device];
 }
 
-void set_hpd3_device_orientation(hpd3_device_id_t device, orientation_t orientation) {
-    if (device >= HPD3_DEVICE_COUNT) {
+void set_split_pointing_device_orientation(split_pointing_device_id_t device, orientation_t orientation) {
+    if (device >= SPLIT_POINTING_DEVICE_COUNT) {
         return;
     }
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.axis[device]               = (uint8_t)orientation;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-uint8_t get_hpd3_device_dpi_index(hpd3_device_id_t device) {
-    if (device >= HPD3_DEVICE_COUNT) {
+uint8_t get_split_pointing_device_dpi_index(split_pointing_device_id_t device) {
+    if (device >= SPLIT_POINTING_DEVICE_COUNT) {
         return 0;
     }
-    return kb_settings_hpd3_devices.dpi_idx[device];
+    return kb_settings_phenom_devices.dpi_idx[device];
 }
 
-void set_hpd3_device_dpi_index(hpd3_device_id_t device, uint8_t dpi_index) {
-    if (device >= HPD3_DEVICE_COUNT) {
+void set_split_pointing_device_dpi_index(split_pointing_device_id_t device, uint8_t dpi_index) {
+    if (device >= SPLIT_POINTING_DEVICE_COUNT) {
         return;
     }
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.dpi_idx[device]            = dpi_index;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-pointing_mode_t get_hpd3_side_mode(hpd3_side_id_t side) {
-    if (side >= HPD3_SIDE_COUNT) {
+pointing_mode_t get_split_pointing_side_mode(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return POINTING_MODE_NORMAL;
     }
-    return (pointing_mode_t)kb_settings_hpd3_devices.mode[side];
+    return (pointing_mode_t)kb_settings_phenom_devices.mode[side];
 }
 
-void set_hpd3_side_mode(hpd3_side_id_t side, pointing_mode_t mode) {
-    if (side >= HPD3_SIDE_COUNT) {
+void set_split_pointing_side_mode(split_pointing_side_t side, pointing_mode_t mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
     }
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.mode[side]                 = (uint8_t)mode;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-uint8_t get_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode) {
-    if (side >= HPD3_SIDE_COUNT) {
+uint8_t get_split_pointing_side_sens(split_pointing_side_t side, pointing_mode_t mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return 1;
     }
     switch (mode) {
         case POINTING_MODE_SNIPER:
-            return kb_settings_hpd3_devices.sens[side][0];
+            return kb_settings_phenom_devices.sens[side][0];
         case POINTING_MODE_SCROLL:
-            return kb_settings_hpd3_devices.sens[side][1];
+            return kb_settings_phenom_devices.sens[side][1];
         case POINTING_MODE_TEXT:
-            return kb_settings_hpd3_devices.sens[side][2];
+            return kb_settings_phenom_devices.sens[side][2];
         default:
             return 1;
     }
 }
 
-void set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens) {
-    if (side >= HPD3_SIDE_COUNT) {
+void set_split_pointing_side_sens(split_pointing_side_t side, pointing_mode_t mode, uint8_t sens) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
     }
 
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     switch (mode) {
         case POINTING_MODE_SNIPER:
             new_config.sens[side][0] = sens;
@@ -215,90 +215,90 @@ void set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens)
         default:
             return;
     }
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-bool get_hpd3_side_invert_scroll(hpd3_side_id_t side) {
-    if (side >= HPD3_SIDE_COUNT) {
+bool get_split_pointing_side_invert_scroll(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return false;
     }
-    return kb_settings_hpd3_devices.invert_scroll[side] != 0;
+    return kb_settings_phenom_devices.invert_scroll[side] != 0;
 }
 
-void set_hpd3_side_invert_scroll(hpd3_side_id_t side, bool invert_scroll) {
-    if (side >= HPD3_SIDE_COUNT) {
+void set_split_pointing_side_invert_scroll(split_pointing_side_t side, bool invert_scroll) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
     }
 
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.invert_scroll[side]        = invert_scroll;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-bool get_hpd3_side_acceleration(hpd3_side_id_t side) {
-    if (side >= HPD3_SIDE_COUNT) {
+bool get_split_pointing_side_acceleration(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return false;
     }
-    return kb_settings_hpd3_devices.acceleration[side] != 0;
+    return kb_settings_phenom_devices.acceleration[side] != 0;
 }
 
-void set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration) {
-    if (side >= HPD3_SIDE_COUNT) {
+void set_split_pointing_side_acceleration(split_pointing_side_t side, bool acceleration) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
     }
 
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.acceleration[side]         = acceleration;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-bool get_hpd3_auto_mouse_enable(void) {
-    return kb_settings_hpd3_devices.auto_mouse_enable != 0;
+bool get_split_pointing_auto_mouse_enable(void) {
+    return kb_settings_phenom_devices.auto_mouse_enable != 0;
 }
 
-void set_hpd3_auto_mouse_enable(bool enable) {
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
-    new_config.auto_mouse_enable          = enable ? HPD3_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
-    kb_settings_hpd3_devices_update(new_config);
+void set_split_pointing_auto_mouse_enable(bool enable) {
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.auto_mouse_enable          = enable ? PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
+    kb_settings_split_pointing_update(new_config);
 }
 
-bool get_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode) {
-    uint8_t mask = hpd3_auto_mouse_mode_mask(mode);
+bool get_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode) {
+    uint8_t mask = phenom_auto_mouse_mode_mask(mode);
     if (mask == 0) {
         return false;
     }
-    return (kb_settings_hpd3_devices.auto_mouse_enable & mask) != 0;
+    return (kb_settings_phenom_devices.auto_mouse_enable & mask) != 0;
 }
 
-void set_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled) {
-    uint8_t mask = hpd3_auto_mouse_mode_mask(mode);
+void set_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled) {
+    uint8_t mask = phenom_auto_mouse_mode_mask(mode);
     if (mask == 0) {
         return;
     }
 
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     if (enabled) {
         new_config.auto_mouse_enable |= mask;
     } else {
         new_config.auto_mouse_enable &= ~mask;
     }
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
-uint8_t get_hpd3_auto_mouse_layer(void) {
-    if (kb_settings_hpd3_devices.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+uint8_t get_split_pointing_auto_mouse_layer(void) {
+    if (kb_settings_phenom_devices.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
         return AUTO_MOUSE_DEFAULT_LAYER;
     }
-    return kb_settings_hpd3_devices.auto_mouse_layer;
+    return kb_settings_phenom_devices.auto_mouse_layer;
 }
 
-void set_hpd3_auto_mouse_layer(uint8_t layer) {
-    kb_settings_hpd3_devices_t new_config = kb_settings_hpd3_devices;
+void set_split_pointing_auto_mouse_layer(uint8_t layer) {
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     if (layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
         layer = AUTO_MOUSE_DEFAULT_LAYER;
     }
     new_config.auto_mouse_layer = layer;
-    kb_settings_hpd3_devices_update(new_config);
+    kb_settings_split_pointing_update(new_config);
 }
 
 static uint16_t apply_pointing_cpi(uint16_t cpi) {
@@ -623,23 +623,23 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
             static pointing_mode_t prev_mode_right   = POINTING_MODE_NORMAL;
 
             const bool left_side             = keycode == EH_SNP || keycode == EH_SCR || keycode == EH_TXT;
-            const hpd3_side_id_t side        = left_side ? HPD3_SIDE_LEFT : HPD3_SIDE_RIGHT;
+            const split_pointing_side_t side        = left_side ? SPLIT_POINTING_SIDE_LEFT : SPLIT_POINTING_SIDE_RIGHT;
             uint16_t *const press_timer      = left_side ? &press_timer_left : &press_timer_right;
             pointing_mode_t *const prev_mode = left_side ? &prev_mode_left : &prev_mode_right;
             const pointing_mode_t NEW_MODE   = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_SNP) : (keycode - EH_USR1));
 
             if (record->event.pressed) {
-                *prev_mode = get_hpd3_side_mode(side);
-                set_hpd3_side_mode(side, NEW_MODE);
+                *prev_mode = get_split_pointing_side_mode(side);
+                set_split_pointing_side_mode(side, NEW_MODE);
                 *press_timer = timer_read();
             } else {
                 if (get_sticky_mode() && timer_elapsed(*press_timer) < get_tapping_term(keycode, record)) {
                     if (*prev_mode == NEW_MODE)
-                        set_hpd3_side_mode(side, POINTING_MODE_NORMAL);
+                        set_split_pointing_side_mode(side, POINTING_MODE_NORMAL);
                     else
-                        set_hpd3_side_mode(side, NEW_MODE);
+                        set_split_pointing_side_mode(side, NEW_MODE);
                 } else {
-                    set_hpd3_side_mode(side, POINTING_MODE_NORMAL);
+                    set_split_pointing_side_mode(side, POINTING_MODE_NORMAL);
                 }
             }
             return false;

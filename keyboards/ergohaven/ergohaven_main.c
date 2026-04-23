@@ -38,8 +38,8 @@ static void sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint8_t out
 #ifdef EH_SYNC_POINTING_SETTINGS
 static kb_settings_pointing_t synced_pointing_settings;
 static bool synced_pointing_settings_valid = false;
-static kb_settings_hpd3_devices_t synced_hpd3_devices;
-static bool synced_hpd3_devices_valid = false;
+static kb_settings_split_pointing_t synced_split_pointing_settings;
+static bool synced_split_pointing_settings_valid = false;
 
 static void sync_pointing_settings_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
     (void)out_len;
@@ -51,13 +51,13 @@ static void sync_pointing_settings_rpc(uint8_t in_len, const void *in_data, uint
     }
 }
 
-static void sync_hpd3_devices_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+static void sync_split_pointing_settings_rpc(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
     (void)out_len;
     (void)out_data;
-    if (in_len == sizeof(kb_settings_hpd3_devices_t) && in_data != NULL) {
-        kb_settings_hpd3_devices_t value;
+    if (in_len == sizeof(kb_settings_split_pointing_t) && in_data != NULL) {
+        kb_settings_split_pointing_t value;
         memcpy(&value, in_data, sizeof(value));
-        set_settings_hpd3_devices(value);
+        set_split_pointing_settings(value);
     }
 }
 #endif
@@ -311,9 +311,9 @@ void keyboard_post_init_kb(void) {
 #endif
 #ifdef EH_SYNC_POINTING_SETTINGS
     transaction_register_rpc(RPC_SYNC_POINTING_SETTINGS, sync_pointing_settings_rpc);
-    transaction_register_rpc(RPC_SYNC_HPD3_DEVICES, sync_hpd3_devices_rpc);
+    transaction_register_rpc(RPC_SYNC_SPLIT_POINTING_SETTINGS, sync_split_pointing_settings_rpc);
     synced_pointing_settings_valid = false;
-    synced_hpd3_devices_valid      = false;
+    synced_split_pointing_settings_valid      = false;
 #endif
     keyboard_post_init_hid();
     keyboard_post_init_user();
@@ -402,11 +402,11 @@ void housekeeping_task_kb(void) {
                 synced_pointing_settings_valid = true;
             }
 
-            kb_settings_hpd3_devices_t hpd3_devices = get_settings_hpd3_devices();
-            if (!synced_hpd3_devices_valid || memcmp(&synced_hpd3_devices, &hpd3_devices, sizeof(hpd3_devices)) != 0) {
-                transaction_rpc_send(RPC_SYNC_HPD3_DEVICES, sizeof(hpd3_devices), &hpd3_devices);
-                synced_hpd3_devices = hpd3_devices;
-                synced_hpd3_devices_valid = true;
+            kb_settings_split_pointing_t phenom_devices = get_split_pointing_settings();
+            if (!synced_split_pointing_settings_valid || memcmp(&synced_split_pointing_settings, &phenom_devices, sizeof(phenom_devices)) != 0) {
+                transaction_rpc_send(RPC_SYNC_SPLIT_POINTING_SETTINGS, sizeof(phenom_devices), &phenom_devices);
+                synced_split_pointing_settings = phenom_devices;
+                synced_split_pointing_settings_valid = true;
             }
         }
     }

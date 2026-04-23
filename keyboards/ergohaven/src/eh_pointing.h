@@ -26,29 +26,29 @@ enum {
 typedef enum { ROT_0, ROT_90, ROT_180, ROT_270 } orientation_t;
 
 typedef enum {
-    HPD3_DEVICE_LEFT_BALL = 0,
-    HPD3_DEVICE_RIGHT_BALL,
-    HPD3_DEVICE_LEFT_TOUCH,
-    HPD3_DEVICE_RIGHT_TOUCH,
-    HPD3_DEVICE_COUNT,
-} hpd3_device_id_t;
+    SPLIT_POINTING_DEVICE_LEFT_BALL = 0,
+    SPLIT_POINTING_DEVICE_RIGHT_BALL,
+    SPLIT_POINTING_DEVICE_LEFT_TOUCH,
+    SPLIT_POINTING_DEVICE_RIGHT_TOUCH,
+    SPLIT_POINTING_DEVICE_COUNT,
+} split_pointing_device_id_t;
 
 typedef enum {
-    HPD3_SIDE_LEFT = 0,
-    HPD3_SIDE_RIGHT,
-    HPD3_SIDE_COUNT,
-} hpd3_side_id_t;
+    SPLIT_POINTING_SIDE_LEFT = 0,
+    SPLIT_POINTING_SIDE_RIGHT,
+    SPLIT_POINTING_SIDE_COUNT,
+} split_pointing_side_t;
 
 typedef struct {
-    uint8_t axis[HPD3_DEVICE_COUNT];
-    uint8_t dpi_idx[HPD3_DEVICE_COUNT];
-    uint8_t mode[HPD3_SIDE_COUNT];
-    uint8_t sens[HPD3_SIDE_COUNT][3];
-    uint8_t invert_scroll[HPD3_SIDE_COUNT];
-    uint8_t acceleration[HPD3_SIDE_COUNT];
+    uint8_t axis[SPLIT_POINTING_DEVICE_COUNT];
+    uint8_t dpi_idx[SPLIT_POINTING_DEVICE_COUNT];
+    uint8_t mode[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t sens[SPLIT_POINTING_SIDE_COUNT][3];
+    uint8_t invert_scroll[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t acceleration[SPLIT_POINTING_SIDE_COUNT];
     uint8_t auto_mouse_enable;
     uint8_t auto_mouse_layer;
-} kb_settings_hpd3_devices_t;
+} kb_settings_split_pointing_t;
 
 typedef union {
     uint64_t raw;
@@ -90,10 +90,10 @@ bool get_invert_scroll(void);
 void set_acceleration(bool acc);
 bool get_acceleration(void);
 
-bool    get_hpd3_auto_mouse_enable(void);
-void    set_hpd3_auto_mouse_enable(bool enable);
-uint8_t get_hpd3_auto_mouse_layer(void);
-void    set_hpd3_auto_mouse_layer(uint8_t layer);
+bool    get_split_pointing_auto_mouse_enable(void);
+void    set_split_pointing_auto_mouse_enable(bool enable);
+uint8_t get_split_pointing_auto_mouse_layer(void);
+void    set_split_pointing_auto_mouse_layer(uint8_t layer);
 void    set_pointing_auto_mouse_override(bool enabled, bool active);
 
 void          set_orientation(orientation_t orientation);
@@ -115,22 +115,22 @@ void kb_settings_pointing_init(void);
 
 void kb_settings_pointing_reset(void);
 
-kb_settings_hpd3_devices_t get_settings_hpd3_devices_default(void);
-kb_settings_hpd3_devices_t get_settings_hpd3_devices(void);
-void                       kb_settings_hpd3_devices_init(void);
-void                       kb_settings_hpd3_devices_reset(void);
-void                       set_settings_hpd3_devices(kb_settings_hpd3_devices_t config);
-orientation_t              get_hpd3_device_orientation(hpd3_device_id_t device);
-void                       set_hpd3_device_orientation(hpd3_device_id_t device, orientation_t orientation);
-uint8_t                    get_hpd3_device_dpi_index(hpd3_device_id_t device);
-void                       set_hpd3_device_dpi_index(hpd3_device_id_t device, uint8_t dpi_index);
-pointing_mode_t            get_hpd3_side_mode(hpd3_side_id_t side);
-void                       set_hpd3_side_mode(hpd3_side_id_t side, pointing_mode_t mode);
-uint8_t                    get_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode);
-void                       set_hpd3_side_sens(hpd3_side_id_t side, pointing_mode_t mode, uint8_t sens);
-bool                       get_hpd3_side_invert_scroll(hpd3_side_id_t side);
-void                       set_hpd3_side_invert_scroll(hpd3_side_id_t side, bool invert_scroll);
-bool                       get_hpd3_side_acceleration(hpd3_side_id_t side);
-void                       set_hpd3_side_acceleration(hpd3_side_id_t side, bool acceleration);
-bool                       get_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode);
-void                       set_hpd3_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled);
+kb_settings_split_pointing_t get_split_pointing_settings_default(void);
+kb_settings_split_pointing_t get_split_pointing_settings(void);
+void                       kb_settings_split_pointing_init(void);
+void                       kb_settings_split_pointing_reset(void);
+void                       set_split_pointing_settings(kb_settings_split_pointing_t config);
+orientation_t              get_split_pointing_device_orientation(split_pointing_device_id_t device);
+void                       set_split_pointing_device_orientation(split_pointing_device_id_t device, orientation_t orientation);
+uint8_t                    get_split_pointing_device_dpi_index(split_pointing_device_id_t device);
+void                       set_split_pointing_device_dpi_index(split_pointing_device_id_t device, uint8_t dpi_index);
+pointing_mode_t            get_split_pointing_side_mode(split_pointing_side_t side);
+void                       set_split_pointing_side_mode(split_pointing_side_t side, pointing_mode_t mode);
+uint8_t                    get_split_pointing_side_sens(split_pointing_side_t side, pointing_mode_t mode);
+void                       set_split_pointing_side_sens(split_pointing_side_t side, pointing_mode_t mode, uint8_t sens);
+bool                       get_split_pointing_side_invert_scroll(split_pointing_side_t side);
+void                       set_split_pointing_side_invert_scroll(split_pointing_side_t side, bool invert_scroll);
+bool                       get_split_pointing_side_acceleration(split_pointing_side_t side);
+void                       set_split_pointing_side_acceleration(split_pointing_side_t side, bool acceleration);
+bool                       get_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode);
+void                       set_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled);

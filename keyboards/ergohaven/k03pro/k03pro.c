@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
     kb_settings_pointing_t     pointing;
-    kb_settings_hpd3_devices_t devices;
+    kb_settings_split_pointing_t devices;
 } k03pro_pointing_sync_t;
 
 typedef struct {
@@ -181,7 +181,7 @@ void sync_pointing(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, v
         memcpy(&value, in_data, sizeof(value));
         value.pointing.led_blinks = false;
         set_settings_pointing(value.pointing);
-        set_settings_hpd3_devices(value.devices);
+        set_split_pointing_settings(value.devices);
     }
 }
 
@@ -281,7 +281,7 @@ void housekeeping_task_user(void) {
 
                 k03pro_pointing_sync_t pointing_sync = {
                     .pointing = get_settings_pointing(),
-                    .devices  = get_settings_hpd3_devices(),
+                    .devices  = get_split_pointing_settings(),
                 };
                 pointing_sync.pointing.led_blinks = false;
                 if (memcmp(&slave_pointing, &pointing_sync, sizeof(pointing_sync)) != 0) {
