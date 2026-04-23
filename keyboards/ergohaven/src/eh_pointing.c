@@ -817,8 +817,10 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
                 return mrpt;
             }
 
-            if (!text_button_armed) {
-                if (!text_button_hold_active && detected_sector == text_button_sector && text_button_hold_kc != KC_NO && timer_elapsed32(text_button_hold_timer) >= 500) {
+            if (!text_button_armed && detected_sector == text_button_sector) {
+                text_button_candidate    = 0;
+                text_button_candidate_ct = 0;
+                if (!text_button_hold_active && text_button_hold_kc != KC_NO && timer_elapsed32(text_button_hold_timer) >= 500) {
                     register_code16(text_button_hold_kc);
                     text_button_hold_active = true;
                 }
@@ -834,6 +836,10 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
             if (text_button_candidate_ct < stable_samples) {
                 text_button_candidate_ct++;
                 return mrpt;
+            }
+
+            if (!text_button_armed && text_button_hold_active && text_button_hold_kc != KC_NO) {
+                unregister_code16(text_button_hold_kc);
             }
 
             text_button_sector       = detected_sector;
