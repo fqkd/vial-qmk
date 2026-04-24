@@ -736,6 +736,9 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     static bool     text_button_hold_active  = false;
     static uint16_t text_button_hold_kc      = KC_NO;
     static uint32_t text_button_hold_timer   = 0;
+    static int16_t  text_button_motion_x     = 0;
+    static int16_t  text_button_motion_y     = 0;
+    static uint32_t text_button_idle_timer   = 0;
 #endif
 
     static uint16_t kc_up    = KC_NO;
@@ -760,62 +763,58 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     if (pmode != POINTING_MODE_NORMAL) {
 #ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
         if (pmode == POINTING_MODE_TEXT) {
-            const int8_t enter_threshold  = 30;
-            const int8_t exit_threshold   = 15;
+            const int16_t enter_threshold = 6;
+            const uint16_t idle_release_ms = 50;
             const uint8_t stable_samples  = 2;
-            report_analog_joystick_t raw  = analog_joystick_read_raw();
+            const int8_t sx               = mrpt.x;
+            const int8_t sy               = mrpt.y;
             uint8_t detected_sector       = 0;
-            int8_t tmp_raw;
-
-            switch (get_orientation()) {
-                case ROT_0:
-                    break;
-                case ROT_270:
-                    tmp_raw = raw.x;
-                    raw.x   = raw.y;
-                    raw.y   = -tmp_raw;
-                    break;
-                case ROT_180:
-                    raw.x = -raw.x;
-                    raw.y = -raw.y;
-                    break;
-                case ROT_90:
-                    tmp_raw = raw.x;
-                    raw.x   = -raw.y;
-                    raw.y   = tmp_raw;
-                    break;
-            }
 
             mrpt.x = 0;
             mrpt.y = 0;
             mrpt.h = 0;
             mrpt.v = 0;
 
-            if (abs(raw.x) <= exit_threshold && abs(raw.y) <= exit_threshold) {
-                if (text_button_hold_active && text_button_hold_kc != KC_NO) {
-                    unregister_code16(text_button_hold_kc);
+            if (sx == 0 && sy == 0) {
+                if (text_button_idle_timer == 0) {
+                    text_button_idle_timer = timer_read32();
                 }
-                text_button_sector       = 0;
-                text_button_candidate    = 0;
-                text_button_candidate_ct = 0;
-                text_button_armed        = true;
-                text_button_hold_active  = false;
-                text_button_hold_kc      = KC_NO;
-                text_button_hold_timer   = 0;
-                accumulated_h            = 0;
-                accumulated_v            = 0;
+                if (timer_elapsed32(text_button_idle_timer) >= idle_release_ms) {
+                    if (text_button_hold_active && text_button_hold_kc != KC_NO) {
+                        unregister_code16(text_button_hold_kc);
+                    }
+                    text_button_sector       = 0;
+                    text_button_candidate    = 0;
+                    text_button_candidate_ct = 0;
+                    text_button_armed        = true;
+                    text_button_hold_active  = false;
+                    text_button_hold_kc      = KC_NO;
+                    text_button_hold_timer   = 0;
+                    text_button_motion_x     = 0;
+                    text_button_motion_y     = 0;
+                    text_button_idle_timer   = 0;
+                    accumulated_h            = 0;
+                    accumulated_v            = 0;
+                }
                 return mrpt;
             }
 
-            if (abs(raw.x) > abs(raw.y) && abs(raw.x) >= enter_threshold) {
-                detected_sector = raw.x > 0 ? 1 : 2;
-            } else if (abs(raw.y) > abs(raw.x) && abs(raw.y) >= enter_threshold) {
-                detected_sector = raw.y > 0 ? 3 : 4;
+            text_button_idle_timer = timer_read32();
+            text_button_motion_x += sx;
+            text_button_motion_y += sy;
+
+            if (abs(text_button_motion_x) > abs(text_button_motion_y) && abs(text_button_motion_x) >= enter_threshold) {
+                detected_sector = text_button_motion_x > 0 ? 1 : 2;
+            } else if (abs(text_button_motion_y) > abs(text_button_motion_x) && abs(text_button_motion_y) >= enter_threshold) {
+                detected_sector = text_button_motion_y > 0 ? 4 : 3;
             }
 
             if (detected_sector == 0) {
                 return mrpt;
             }
+
+            text_button_motion_x = 0;
+            text_button_motion_y = 0;
 
             if (!text_button_armed && detected_sector == text_button_sector) {
                 text_button_candidate    = 0;
@@ -848,6 +847,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
             text_button_armed        = false;
             text_button_hold_active  = false;
             text_button_hold_timer   = timer_read32();
+            text_button_idle_timer   = 0;
 
             switch (text_button_sector) {
                 case 1:
@@ -961,6 +961,9 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
         text_button_hold_active  = false;
         text_button_hold_kc      = KC_NO;
         text_button_hold_timer   = 0;
+        text_button_motion_x     = 0;
+        text_button_motion_y     = 0;
+        text_button_idle_timer   = 0;
 #endif
         accumulated_h = 0;
         accumulated_v = 0;
