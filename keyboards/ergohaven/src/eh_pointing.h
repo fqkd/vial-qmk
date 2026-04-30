@@ -14,6 +14,9 @@ typedef enum {
 } pointing_mode_t;
 
 enum {
+    EH_L_SNP = EH_RSRV2,
+    EH_L_SCR,
+    EH_L_TXT,
     EH_LED_BL = EH_RSRV7 + 1,
     EH_SNP,
     EH_SCR,

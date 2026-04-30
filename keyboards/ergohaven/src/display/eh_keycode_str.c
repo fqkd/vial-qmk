@@ -514,14 +514,23 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
             sprintf(buf, "Led\nBlnk");
             return true;
 #ifdef EH_KEYBOARD_SPLIT_POINTING_V2
-        case EH_SNP:
+        case EH_L_SNP:
             sprintf(buf, "Left\nSnpr");
             return true;
-        case EH_SCR:
+        case EH_L_SCR:
             sprintf(buf, "Left\nScrl");
             return true;
-        case EH_TXT:
+        case EH_L_TXT:
             sprintf(buf, "Left\nText");
+            return true;
+        case EH_SNP:
+            sprintf(buf, "Snpr\nMode");
+            return true;
+        case EH_SCR:
+            sprintf(buf, "Scrl\nMode");
+            return true;
+        case EH_TXT:
+            sprintf(buf, "Text\nMode");
             return true;
         case EH_USR1:
             sprintf(buf, "Rght\nSnpr");
@@ -553,7 +562,7 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
             return true;
 #endif
         case EH_RSRV1:
-        case EH_RSRV2 ... EH_RSRV7:
+        case EH_RSRV5 ... EH_RSRV7:
             sprintf(buf, "Rsrv");
             return true;
 

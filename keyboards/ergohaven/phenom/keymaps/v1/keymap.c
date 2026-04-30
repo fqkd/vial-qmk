@@ -3,6 +3,7 @@
 #include "src/eh_pointing.h"
 
 // clang-format off
+// phenom-layout-v0.0.3: align Phenom layers with the layout map; layer 4 uses common pointing modes.
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(
 KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,                                   KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_BSPC,
@@ -33,9 +34,9 @@ _______,  _______,  KC_ASTR,  KC_COLN,  KC_SLSH,  _______,                      
 
     [_FOUR] = LAYOUT(
 _______,  _______,  _______,  _______,  _______,  _______,                                _______,  _______,  _______,  _______,  _______,  _______,
-_______,  _______,  EH_USR3,  EH_USR1,  EH_USR2,  _______,                                _______,  EH_SCR,  EH_SNP,   EH_TXT,   _______,  _______,
-_______,  _______,  KC_BTN3,  KC_BTN2,  KC_BTN1,  _______,                                _______,  KC_BTN1, KC_BTN2,  KC_BTN3,  _______,  _______,
 _______,  _______,  _______,  _______,  _______,  _______,                                _______,  _______,  _______,  _______,  _______,  _______,
+_______,  EH_SCR,   KC_BTN3,  KC_BTN2,  KC_BTN1,  EH_SNP,                                 EH_SNP,   KC_BTN1,  KC_BTN2,  KC_BTN3,  EH_SCR,   _______,
+_______,  _______,  _______,  _______,  _______,  EH_TXT,                                 EH_TXT,   _______,  _______,  _______,  _______,  _______,
                     _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,  _______,  _______,
                                                             _______,            _______
     ),

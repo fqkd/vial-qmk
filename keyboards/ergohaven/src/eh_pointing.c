@@ -91,6 +91,11 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
     if (config_all_zero(&config, sizeof(config))) {
         return get_split_pointing_settings_default();
     }
+    for (uint8_t side = 0; side < SPLIT_POINTING_SIDE_COUNT; ++side) {
+        if (config.mode[side] > POINTING_MODE_TEXT) {
+            config.mode[side] = POINTING_MODE_NORMAL;
+        }
+    }
     if (config.auto_mouse_enable <= 1) {
         config.auto_mouse_enable = config.auto_mouse_enable ? PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
     } else if (config.auto_mouse_enable & ~PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
@@ -174,6 +179,9 @@ pointing_mode_t get_split_pointing_side_mode(split_pointing_side_t side) {
 void set_split_pointing_side_mode(split_pointing_side_t side, pointing_mode_t mode) {
     if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
+    }
+    if (mode > POINTING_MODE_TEXT) {
+        mode = POINTING_MODE_NORMAL;
     }
     kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.mode[side]                 = (uint8_t)mode;
@@ -613,7 +621,32 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
 #ifdef EH_KEYBOARD_SPLIT_POINTING_V2
         case EH_SCR:
         case EH_TXT:
-        case EH_SNP:
+        case EH_SNP: {
+            static uint16_t        press_timer     = 0;
+            static pointing_mode_t prev_mode_left  = POINTING_MODE_NORMAL;
+            static pointing_mode_t prev_mode_right = POINTING_MODE_NORMAL;
+            const pointing_mode_t  NEW_MODE        = POINTING_MODE_SNIPER + (keycode - EH_SNP);
+
+            if (record->event.pressed) {
+                prev_mode_left  = get_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT);
+                prev_mode_right = get_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT);
+                set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, NEW_MODE);
+                set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, NEW_MODE);
+                press_timer = timer_read();
+            } else {
+                if (get_sticky_mode() && timer_elapsed(press_timer) < get_tapping_term(keycode, record)) {
+                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, prev_mode_left == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
+                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, prev_mode_right == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
+                } else {
+                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, POINTING_MODE_NORMAL);
+                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, POINTING_MODE_NORMAL);
+                }
+            }
+            return false;
+        }
+        case EH_L_SCR:
+        case EH_L_TXT:
+        case EH_L_SNP:
         case EH_USR1:
         case EH_USR2:
         case EH_USR3: {
@@ -622,11 +655,11 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
             static pointing_mode_t prev_mode_left    = POINTING_MODE_NORMAL;
             static pointing_mode_t prev_mode_right   = POINTING_MODE_NORMAL;
 
-            const bool left_side             = keycode == EH_SNP || keycode == EH_SCR || keycode == EH_TXT;
+            const bool left_side             = keycode == EH_L_SNP || keycode == EH_L_SCR || keycode == EH_L_TXT;
             const split_pointing_side_t side        = left_side ? SPLIT_POINTING_SIDE_LEFT : SPLIT_POINTING_SIDE_RIGHT;
             uint16_t *const press_timer      = left_side ? &press_timer_left : &press_timer_right;
             pointing_mode_t *const prev_mode = left_side ? &prev_mode_left : &prev_mode_right;
-            const pointing_mode_t NEW_MODE   = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_SNP) : (keycode - EH_USR1));
+            const pointing_mode_t NEW_MODE   = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_L_SNP) : (keycode - EH_USR1));
 
             if (record->event.pressed) {
                 *prev_mode = get_split_pointing_side_mode(side);
