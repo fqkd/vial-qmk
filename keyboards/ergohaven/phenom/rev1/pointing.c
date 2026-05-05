@@ -580,6 +580,12 @@ static report_mouse_t phenom_apply_side_mode(report_mouse_t mrpt, split_pointing
                     accumulated_h[side] = 0;
                 }
 
+                // phenom-text-dir-default-v0.0.14: Phenom's natural Text mode vertical direction is opposite
+                // to the shared fallback; Invert text flips it back when enabled.
+                if (!get_split_pointing_side_invert_text(side)) {
+                    shift_y = -shift_y;
+                }
+
                 for (; shift_x > 0; shift_x--) tap_code16(kc_right[side]);
                 for (; shift_x < 0; shift_x++) tap_code16(kc_left[side]);
                 for (; shift_y > 0; shift_y--) tap_code16(kc_up[side]);

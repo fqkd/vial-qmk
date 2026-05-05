@@ -63,4 +63,7 @@
 #define AUTO_MOUSE_DEFAULT_LAYER 4
 #define POINTING_DEVICE_DEBUG
 
+// phenom-text-mode-v0.0.1: enable split left/right pointing modes and map Text mode movement to arrow key taps.
+#define EH_KEYBOARD_SPLIT_POINTING_V2
+#define EH_TRACKBALL_TEXT_DIR_REMAP
 #define EH_POINTING_KEYCODES

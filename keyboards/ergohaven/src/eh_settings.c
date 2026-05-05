@@ -269,6 +269,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 134:
         case 136:
         case 137:
+        case 140:
+        case 147:
             return SPLIT_POINTING_SIDE_LEFT;
         case 127:
         case 128:
@@ -276,6 +278,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 135:
         case 138:
         case 139:
+        case 141:
+        case 148:
             return SPLIT_POINTING_SIDE_RIGHT;
         default:
             return SPLIT_POINTING_SIDE_LEFT;
@@ -443,18 +447,21 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 137: value = get_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_LEFT); break;
         case 138: value = get_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_RIGHT); break;
         case 139: value = get_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_RIGHT); break;
-        case 140: value = get_sticky_mode(); break;
-        case 141: value = get_led_blinks(); break;
+        case 140:
+        case 141: value = get_split_pointing_side_sticky_mode(split_pointing_side_for_qsid(proto->qsid)); break;
         case 142: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_NORMAL); break;
         case 144: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SNIPER); break;
         case 145: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SCROLL); break;
         case 146: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT); break;
+        case 147:
+        case 148: value = get_split_pointing_side_invert_text(split_pointing_side_for_qsid(proto->qsid)); break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
         case 127: value = get_invert_scroll(); break;
         case 128: value = get_acceleration(); break;
+        case 136: value = get_invert_text(); break;
         case 133:
         case 140: value = get_sticky_mode(); break;
         case 134:
@@ -478,18 +485,21 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 137: set_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_LEFT, value); break;
         case 138: set_split_pointing_side_invert_scroll(SPLIT_POINTING_SIDE_RIGHT, value); break;
         case 139: set_split_pointing_side_acceleration(SPLIT_POINTING_SIDE_RIGHT, value); break;
-        case 140: set_sticky_mode(value); break;
-        case 141: set_led_blinks(value); break;
+        case 140:
+        case 141: set_split_pointing_side_sticky_mode(split_pointing_side_for_qsid(proto->qsid), value); break;
         case 142: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_NORMAL, value); break;
         case 144: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SNIPER, value); break;
         case 145: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_SCROLL, value); break;
         case 146: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT, value); break;
+        case 147:
+        case 148: set_split_pointing_side_invert_text(split_pointing_side_for_qsid(proto->qsid), value); break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
         case 127: set_invert_scroll(value); break;
         case 128: set_acceleration(value); break;
+        case 136: set_invert_text(value); break;
         case 133:
         case 140: set_sticky_mode(value); break;
         case 134:
@@ -661,6 +671,7 @@ static int simple_touchpad_flags_get(const qmk_settings_proto_t *proto, void *se
     value |= get_invert_scroll() ? (1 << 0) : 0;
     value |= get_acceleration() ? (1 << 1) : 0;
     value |= get_sticky_mode() ? (1 << 2) : 0;
+    value |= get_invert_text() ? (1 << 3) : 0;
     if (maxsz < sizeof(value)) return -1;
     memcpy(setting, &value, sizeof(value));
     return 0;
@@ -674,6 +685,7 @@ static int simple_touchpad_flags_set(const qmk_settings_proto_t *proto, const vo
     set_invert_scroll(value & (1 << 0));
     set_acceleration(value & (1 << 1));
     set_sticky_mode(value & (1 << 2));
+    set_invert_text(value & (1 << 3));
     return 0;
 }
 
@@ -915,6 +927,8 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(144, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(145, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(146, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(147, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(148, modules_bool_get, modules_bool_set),
 #else
 #    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),

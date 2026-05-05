@@ -17,12 +17,17 @@ static kb_settings_split_pointing_t kb_settings_phenom_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
 #define PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK ((1u << POINTING_MODE_NORMAL) | (1u << POINTING_MODE_SNIPER) | (1u << POINTING_MODE_SCROLL) | (1u << POINTING_MODE_TEXT))
+#define PHENOM_SPLIT_POINTING_SETTINGS_VERSION 5
 
 static uint8_t phenom_auto_mouse_mode_mask(pointing_mode_t mode) {
     if (mode < POINTING_MODE_NORMAL || mode > POINTING_MODE_USR3) {
         return 0;
     }
     return (uint8_t)(1u << (uint8_t)mode);
+}
+
+static uint16_t pointing_text_keycode_or_default(uint16_t keycode, uint16_t fallback) {
+    return keycode == KC_NO || keycode == KC_TRNS ? fallback : keycode;
 }
 
 static void apply_auto_mouse_settings(void) {
@@ -59,6 +64,7 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
         .mode          = 0,
         .sticky_mode   = true,
         .led_blinks    = false,
+        .invert_text   = false,
     };
     return dflt;
 }
@@ -73,6 +79,13 @@ kb_settings_split_pointing_t get_split_pointing_settings_default(void) {
         .acceleration      = {false, false},
         .auto_mouse_enable = PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK,
         .auto_mouse_layer  = AUTO_MOUSE_DEFAULT_LAYER,
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+        .sticky_mode            = {true, true},
+        .side_auto_mouse_enable = {PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK, PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK},
+        .side_auto_mouse_layer  = {AUTO_MOUSE_DEFAULT_LAYER, AUTO_MOUSE_DEFAULT_LAYER},
+        .invert_text            = {false, false},
+        .version                = PHENOM_SPLIT_POINTING_SETTINGS_VERSION,
+#endif
     };
     return dflt;
 }
@@ -91,10 +104,45 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
     if (config_all_zero(&config, sizeof(config))) {
         return get_split_pointing_settings_default();
     }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    bool legacy_config = config.version != PHENOM_SPLIT_POINTING_SETTINGS_VERSION;
+    if (legacy_config) {
+        uint8_t legacy_auto_mouse_enable = config.auto_mouse_enable;
+        uint8_t legacy_auto_mouse_layer  = config.auto_mouse_layer;
+        bool    legacy_sticky_mode       = get_sticky_mode();
+
+        if (legacy_auto_mouse_enable <= 1) {
+            legacy_auto_mouse_enable = legacy_auto_mouse_enable ? PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
+        } else if (legacy_auto_mouse_enable & ~PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
+            legacy_auto_mouse_enable &= PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK;
+        }
+        if (legacy_auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+            legacy_auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
+        }
+
+        for (uint8_t side = 0; side < SPLIT_POINTING_SIDE_COUNT; ++side) {
+            config.sticky_mode[side]            = legacy_sticky_mode;
+            config.side_auto_mouse_enable[side] = legacy_auto_mouse_enable;
+            config.side_auto_mouse_layer[side]  = legacy_auto_mouse_layer;
+            config.invert_text[side]            = false;
+        }
+        config.version = PHENOM_SPLIT_POINTING_SETTINGS_VERSION;
+    }
+#endif
     for (uint8_t side = 0; side < SPLIT_POINTING_SIDE_COUNT; ++side) {
         if (config.mode[side] > POINTING_MODE_TEXT) {
             config.mode[side] = POINTING_MODE_NORMAL;
         }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+        config.sticky_mode[side] = config.sticky_mode[side] != 0;
+        config.invert_text[side] = config.invert_text[side] != 0;
+        if (config.side_auto_mouse_enable[side] & ~PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK) {
+            config.side_auto_mouse_enable[side] &= PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK;
+        }
+        if (config.side_auto_mouse_layer[side] >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+            config.side_auto_mouse_layer[side] = AUTO_MOUSE_DEFAULT_LAYER;
+        }
+#endif
     }
     if (config.auto_mouse_enable <= 1) {
         config.auto_mouse_enable = config.auto_mouse_enable ? PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK : 0;
@@ -104,6 +152,9 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
     if (config.auto_mouse_layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
         config.auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
     }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    config.version = PHENOM_SPLIT_POINTING_SETTINGS_VERSION;
+#endif
     return config;
 }
 
@@ -309,6 +360,123 @@ void set_split_pointing_auto_mouse_layer(uint8_t layer) {
     kb_settings_split_pointing_update(new_config);
 }
 
+bool get_split_pointing_side_invert_text(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return false;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    return kb_settings_phenom_devices.invert_text[side] != 0;
+#else
+    return false;
+#endif
+}
+
+void set_split_pointing_side_invert_text(split_pointing_side_t side, bool invert_text) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.invert_text[side]           = invert_text;
+    kb_settings_split_pointing_update(new_config);
+#endif
+}
+
+bool get_split_pointing_side_sticky_mode(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return true;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    return kb_settings_phenom_devices.sticky_mode[side] != 0;
+#else
+    return get_sticky_mode();
+#endif
+}
+
+void set_split_pointing_side_sticky_mode(split_pointing_side_t side, bool sticky_mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.sticky_mode[side]           = sticky_mode;
+    kb_settings_split_pointing_update(new_config);
+#else
+    set_sticky_mode(sticky_mode);
+#endif
+}
+
+bool get_split_pointing_side_auto_mouse_mode_enabled(split_pointing_side_t side, pointing_mode_t mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return false;
+    }
+    uint8_t mask = phenom_auto_mouse_mode_mask(mode);
+    if (mask == 0) {
+        return false;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    return (kb_settings_phenom_devices.side_auto_mouse_enable[side] & mask) != 0;
+#else
+    return (kb_settings_phenom_devices.auto_mouse_enable & mask) != 0;
+#endif
+}
+
+void set_split_pointing_side_auto_mouse_mode_enabled(split_pointing_side_t side, pointing_mode_t mode, bool enabled) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    uint8_t mask = phenom_auto_mouse_mode_mask(mode);
+    if (mask == 0) {
+        return;
+    }
+
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (enabled) {
+        new_config.side_auto_mouse_enable[side] |= mask;
+    } else {
+        new_config.side_auto_mouse_enable[side] &= ~mask;
+    }
+#else
+    if (enabled) {
+        new_config.auto_mouse_enable |= mask;
+    } else {
+        new_config.auto_mouse_enable &= ~mask;
+    }
+#endif
+    kb_settings_split_pointing_update(new_config);
+}
+
+uint8_t get_split_pointing_side_auto_mouse_layer(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return AUTO_MOUSE_DEFAULT_LAYER;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (kb_settings_phenom_devices.side_auto_mouse_layer[side] >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+        return AUTO_MOUSE_DEFAULT_LAYER;
+    }
+    return kb_settings_phenom_devices.side_auto_mouse_layer[side];
+#else
+    return get_split_pointing_auto_mouse_layer();
+#endif
+}
+
+void set_split_pointing_side_auto_mouse_layer(split_pointing_side_t side, uint8_t layer) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    if (layer >= DYNAMIC_KEYMAP_LAYER_COUNT) {
+        layer = AUTO_MOUSE_DEFAULT_LAYER;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.side_auto_mouse_layer[side] = layer;
+    kb_settings_split_pointing_update(new_config);
+#else
+    set_split_pointing_auto_mouse_layer(layer);
+#endif
+}
+
 static uint16_t apply_pointing_cpi(uint16_t cpi) {
 #if defined(POINTING_DEVICE_ENABLE) && !defined(POINTING_DEVICE_DRIVER_analog_joystick)
     uint16_t actual_dpi = cpi;
@@ -415,6 +583,16 @@ void set_invert_scroll(bool invert) {
 
 bool get_invert_scroll(void) {
     return kb_settings_pointing.invert_scroll;
+}
+
+void set_invert_text(bool invert) {
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.invert_text            = invert;
+    kb_settings_pointing_update(new_config);
+}
+
+bool get_invert_text(void) {
+    return kb_settings_pointing.invert_text;
 }
 
 void set_orientation(orientation_t o) {
@@ -634,11 +812,15 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
                 set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, NEW_MODE);
                 press_timer = timer_read();
             } else {
-                if (get_sticky_mode() && timer_elapsed(press_timer) < get_tapping_term(keycode, record)) {
+                bool tapped = timer_elapsed(press_timer) < get_tapping_term(keycode, record);
+                if (get_split_pointing_side_sticky_mode(SPLIT_POINTING_SIDE_LEFT) && tapped) {
                     set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, prev_mode_left == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
-                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, prev_mode_right == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
                 } else {
                     set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, POINTING_MODE_NORMAL);
+                }
+                if (get_split_pointing_side_sticky_mode(SPLIT_POINTING_SIDE_RIGHT) && tapped) {
+                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, prev_mode_right == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
+                } else {
                     set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, POINTING_MODE_NORMAL);
                 }
             }
@@ -666,7 +848,7 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
                 set_split_pointing_side_mode(side, NEW_MODE);
                 *press_timer = timer_read();
             } else {
-                if (get_sticky_mode() && timer_elapsed(*press_timer) < get_tapping_term(keycode, record)) {
+                if (get_split_pointing_side_sticky_mode(side) && timer_elapsed(*press_timer) < get_tapping_term(keycode, record)) {
                     if (*prev_mode == NEW_MODE)
                         set_split_pointing_side_mode(side, POINTING_MODE_NORMAL);
                     else
@@ -706,9 +888,11 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
         }
 #endif
 
+#ifndef EH_KEYBOARD_SPLIT_POINTING_V2
         case EH_LED_BL:
             if (record->event.pressed) set_led_blinks(!get_led_blinks());
             return false;
+#endif
     }
 
     return true;
@@ -774,10 +958,11 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     static uint32_t text_button_idle_timer   = 0;
 #endif
 
-    static uint16_t kc_up    = KC_NO;
-    static uint16_t kc_down  = KC_NO;
-    static uint16_t kc_left  = KC_NO;
-    static uint16_t kc_right = KC_NO;
+    // hpd-text-mode-v0.0.4: default Text mode to arrow keys when no custom text layer mapping exists.
+    static uint16_t kc_up    = KC_UP;
+    static uint16_t kc_down  = KC_DOWN;
+    static uint16_t kc_left  = KC_LEFT;
+    static uint16_t kc_right = KC_RIGHT;
 #ifdef EH_HPD_LAYERS
     uint8_t layer = get_current_layer();
     kc_up         = dynamic_keymap_get_keycode(layer, 11, 0);
@@ -792,6 +977,10 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
     }
 #    endif
 #endif
+    kc_up    = pointing_text_keycode_or_default(kc_up, KC_UP);
+    kc_down  = pointing_text_keycode_or_default(kc_down, KC_DOWN);
+    kc_left  = pointing_text_keycode_or_default(kc_left, KC_LEFT);
+    kc_right = pointing_text_keycode_or_default(kc_right, KC_RIGHT);
 
     if (pmode != POINTING_MODE_NORMAL) {
 #ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
@@ -840,6 +1029,14 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
                 detected_sector = text_button_motion_x > 0 ? 1 : 2;
             } else if (abs(text_button_motion_y) > abs(text_button_motion_x) && abs(text_button_motion_y) >= enter_threshold) {
                 detected_sector = text_button_motion_y > 0 ? 4 : 3;
+            }
+
+            if (get_invert_text()) {
+                if (detected_sector == 3) {
+                    detected_sector = 4;
+                } else if (detected_sector == 4) {
+                    detected_sector = 3;
+                }
             }
 
             if (detected_sector == 0) {
@@ -955,12 +1152,20 @@ report_mouse_t pointing_device_task_user(report_mouse_t mrpt) {
                 kc_left  = dynamic_keymap_get_keycode(layer, 1, 0);
                 kc_right = dynamic_keymap_get_keycode(layer, 1, 1);
 #endif
+                kc_up    = pointing_text_keycode_or_default(kc_up, KC_UP);
+                kc_down  = pointing_text_keycode_or_default(kc_down, KC_DOWN);
+                kc_left  = pointing_text_keycode_or_default(kc_left, KC_LEFT);
+                kc_right = pointing_text_keycode_or_default(kc_right, KC_RIGHT);
                 if (abs(shift_x) > abs(shift_y)) {
                     shift_y       = 0;
                     accumulated_v = 0;
                 } else if (abs(shift_x) < abs(shift_y)) {
                     shift_x       = 0;
                     accumulated_h = 0;
+                }
+
+                if (get_invert_text()) {
+                    shift_y = -shift_y;
                 }
 
                 for (; shift_x > 0; shift_x--)

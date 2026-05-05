@@ -4,7 +4,7 @@
 ,{"name": "EH_RSRV5", "shortName": "", "title": "Not using"}
 ,{"name": "EH_RSRV6", "shortName": "", "title": "Not using"}
 ,{"name": "EH_RSRV7", "shortName": "", "title": "Not using"}
-,{"name": "EH_LED_BL", "shortName": "Tg Led\nBlinks", "title": "Enable/disable special protocol for Ergohaven Trackball Mini with led blinking"}
+,{"name": "EH_LED_BL", "shortName": "", "title": "Not using"}
 ,{"name": "EH_SNP", "shortName": "Sniper\nmode", "title": "Set both pointing devices to sniper mode"}
 ,{"name": "EH_SCR", "shortName": "Scroll\nmode", "title": "Set both pointing devices to scroll mode"}
 ,{"name": "EH_TXT", "shortName": "Text\nmode", "title": "Set both pointing devices to text mode"}

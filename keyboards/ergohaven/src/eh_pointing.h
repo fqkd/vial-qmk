@@ -51,6 +51,14 @@ typedef struct {
     uint8_t acceleration[SPLIT_POINTING_SIDE_COUNT];
     uint8_t auto_mouse_enable;
     uint8_t auto_mouse_layer;
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    // phenom-side-modules-v0.0.2: per-half sticky/auto-layer settings.
+    uint8_t sticky_mode[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t side_auto_mouse_enable[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t side_auto_mouse_layer[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t invert_text[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t version;
+#endif
 } kb_settings_split_pointing_t;
 
 typedef union {
@@ -64,6 +72,7 @@ typedef union {
         uint8_t       mode : 2; // trackball mini v1/v2 modes
         bool          sticky_mode : 1;
         bool          led_blinks : 1;
+        bool          invert_text : 1;
     };
 } kb_settings_pointing_t;
 
@@ -89,6 +98,9 @@ uint8_t get_text_sens(void);
 
 void set_invert_scroll(bool invert);
 bool get_invert_scroll(void);
+
+void set_invert_text(bool invert);
+bool get_invert_text(void);
 
 void set_acceleration(bool acc);
 bool get_acceleration(void);
@@ -135,5 +147,13 @@ bool                       get_split_pointing_side_invert_scroll(split_pointing_
 void                       set_split_pointing_side_invert_scroll(split_pointing_side_t side, bool invert_scroll);
 bool                       get_split_pointing_side_acceleration(split_pointing_side_t side);
 void                       set_split_pointing_side_acceleration(split_pointing_side_t side, bool acceleration);
+bool                       get_split_pointing_side_invert_text(split_pointing_side_t side);
+void                       set_split_pointing_side_invert_text(split_pointing_side_t side, bool invert_text);
+bool                       get_split_pointing_side_sticky_mode(split_pointing_side_t side);
+void                       set_split_pointing_side_sticky_mode(split_pointing_side_t side, bool sticky_mode);
+uint8_t                    get_split_pointing_side_auto_mouse_layer(split_pointing_side_t side);
+void                       set_split_pointing_side_auto_mouse_layer(split_pointing_side_t side, uint8_t layer);
 bool                       get_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode);
 void                       set_split_pointing_auto_mouse_mode_enabled(pointing_mode_t mode, bool enabled);
+bool                       get_split_pointing_side_auto_mouse_mode_enabled(split_pointing_side_t side, pointing_mode_t mode);
+void                       set_split_pointing_side_auto_mouse_mode_enabled(split_pointing_side_t side, pointing_mode_t mode, bool enabled);
