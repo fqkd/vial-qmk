@@ -220,10 +220,60 @@ void set_split_pointing_device_dpi_index(split_pointing_device_id_t device, uint
     kb_settings_split_pointing_update(new_config);
 }
 
+static pointing_mode_t sanitize_split_pointing_mode(pointing_mode_t mode) {
+    return mode > POINTING_MODE_TEXT ? POINTING_MODE_NORMAL : mode;
+}
+
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+// split-mode-restore-v0.0.11: mode keys are temporary overrides, not saved settings.
+static bool            split_pointing_mode_override_active[SPLIT_POINTING_SIDE_COUNT] = {false, false};
+static pointing_mode_t split_pointing_mode_override[SPLIT_POINTING_SIDE_COUNT]        = {POINTING_MODE_NORMAL, POINTING_MODE_NORMAL};
+
+static void set_split_pointing_side_mode_override(split_pointing_side_t side, pointing_mode_t mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    split_pointing_mode_override[side]        = sanitize_split_pointing_mode(mode);
+    split_pointing_mode_override_active[side] = true;
+}
+
+static void clear_split_pointing_side_mode_override(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    split_pointing_mode_override_active[side] = false;
+}
+
+static void restore_split_pointing_side_mode_override(split_pointing_side_t side, bool active, pointing_mode_t mode) {
+    if (active) {
+        set_split_pointing_side_mode_override(side, mode);
+    } else {
+        clear_split_pointing_side_mode_override(side);
+    }
+}
+
+static void toggle_split_pointing_side_sticky_override(split_pointing_side_t side, pointing_mode_t mode) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    mode = sanitize_split_pointing_mode(mode);
+    if (split_pointing_mode_override_active[side] && split_pointing_mode_override[side] == mode) {
+        clear_split_pointing_side_mode_override(side);
+    } else {
+        set_split_pointing_side_mode_override(side, mode);
+    }
+}
+#endif
+
 pointing_mode_t get_split_pointing_side_mode(split_pointing_side_t side) {
     if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return POINTING_MODE_NORMAL;
     }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (split_pointing_mode_override_active[side]) {
+        return split_pointing_mode_override[side];
+    }
+#endif
     return (pointing_mode_t)kb_settings_phenom_devices.mode[side];
 }
 
@@ -231,9 +281,7 @@ void set_split_pointing_side_mode(split_pointing_side_t side, pointing_mode_t mo
     if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return;
     }
-    if (mode > POINTING_MODE_TEXT) {
-        mode = POINTING_MODE_NORMAL;
-    }
+    mode = sanitize_split_pointing_mode(mode);
     kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
     new_config.mode[side]                 = (uint8_t)mode;
     kb_settings_split_pointing_update(new_config);
@@ -800,28 +848,34 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
         case EH_SCR:
         case EH_TXT:
         case EH_SNP: {
-            static uint16_t        press_timer     = 0;
-            static pointing_mode_t prev_mode_left  = POINTING_MODE_NORMAL;
-            static pointing_mode_t prev_mode_right = POINTING_MODE_NORMAL;
-            const pointing_mode_t  NEW_MODE        = POINTING_MODE_SNIPER + (keycode - EH_SNP);
+            static uint16_t        press_timer                 = 0;
+            static bool            prev_override_active_left   = false;
+            static bool            prev_override_active_right  = false;
+            static pointing_mode_t prev_override_mode_left     = POINTING_MODE_NORMAL;
+            static pointing_mode_t prev_override_mode_right    = POINTING_MODE_NORMAL;
+            const pointing_mode_t  NEW_MODE                   = POINTING_MODE_SNIPER + (keycode - EH_SNP);
 
             if (record->event.pressed) {
-                prev_mode_left  = get_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT);
-                prev_mode_right = get_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT);
-                set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, NEW_MODE);
-                set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, NEW_MODE);
+                prev_override_active_left  = split_pointing_mode_override_active[SPLIT_POINTING_SIDE_LEFT];
+                prev_override_active_right = split_pointing_mode_override_active[SPLIT_POINTING_SIDE_RIGHT];
+                prev_override_mode_left    = split_pointing_mode_override[SPLIT_POINTING_SIDE_LEFT];
+                prev_override_mode_right   = split_pointing_mode_override[SPLIT_POINTING_SIDE_RIGHT];
+                set_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_LEFT, NEW_MODE);
+                set_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_RIGHT, NEW_MODE);
                 press_timer = timer_read();
             } else {
                 bool tapped = timer_elapsed(press_timer) < get_tapping_term(keycode, record);
                 if (get_split_pointing_side_sticky_mode(SPLIT_POINTING_SIDE_LEFT) && tapped) {
-                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, prev_mode_left == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
+                    restore_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_LEFT, prev_override_active_left, prev_override_mode_left);
+                    toggle_split_pointing_side_sticky_override(SPLIT_POINTING_SIDE_LEFT, NEW_MODE);
                 } else {
-                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_LEFT, POINTING_MODE_NORMAL);
+                    restore_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_LEFT, prev_override_active_left, prev_override_mode_left);
                 }
                 if (get_split_pointing_side_sticky_mode(SPLIT_POINTING_SIDE_RIGHT) && tapped) {
-                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, prev_mode_right == NEW_MODE ? POINTING_MODE_NORMAL : NEW_MODE);
+                    restore_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_RIGHT, prev_override_active_right, prev_override_mode_right);
+                    toggle_split_pointing_side_sticky_override(SPLIT_POINTING_SIDE_RIGHT, NEW_MODE);
                 } else {
-                    set_split_pointing_side_mode(SPLIT_POINTING_SIDE_RIGHT, POINTING_MODE_NORMAL);
+                    restore_split_pointing_side_mode_override(SPLIT_POINTING_SIDE_RIGHT, prev_override_active_right, prev_override_mode_right);
                 }
             }
             return false;
@@ -832,29 +886,31 @@ bool process_record_pointing(uint16_t keycode, keyrecord_t *record) {
         case EH_USR1:
         case EH_USR2:
         case EH_USR3: {
-            static uint16_t        press_timer_left  = 0;
-            static uint16_t        press_timer_right = 0;
-            static pointing_mode_t prev_mode_left    = POINTING_MODE_NORMAL;
-            static pointing_mode_t prev_mode_right   = POINTING_MODE_NORMAL;
+            static uint16_t        press_timer_left             = 0;
+            static uint16_t        press_timer_right            = 0;
+            static bool            prev_override_active_left    = false;
+            static bool            prev_override_active_right   = false;
+            static pointing_mode_t prev_override_mode_left      = POINTING_MODE_NORMAL;
+            static pointing_mode_t prev_override_mode_right     = POINTING_MODE_NORMAL;
 
-            const bool left_side             = keycode == EH_L_SNP || keycode == EH_L_SCR || keycode == EH_L_TXT;
+            const bool left_side                    = keycode == EH_L_SNP || keycode == EH_L_SCR || keycode == EH_L_TXT;
             const split_pointing_side_t side        = left_side ? SPLIT_POINTING_SIDE_LEFT : SPLIT_POINTING_SIDE_RIGHT;
-            uint16_t *const press_timer      = left_side ? &press_timer_left : &press_timer_right;
-            pointing_mode_t *const prev_mode = left_side ? &prev_mode_left : &prev_mode_right;
-            const pointing_mode_t NEW_MODE   = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_L_SNP) : (keycode - EH_USR1));
+            uint16_t *const press_timer             = left_side ? &press_timer_left : &press_timer_right;
+            bool *const prev_override_active        = left_side ? &prev_override_active_left : &prev_override_active_right;
+            pointing_mode_t *const prev_override_mode = left_side ? &prev_override_mode_left : &prev_override_mode_right;
+            const pointing_mode_t NEW_MODE          = POINTING_MODE_SNIPER + (left_side ? (keycode - EH_L_SNP) : (keycode - EH_USR1));
 
             if (record->event.pressed) {
-                *prev_mode = get_split_pointing_side_mode(side);
-                set_split_pointing_side_mode(side, NEW_MODE);
+                *prev_override_active = split_pointing_mode_override_active[side];
+                *prev_override_mode   = split_pointing_mode_override[side];
+                set_split_pointing_side_mode_override(side, NEW_MODE);
                 *press_timer = timer_read();
             } else {
                 if (get_split_pointing_side_sticky_mode(side) && timer_elapsed(*press_timer) < get_tapping_term(keycode, record)) {
-                    if (*prev_mode == NEW_MODE)
-                        set_split_pointing_side_mode(side, POINTING_MODE_NORMAL);
-                    else
-                        set_split_pointing_side_mode(side, NEW_MODE);
+                    restore_split_pointing_side_mode_override(side, *prev_override_active, *prev_override_mode);
+                    toggle_split_pointing_side_sticky_override(side, NEW_MODE);
                 } else {
-                    set_split_pointing_side_mode(side, POINTING_MODE_NORMAL);
+                    restore_split_pointing_side_mode_override(side, *prev_override_active, *prev_override_mode);
                 }
             }
             return false;
