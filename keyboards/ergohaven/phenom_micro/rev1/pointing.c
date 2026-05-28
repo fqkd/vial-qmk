@@ -5,6 +5,8 @@
 #include "drivers/sensors/azoteq_iqs5xx.h"
 #include "drivers/sensors/pmw3610.h"
 #include "gpio.h"
+#include "dynamic_keymap.h"
+#include "eeconfig.h"
 #include "quantum/split_common/transactions.h"
 #include "src/eh_pointing.h"
 #include "ergohaven_rgb.h"
@@ -26,6 +28,8 @@
 #ifndef PHENOM_MODULE_PROBE_STREAK_REQUIRED
 #    define PHENOM_MODULE_PROBE_STREAK_REQUIRED 2
 #endif
+
+#define PHENOM_MICRO_KEYMAP_EEPROM_VERSION 0x504D000F
 
 typedef enum {
     PHENOM_MODULE_AUTO = 0,
@@ -400,11 +404,23 @@ static void phenom_sync_led_colors_rpc(uint8_t in_len, const void *in_data, uint
     }
 }
 
+static void phenom_micro_reset_dynamic_keymap_once(void) {
+#if defined(DYNAMIC_KEYMAP_ENABLE) && EECONFIG_USER_DATA_SIZE == 0
+    if (eeconfig_read_user() != PHENOM_MICRO_KEYMAP_EEPROM_VERSION) {
+        dynamic_keymap_reset();
+        eeconfig_update_user(PHENOM_MICRO_KEYMAP_EEPROM_VERSION);
+    }
+#endif
+}
+
 void keyboard_post_init_user(void) {
 #ifdef CONSOLE_ENABLE
     debug_enable = true;
     dprintf("keyboard_post_init_user: phenom both halves debug\n");
 #endif
+    if (is_keyboard_master()) {
+        phenom_micro_reset_dynamic_keymap_once();
+    }
     transaction_register_rpc(RPC_PHENOM_CONFIG, phenom_sync_config_rpc);
     transaction_register_rpc(RPC_PHENOM_SPLIT_POINTING_SETTINGS, phenom_sync_split_pointing_settings_rpc);
     transaction_register_rpc(RPC_PHENOM_LED_COLORS, phenom_sync_led_colors_rpc);

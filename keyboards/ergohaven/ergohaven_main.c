@@ -234,11 +234,21 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
         }
     }
 
+// Some Vial keymaps need to consume keyboard-range user slots before shared
+// Ergohaven handlers see them.
+#ifdef EH_PROCESS_RECORD_USER_FIRST
+    if (!process_record_user(keycode, record)) return false;
+#endif
+
     if (!process_record_ruen(keycode, record)) return false;
 
     if (!process_record_pointing(keycode, record)) return false;
 
+#ifdef EH_PROCESS_RECORD_USER_FIRST
+    return true;
+#else
     return process_record_user(keycode, record);
+#endif
 }
 
 bool caps_word_press_user(uint16_t keycode) {

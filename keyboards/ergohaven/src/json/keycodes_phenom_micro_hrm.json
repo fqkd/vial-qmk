@@ -1,0 +1,10 @@
+,{"name": "HRM_LALT_LPRN", "shortName": "LAlt_T\n(", "title": "( on tap, left Alt on hold"}
+,{"name": "HRM_LCTL_RPRN", "shortName": "LCtl_T\n)", "title": ") on tap, left Ctrl on hold"}
+,{"name": "HRM_RCTL_LCBR", "shortName": "RCtl_T\n{", "title": "{ on tap, right Ctrl on hold"}
+,{"name": "HRM_RALT_RCBR", "shortName": "RAlt_T\n}", "title": "} on tap, right Alt on hold"}
+,{"name": "HRM_RGUI_EXLM", "shortName": "RGui_T\n!", "title": "! on tap, right GUI on hold"}
+
+,{"name": "HRM_LGUI_SCR", "shortName": "LGui_T\nScroll", "title": "Scroll mode on tap, left GUI on hold"}
+,{"name": "HRM_RGUI_SCR", "shortName": "RGui_T\nScroll", "title": "Scroll mode on tap, right GUI on hold"}
+,{"name": "PM_SNP", "shortName": "Sniper\nmode", "title": "Set both pointing devices to sniper mode"}
+,{"name": "PM_TXT", "shortName": "Text\nmode", "title": "Set both pointing devices to text mode"}
