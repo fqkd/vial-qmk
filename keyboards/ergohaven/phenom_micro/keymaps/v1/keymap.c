@@ -4,16 +4,12 @@
 #include "vial.h"
 
 enum phenom_micro_keycodes {
-    HRM_LALT_LPRN = QK_KB + 8,
+    HRM_GUI_SCR   = EH_PRINFO,
+    HRM_RGUI_EXLM = EH_RSRV1,
+    HRM_LALT_LPRN = EH_RSRV5,
     HRM_LCTL_RPRN,
     HRM_RCTL_LCBR,
     HRM_RALT_RCBR,
-    HRM_RGUI_EXLM,
-
-    HRM_LGUI_SCR,
-    HRM_RGUI_SCR,
-    PM_SNP,
-    PM_TXT,
 };
 
 typedef struct {
@@ -24,19 +20,18 @@ typedef struct {
 
 typedef struct {
     uint16_t timer;
+    uint8_t  mod;
     bool     pressed;
     bool     held;
 } phenom_micro_hrm_state_t;
 
 static const phenom_micro_hrm_t phenom_micro_hrms[] = {
+    {HRM_GUI_SCR,   EH_SCR,   MOD_BIT(KC_LEFT_GUI)},
+    {HRM_RGUI_EXLM, KC_EXLM,  MOD_BIT(KC_RIGHT_GUI)},
     {HRM_LALT_LPRN, KC_LPRN,  MOD_BIT(KC_LEFT_ALT)},
     {HRM_LCTL_RPRN, KC_RPRN,  MOD_BIT(KC_LEFT_CTRL)},
     {HRM_RCTL_LCBR, KC_LCBR,  MOD_BIT(KC_RIGHT_CTRL)},
     {HRM_RALT_RCBR, KC_RCBR,  MOD_BIT(KC_RIGHT_ALT)},
-    {HRM_RGUI_EXLM, KC_EXLM,  MOD_BIT(KC_RIGHT_GUI)},
-
-    {HRM_LGUI_SCR,  EH_SCR,   MOD_BIT(KC_LEFT_GUI)},
-    {HRM_RGUI_SCR,  EH_SCR,   MOD_BIT(KC_RIGHT_GUI)},
 };
 
 static phenom_micro_hrm_state_t phenom_micro_hrm_states[ARRAY_SIZE(phenom_micro_hrms)];
@@ -53,7 +48,7 @@ static int8_t phenom_micro_hrm_index(uint16_t keycode) {
 static void phenom_micro_hrm_hold(uint8_t index) {
     phenom_micro_hrm_state_t *state = &phenom_micro_hrm_states[index];
     if (state->pressed && !state->held) {
-        register_mods(phenom_micro_hrms[index].mod);
+        register_mods(state->mod);
         state->held = true;
     }
 }
@@ -66,19 +61,8 @@ static void phenom_micro_hrm_hold_pending_except(uint16_t keycode) {
     }
 }
 
-static uint16_t phenom_micro_mode_keycode(uint16_t keycode) {
-    switch (keycode) {
-        case PM_SNP:
-            return EH_SNP;
-        case PM_TXT:
-            return EH_TXT;
-        default:
-            return KC_NO;
-    }
-}
-
 // clang-format off
-// phenom-micro-layout-v0.0.15: show FOUR sniper/text modes as named Vial keycodes.
+// phenom-micro-layout-v0.0.17: keep User keycodes inside Vial's USER00..USER63 range.
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(
 KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,                                             KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,
@@ -114,8 +98,8 @@ _______,  _______,  _______,  _______,  _______,                                
 
     [_FOUR] = LAYOUT(
 _______,  _______,  _______,  _______,  _______,                                          _______,  _______,  _______,  _______,  _______,
-HRM_LGUI_SCR, LALT_T(KC_BTN3), LSFT_T(KC_BTN2), LCTL_T(KC_BTN1), PM_SNP,                  PM_SNP,   RCTL_T(KC_BTN1), RSFT_T(KC_BTN2), RALT_T(KC_BTN3), HRM_RGUI_SCR,
-_______,  _______,  _______,  _______,  PM_TXT,                                           PM_TXT,   _______,  _______,  _______,  _______,
+HRM_GUI_SCR, KC_BTN3,  KC_BTN2,  KC_BTN1,  EH_SNP,                                       EH_SNP,   KC_BTN1,  KC_BTN2,  KC_BTN3,  HRM_GUI_SCR,
+_______,  _______,  _______,  _______,  EH_TXT,                                           EH_TXT,   _______,  _______,  _______,  _______,
           _______,  _______,  _______,  _______,  _______,                                _______,  _______,  _______,  _______,  _______,
                                                             _______,            _______
     ),
@@ -140,11 +124,6 @@ bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    uint16_t mode_keycode = phenom_micro_mode_keycode(keycode);
-    if (mode_keycode != KC_NO) {
-        return process_record_pointing(mode_keycode, record);
-    }
-
     int8_t index = phenom_micro_hrm_index(keycode);
     if (index < 0) {
         return true;
@@ -153,11 +132,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     phenom_micro_hrm_state_t *state = &phenom_micro_hrm_states[index];
     if (record->event.pressed) {
         state->timer   = timer_read();
+        state->mod     = phenom_micro_hrms[index].mod;
+        if (keycode == HRM_GUI_SCR && record->event.key.row >= MATRIX_ROWS / 2) {
+            state->mod = MOD_BIT(KC_RIGHT_GUI);
+        }
         state->pressed = true;
         state->held    = false;
     } else {
         if (state->held) {
-            unregister_mods(phenom_micro_hrms[index].mod);
+            unregister_mods(state->mod);
         } else if (phenom_micro_hrms[index].tap_keycode != KC_NO) {
             vial_keycode_tap(phenom_micro_hrms[index].tap_keycode);
         }
