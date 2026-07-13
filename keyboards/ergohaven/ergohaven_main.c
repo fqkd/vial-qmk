@@ -186,7 +186,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
         case EH_PRINFO: {
             if (record->event.pressed) {
                 send_string("Product: " PRODUCT "\n");
-                send_string("FW version: " QMK_VERSION "\n");
+                send_string("FW version: " EH_VERSION_STR "\n");
                 send_string("Build date: " QMK_BUILDDATE "\n");
                 send_string("Git hash: " QMK_GIT_HASH "\n");
 
