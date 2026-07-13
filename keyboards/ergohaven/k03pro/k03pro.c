@@ -99,7 +99,7 @@ void kb_settings_lcd_reset(void) {
 }
 
 uint8_t get_lcd_brightness(void) {
-    return get_backlight_level();
+    return kb_settings_lcd.brightness;
 }
 
 void set_lcd_brightness(uint8_t brightness) {

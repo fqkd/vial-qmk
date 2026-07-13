@@ -252,6 +252,14 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                     command_data[4] = value & 0xFF;
                     break;
                 }
+                case id_firmware_version: {
+                    uint32_t value  = VIA_FIRMWARE_VERSION;
+                    command_data[1] = (value >> 24) & 0xFF;
+                    command_data[2] = (value >> 16) & 0xFF;
+                    command_data[3] = (value >> 8) & 0xFF;
+                    command_data[4] = value & 0xFF;
+                    break;
+                }
                 case id_switch_matrix_state: {
 #ifdef VIAL_ENABLE
                     /* Disable wannabe keylogger unless unlocked */

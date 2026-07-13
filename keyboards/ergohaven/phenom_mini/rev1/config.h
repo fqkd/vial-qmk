@@ -65,5 +65,6 @@
 
 // phenom-mini-v0.0.7 / phenom-text-mode-v0.0.1: enable split left/right pointing modes and map Text mode movement to arrow key taps.
 #define EH_KEYBOARD_SPLIT_POINTING_V2
+#define EH_SPLIT_POINTING_INVERT_AXES
 #define EH_TRACKBALL_TEXT_DIR_REMAP
 #define EH_POINTING_KEYCODES

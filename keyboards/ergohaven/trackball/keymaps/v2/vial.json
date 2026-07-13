@@ -1,10 +1,17 @@
 {
+    "firmware": {"version": "4.0.5"},
+    "firmwareVersion": "4.0.5",
     "matrix": {
         "rows": 2,
         "cols": 2
     },
     "layouts": {
         "labels": [
+            "Invert text horizontal",
+            "Invert text vertical",
+            "Invert scroll horizontal",
+            "Acceleration",
+            "Invert scroll vertical",
             [ "Mode", "NumLock - Scroll, ScrollLock - Sniper", "NumLock - Sniper, ScrollLock - Scroll", "NumLock - Text, ScrollLock - Scroll", "Led blinks" ],
             [ "Orientation", "0°", "90°", "180°", "270°" ],
             [ "DPI", "100", "200", "300", "400", "500", "600", "800", "1000", "1200", "1600", "2000", "2500", "3200", "4000", "5000" ],

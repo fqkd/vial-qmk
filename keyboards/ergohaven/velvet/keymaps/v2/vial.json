@@ -1,4 +1,6 @@
 {
+    "firmware": {"version": "4.0.5"},
+    "firmwareVersion": "4.0.5",
     "matrix": { "rows": 8, "cols": 6},
 #include "keyboards/ergohaven/src/json/keycodes_all.json"
     "settings": [

@@ -20,6 +20,9 @@ typedef union {
         uint8_t mode : 2;
         bool    invert_scroll : 1;
         bool    acceleration : 1;
+        bool    invert_scroll_h : 1;
+        bool    invert_text : 1;
+        bool    invert_text_h : 1;
     };
 } vial_config_t;
 
@@ -75,6 +78,9 @@ void via_set_layout_options_kb(uint32_t value) {
     set_text_sens(TEXT_TABLE[vial_config.text_mode]);
     set_orientation(vial_config.orientation);
     set_invert_scroll(vial_config.invert_scroll);
+    set_invert_scroll_h(vial_config.invert_scroll_h);
+    set_invert_text(vial_config.invert_text);
+    set_invert_text_h(vial_config.invert_text_h);
     set_acceleration(vial_config.acceleration);
     update_settings(host_keyboard_led_state());
 }

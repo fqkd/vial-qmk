@@ -1,4 +1,6 @@
 {
+    "firmware": {"version": "4.0.5"},
+    "firmwareVersion": "4.0.5",
     "matrix": {
         "rows": 10,
         "cols": 8
@@ -6,7 +8,7 @@
     "keycodes": ["qmk_lighting"],
 #include "keyboards/ergohaven/src/json/keycodes_all_phenom_rev3.json"
     "settings": [
-#include "keyboards/ergohaven/src/json/settings_phenom_modules.json"
+#include "keyboards/ergohaven/src/json/settings_phenom_modules_invert_axes.json"
 ,
 #include "keyboards/ergohaven/src/json/settings_leds.json"
 ,

@@ -271,6 +271,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 137:
         case 140:
         case 147:
+        case 149:
+        case 151:
             return SPLIT_POINTING_SIDE_LEFT;
         case 127:
         case 128:
@@ -280,6 +282,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 139:
         case 141:
         case 148:
+        case 150:
+        case 152:
             return SPLIT_POINTING_SIDE_RIGHT;
         default:
             return SPLIT_POINTING_SIDE_LEFT;
@@ -455,6 +459,12 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 146: value = get_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT); break;
         case 147:
         case 148: value = get_split_pointing_side_invert_text(split_pointing_side_for_qsid(proto->qsid)); break;
+#    ifdef EH_SPLIT_POINTING_INVERT_AXES
+        case 149:
+        case 150: value = get_split_pointing_side_invert_scroll_h(split_pointing_side_for_qsid(proto->qsid)); break;
+        case 151:
+        case 152: value = get_split_pointing_side_invert_text_h(split_pointing_side_for_qsid(proto->qsid)); break;
+#    endif
         default: return -1;
     }
 #else
@@ -493,6 +503,12 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 146: set_split_pointing_auto_mouse_mode_enabled(POINTING_MODE_TEXT, value); break;
         case 147:
         case 148: set_split_pointing_side_invert_text(split_pointing_side_for_qsid(proto->qsid), value); break;
+#    ifdef EH_SPLIT_POINTING_INVERT_AXES
+        case 149:
+        case 150: set_split_pointing_side_invert_scroll_h(split_pointing_side_for_qsid(proto->qsid), value); break;
+        case 151:
+        case 152: set_split_pointing_side_invert_text_h(split_pointing_side_for_qsid(proto->qsid), value); break;
+#    endif
         default: return -1;
     }
 #else
@@ -672,6 +688,8 @@ static int simple_touchpad_flags_get(const qmk_settings_proto_t *proto, void *se
     value |= get_acceleration() ? (1 << 1) : 0;
     value |= get_sticky_mode() ? (1 << 2) : 0;
     value |= get_invert_text() ? (1 << 3) : 0;
+    value |= get_invert_scroll_h() ? (1 << 4) : 0;
+    value |= get_invert_text_h() ? (1 << 5) : 0;
     if (maxsz < sizeof(value)) return -1;
     memcpy(setting, &value, sizeof(value));
     return 0;
@@ -686,6 +704,8 @@ static int simple_touchpad_flags_set(const qmk_settings_proto_t *proto, const vo
     set_acceleration(value & (1 << 1));
     set_sticky_mode(value & (1 << 2));
     set_invert_text(value & (1 << 3));
+    set_invert_scroll_h(value & (1 << 4));
+    set_invert_text_h(value & (1 << 5));
     return 0;
 }
 
@@ -825,20 +845,32 @@ static int leds_brightness_set(const qmk_settings_proto_t *proto, const void *se
 }
 
 static int leds_timeout_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint8_t value = get_led_rgb_timeout_mins();
+    static const uint8_t timeout_variants[] = {0, 1, 2, 5, 10, 15, 30, 60};
+    uint8_t              minutes            = get_led_rgb_timeout_mins();
+    uint8_t              value              = 4; // 10 min
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
+    for (uint8_t i = 0; i < sizeof(timeout_variants); ++i) {
+        if (timeout_variants[i] == minutes) {
+            value = i;
+            break;
+        }
+    }
     memcpy(setting, &value, sizeof(value));
     return 0;
 }
 
 static int leds_timeout_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
-    uint8_t value;
+    static const uint8_t timeout_variants[] = {0, 1, 2, 5, 10, 15, 30, 60};
+    uint8_t              value;
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    /* uint8_t, allowed range is 0..255 */
-    set_led_rgb_timeout_mins(value);
+    if (value < sizeof(timeout_variants)) {
+        set_led_rgb_timeout_mins(timeout_variants[value]);
+    } else {
+        set_led_rgb_timeout_mins(value);
+    }
     return 0;
 }
 
@@ -860,19 +892,32 @@ static int lcd_brightness_set(const qmk_settings_proto_t *proto, const void *set
 }
 
 static int lcd_timeout_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
-    uint8_t value = get_lcd_timeout_mins();
+    static const uint8_t timeout_variants[] = {0, 1, 2, 5, 10, 15, 30, 60};
+    uint8_t              minutes            = get_lcd_timeout_mins();
+    uint8_t              value              = 4; // 10 min
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
+    for (uint8_t i = 0; i < sizeof(timeout_variants); ++i) {
+        if (timeout_variants[i] == minutes) {
+            value = i;
+            break;
+        }
+    }
     memcpy(setting, &value, sizeof(value));
     return 0;
 }
 
 static int lcd_timeout_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
-    uint8_t value;
+    static const uint8_t timeout_variants[] = {0, 1, 2, 5, 10, 15, 30, 60};
+    uint8_t              value;
     (void)proto;
     if (maxsz < sizeof(value)) return -1;
     memcpy(&value, setting, sizeof(value));
-    set_lcd_timeout_mins(value);
+    if (value < sizeof(timeout_variants)) {
+        set_lcd_timeout_mins(timeout_variants[value]);
+    } else {
+        set_lcd_timeout_mins(value);
+    }
     return 0;
 }
 
@@ -929,6 +974,12 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(146, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(147, modules_bool_get, modules_bool_set),
     DECLARE_SETTING(148, modules_bool_get, modules_bool_set),
+#    ifdef EH_SPLIT_POINTING_INVERT_AXES
+    DECLARE_SETTING(149, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(150, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(151, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(152, modules_bool_get, modules_bool_set),
+#    endif
 #else
 #    if defined(EH_QMK_SETTINGS_SIMPLE_TOUCHPAD) || defined(EH_QMK_SETTINGS_SIMPLE_TRACKBALL) || defined(EH_QMK_SETTINGS_SIMPLE_JOYSTICK)
     DECLARE_SETTING(124, simple_touchpad_flags_get, simple_touchpad_flags_set),

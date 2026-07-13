@@ -17,6 +17,11 @@
 
 #define WEAR_LEVELING_BACKING_SIZE 16384 // increase EEPROM size
 
+#define EH_FIRMWARE_VERSION 0x00040005
+#ifndef VIA_FIRMWARE_VERSION
+#    define VIA_FIRMWARE_VERSION EH_FIRMWARE_VERSION
+#endif
+
 #define OLED_FONT_H "src/oled/eh_oled_font.c"
 #define OLED_TIMEOUT 0
 #define EH_TIMEOUT (10 * 60 * 1000) // 10 minutes
@@ -38,7 +43,7 @@
 #define KB_SETTINGS_POINTING_SIZE 8
 #define KB_SETTINGS_POINTING_OFFSET (KB_SETTINGS_RUEN_OFFSET + KB_SETTINGS_RUEN_SIZE)
 #if defined(KEYBOARD_ergohaven_phenom_rev1) || defined(KEYBOARD_ergohaven_phenom_mini_rev1) || defined(KEYBOARD_ergohaven_phenom_micro_rev1)
-#    define KB_SETTINGS_POINTING_PROTOS 29
+#    define KB_SETTINGS_POINTING_PROTOS 33
 #else
 #    define KB_SETTINGS_POINTING_PROTOS 27
 #endif
@@ -51,7 +56,7 @@
 #define KB_SETTINGS_LAYER_LABELS_PROTOS DYNAMIC_KEYMAP_LAYER_COUNT
 
 #if defined(KEYBOARD_ergohaven_phenom_rev1) || defined(KEYBOARD_ergohaven_phenom_mini_rev1) || defined(KEYBOARD_ergohaven_phenom_micro_rev1)
-#    define KB_SETTINGS_SPLIT_POINTING_SIZE 31
+#    define KB_SETTINGS_SPLIT_POINTING_SIZE 35
 #else
 #    define KB_SETTINGS_SPLIT_POINTING_SIZE 22
 #endif

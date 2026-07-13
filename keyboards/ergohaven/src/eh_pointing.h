@@ -58,6 +58,10 @@ typedef struct {
     uint8_t side_auto_mouse_layer[SPLIT_POINTING_SIDE_COUNT];
     uint8_t invert_text[SPLIT_POINTING_SIDE_COUNT];
     uint8_t version;
+#    ifdef EH_SPLIT_POINTING_INVERT_AXES
+    uint8_t invert_scroll_h[SPLIT_POINTING_SIDE_COUNT];
+    uint8_t invert_text_h[SPLIT_POINTING_SIDE_COUNT];
+#    endif
 #endif
 } kb_settings_split_pointing_t;
 
@@ -73,6 +77,8 @@ typedef union {
         bool          sticky_mode : 1;
         bool          led_blinks : 1;
         bool          invert_text : 1;
+        bool          invert_scroll_h : 1;
+        bool          invert_text_h : 1;
     };
 } kb_settings_pointing_t;
 
@@ -98,9 +104,13 @@ uint8_t get_text_sens(void);
 
 void set_invert_scroll(bool invert);
 bool get_invert_scroll(void);
+void set_invert_scroll_h(bool invert);
+bool get_invert_scroll_h(void);
 
 void set_invert_text(bool invert);
 bool get_invert_text(void);
+void set_invert_text_h(bool invert);
+bool get_invert_text_h(void);
 
 void set_acceleration(bool acc);
 bool get_acceleration(void);
@@ -145,10 +155,18 @@ uint8_t                    get_split_pointing_side_sens(split_pointing_side_t si
 void                       set_split_pointing_side_sens(split_pointing_side_t side, pointing_mode_t mode, uint8_t sens);
 bool                       get_split_pointing_side_invert_scroll(split_pointing_side_t side);
 void                       set_split_pointing_side_invert_scroll(split_pointing_side_t side, bool invert_scroll);
+#ifdef EH_SPLIT_POINTING_INVERT_AXES
+bool                       get_split_pointing_side_invert_scroll_h(split_pointing_side_t side);
+void                       set_split_pointing_side_invert_scroll_h(split_pointing_side_t side, bool invert_scroll);
+#endif
 bool                       get_split_pointing_side_acceleration(split_pointing_side_t side);
 void                       set_split_pointing_side_acceleration(split_pointing_side_t side, bool acceleration);
 bool                       get_split_pointing_side_invert_text(split_pointing_side_t side);
 void                       set_split_pointing_side_invert_text(split_pointing_side_t side, bool invert_text);
+#ifdef EH_SPLIT_POINTING_INVERT_AXES
+bool                       get_split_pointing_side_invert_text_h(split_pointing_side_t side);
+void                       set_split_pointing_side_invert_text_h(split_pointing_side_t side, bool invert_text);
+#endif
 bool                       get_split_pointing_side_sticky_mode(split_pointing_side_t side);
 void                       set_split_pointing_side_sticky_mode(split_pointing_side_t side, bool sticky_mode);
 uint8_t                    get_split_pointing_side_auto_mouse_layer(split_pointing_side_t side);

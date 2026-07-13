@@ -84,8 +84,9 @@ void display_housekeeping_task(void) {
     }
 
     if (change_screen_state != screen_state) {
+        bool waking = screen_state == SCREEN_OFF && change_screen_state != SCREEN_OFF;
         bool typing = activity_elapsed < 500; // prevent display updates when typing
-        if (typing) return;
+        if (typing && !waking) return;
 
         dprintf("change screen state %d->%d\n", screen_state, change_screen_state);
         screen_timer = timer_read32();

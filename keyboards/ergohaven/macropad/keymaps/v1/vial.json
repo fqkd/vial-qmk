@@ -1,4 +1,6 @@
 {
+    "firmware": {"version": "4.0.5"},
+    "firmwareVersion": "4.0.5",
     "matrix": {
         "rows": 5,
         "cols": 3

@@ -90,7 +90,9 @@ static bool is_display_on = false;
 
 void display_turn_on(void) {
     if (!is_display_on) {
+#if !defined(K03_DISPLAY_LEFT) && !defined(K03_DISPLAY_RIGHT)
         qp_power(display, true);
+#endif
         backlight_level_noeeprom(get_split_lcd_brightness());
         is_display_on = true;
     }
@@ -99,7 +101,9 @@ void display_turn_on(void) {
 void display_turn_off(void) {
     if (is_display_on) {
         is_display_on = false;
+#if !defined(K03_DISPLAY_LEFT) && !defined(K03_DISPLAY_RIGHT)
         qp_power(display, false);
+#endif
         backlight_level_noeeprom(0);
     }
 }

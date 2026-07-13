@@ -65,5 +65,6 @@
 
 // phenom-micro-layout-v0.0.1: Phenom Mini base with the outer alpha columns hidden from Vial.
 #define EH_KEYBOARD_SPLIT_POINTING_V2
+#define EH_SPLIT_POINTING_INVERT_AXES
 #define EH_TRACKBALL_TEXT_DIR_REMAP
 #define EH_POINTING_KEYCODES

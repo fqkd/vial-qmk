@@ -548,8 +548,10 @@ static report_mouse_t phenom_apply_side_mode(report_mouse_t mrpt, split_pointing
                 mrpt.v              = -shift_y;
                 accumulated_h[side] = 0;
             }
-            if (get_split_pointing_side_invert_scroll(side)) {
+            if (get_split_pointing_side_invert_scroll_h(side)) {
                 mrpt.h = -mrpt.h;
+            }
+            if (get_split_pointing_side_invert_scroll(side)) {
                 mrpt.v = -mrpt.v;
             }
             break;
@@ -584,6 +586,9 @@ static report_mouse_t phenom_apply_side_mode(report_mouse_t mrpt, split_pointing
                 // to the shared fallback; Invert text flips it back when enabled.
                 if (!get_split_pointing_side_invert_text(side)) {
                     shift_y = -shift_y;
+                }
+                if (get_split_pointing_side_invert_text_h(side)) {
+                    shift_x = -shift_x;
                 }
 
                 for (; shift_x > 0; shift_x--) tap_code16(kc_right[side]);

@@ -2,7 +2,7 @@
     "name": "LEDs settings",
     "fields": [
         { "type": "integer", "title": "LED brightness", "qsid": 316, "min": 0, "max": 255, "width": 2 },
-        { "type": "integer", "title": "LED timeout, min", "qsid": 317, "min": 0, "max": 255, "width": 1 },
+        { "type": "select", "title": "LED timeout", "qsid": 317, "variants": ["Never", "1 min", "2 min", "5 min", "10 min", "15 min", "30 min", "60 min"] },
         { "type": "select", "title": "Layer 0 color", "qsid": 300, "variants": ["Off", "White", "Red", "Orange", "Goldenrod", "Gold", "Yellow", "Chartreuse", "Lime", "Green", "Spring Green", "Turquoise", "Teal", "Cyan", "Azure", "Sky", "Blue", "Indigo", "Purple", "Magenta", "Pink", "Coral", "Salmon", "Warm White", "Amber"] },
         { "type": "select", "title": "Layer 1 color", "qsid": 301, "variants": ["Off", "White", "Red", "Orange", "Goldenrod", "Gold", "Yellow", "Chartreuse", "Lime", "Green", "Spring Green", "Turquoise", "Teal", "Cyan", "Azure", "Sky", "Blue", "Indigo", "Purple", "Magenta", "Pink", "Coral", "Salmon", "Warm White", "Amber"] },
         { "type": "select", "title": "Layer 2 color", "qsid": 302, "variants": ["Off", "White", "Red", "Orange", "Goldenrod", "Gold", "Yellow", "Chartreuse", "Lime", "Green", "Spring Green", "Turquoise", "Teal", "Cyan", "Azure", "Sky", "Blue", "Indigo", "Purple", "Magenta", "Pink", "Coral", "Salmon", "Warm White", "Amber"] },
