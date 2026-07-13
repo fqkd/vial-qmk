@@ -187,7 +187,8 @@ i2c_status_t   azoteq_iqs5xx_get_report_rate(azoteq_iqs5xx_report_rate_t *report
 i2c_status_t   azoteq_iqs5xx_set_report_rate(uint16_t report_rate_ms, azoteq_iqs5xx_charging_modes_t mode, bool end_session);
 i2c_status_t   azoteq_iqs5xx_set_event_mode(bool enabled, bool end_session);
 i2c_status_t   azoteq_iqs5xx_set_reati(bool enabled, bool end_session);
-i2c_status_t   azoteq_iqs5xx_set_gesture_config(bool end_session);
+i2c_status_t   azoteq_iqs5xx_set_gesture_config(bool gestures_enabled, bool end_session);
+bool           azoteq_iqs5xx_gestures_enabled(void);
 i2c_status_t   azoteq_iqs5xx_set_xy_config(bool flip_x, bool flip_y, bool switch_xy, bool palm_reject, bool end_session);
 i2c_status_t   azoteq_iqs5xx_reset_suspend(bool reset, bool suspend, bool end_session);
 i2c_status_t   azoteq_iqs5xx_get_base_data(azoteq_iqs5xx_base_data_t *base_data);

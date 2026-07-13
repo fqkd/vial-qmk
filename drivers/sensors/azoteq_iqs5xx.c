@@ -193,20 +193,20 @@ i2c_status_t azoteq_iqs5xx_set_event_mode(bool enabled, bool end_session) {
     return status;
 }
 
-i2c_status_t azoteq_iqs5xx_set_gesture_config(bool end_session) {
+i2c_status_t azoteq_iqs5xx_set_gesture_config(bool gestures_enabled, bool end_session) {
     azoteq_iqs5xx_gesture_config_t config = {0};
     i2c_status_t                   status = i2c_read_register16(AZOTEQ_IQS5XX_ADDRESS, AZOTEQ_IQS5XX_REG_SINGLE_FINGER_GESTURES, (uint8_t *)&config, sizeof(azoteq_iqs5xx_gesture_config_t), AZOTEQ_IQS5XX_TIMEOUT_MS);
     pd_dprintf("azo scroll: %d\n", config.multi_finger_gestures.scroll);
     if (status == I2C_STATUS_SUCCESS) {
-        config.single_finger_gestures.single_tap     = AZOTEQ_IQS5XX_TAP_ENABLE;
-        config.single_finger_gestures.press_and_hold = AZOTEQ_IQS5XX_PRESS_AND_HOLD_ENABLE;
-        config.single_finger_gestures.swipe_x_plus   = AZOTEQ_IQS5XX_SWIPE_X_ENABLE;
-        config.single_finger_gestures.swipe_x_minus  = AZOTEQ_IQS5XX_SWIPE_X_ENABLE;
-        config.single_finger_gestures.swipe_y_plus   = AZOTEQ_IQS5XX_SWIPE_Y_ENABLE;
-        config.single_finger_gestures.swipe_y_minus  = AZOTEQ_IQS5XX_SWIPE_Y_ENABLE;
-        config.multi_finger_gestures.two_finger_tap  = AZOTEQ_IQS5XX_TWO_FINGER_TAP_ENABLE;
-        config.multi_finger_gestures.scroll          = AZOTEQ_IQS5XX_SCROLL_ENABLE;
-        config.multi_finger_gestures.zoom            = AZOTEQ_IQS5XX_ZOOM_ENABLE;
+        config.single_finger_gestures.single_tap     = gestures_enabled && AZOTEQ_IQS5XX_TAP_ENABLE;
+        config.single_finger_gestures.press_and_hold = gestures_enabled && AZOTEQ_IQS5XX_PRESS_AND_HOLD_ENABLE;
+        config.single_finger_gestures.swipe_x_plus   = gestures_enabled && AZOTEQ_IQS5XX_SWIPE_X_ENABLE;
+        config.single_finger_gestures.swipe_x_minus  = gestures_enabled && AZOTEQ_IQS5XX_SWIPE_X_ENABLE;
+        config.single_finger_gestures.swipe_y_plus   = gestures_enabled && AZOTEQ_IQS5XX_SWIPE_Y_ENABLE;
+        config.single_finger_gestures.swipe_y_minus  = gestures_enabled && AZOTEQ_IQS5XX_SWIPE_Y_ENABLE;
+        config.multi_finger_gestures.two_finger_tap  = gestures_enabled && AZOTEQ_IQS5XX_TWO_FINGER_TAP_ENABLE;
+        config.multi_finger_gestures.scroll          = gestures_enabled && AZOTEQ_IQS5XX_SCROLL_ENABLE;
+        config.multi_finger_gestures.zoom            = gestures_enabled && AZOTEQ_IQS5XX_ZOOM_ENABLE;
         config.tap_time                              = AZOTEQ_IQS5XX_SWAP_H_L_BYTES(AZOTEQ_IQS5XX_TAP_TIME);
         config.tap_distance                          = AZOTEQ_IQS5XX_SWAP_H_L_BYTES(AZOTEQ_IQS5XX_TAP_DISTANCE);
         config.hold_time                             = AZOTEQ_IQS5XX_SWAP_H_L_BYTES(AZOTEQ_IQS5XX_HOLD_TIME);
@@ -223,6 +223,10 @@ i2c_status_t azoteq_iqs5xx_set_gesture_config(bool end_session) {
         azoteq_iqs5xx_end_session();
     }
     return status;
+}
+
+__attribute__((weak)) bool azoteq_iqs5xx_gestures_enabled(void) {
+    return true;
 }
 
 i2c_status_t azoteq_iqs5xx_set_xy_config(bool flip_x, bool flip_y, bool switch_xy, bool palm_reject, bool end_session) {
@@ -354,7 +358,7 @@ void azoteq_iqs5xx_init(void) {
 #else
         azoteq_iqs5xx_init_status |= azoteq_iqs5xx_set_xy_config(false, false, false, true, false);
 #endif
-        azoteq_iqs5xx_init_status |= azoteq_iqs5xx_set_gesture_config(true);
+        azoteq_iqs5xx_init_status |= azoteq_iqs5xx_set_gesture_config(azoteq_iqs5xx_gestures_enabled(), true);
         wait_ms(AZOTEQ_IQS5XX_REPORT_RATE + 1);
     } else {
         pd_dprintf("AZOTEQ init: product unknown, skipping configuration\n");

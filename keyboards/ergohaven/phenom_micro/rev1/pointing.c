@@ -339,6 +339,8 @@ static void phenom_apply_device_config(void) {
         uint8_t idx = phenom_clamp_index(get_split_pointing_device_dpi_index(phenom_get_local_device_id(PHENOM_MODULE_TOUCHPAD)), ARRAY_SIZE(phenom_touchpad_cpi_table));
         uint16_t cpi = phenom_touchpad_cpi_table[idx];
         dprintf("  touchpad CPI=%u (idx=%u)\n", cpi, idx);
+        split_pointing_side_t side = is_keyboard_left() ? SPLIT_POINTING_SIDE_LEFT : SPLIT_POINTING_SIDE_RIGHT;
+        azoteq_iqs5xx_set_gesture_config(get_split_pointing_side_touch_gestures(side), false);
         azoteq_iqs5xx_set_cpi(cpi);
     }
 

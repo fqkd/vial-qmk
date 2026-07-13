@@ -273,6 +273,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 147:
         case 149:
         case 151:
+        case 325:
+        case 327:
             return SPLIT_POINTING_SIDE_LEFT;
         case 127:
         case 128:
@@ -284,6 +286,8 @@ static split_pointing_side_t split_pointing_side_for_qsid(uint16_t qsid) {
         case 148:
         case 150:
         case 152:
+        case 326:
+        case 328:
             return SPLIT_POINTING_SIDE_RIGHT;
         default:
             return SPLIT_POINTING_SIDE_LEFT;
@@ -465,6 +469,8 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 151:
         case 152: value = get_split_pointing_side_invert_text_h(split_pointing_side_for_qsid(proto->qsid)); break;
 #    endif
+        case 327:
+        case 328: value = get_split_pointing_side_touch_gestures(split_pointing_side_for_qsid(proto->qsid)); break;
         default: return -1;
     }
 #else
@@ -472,6 +478,7 @@ static int modules_bool_get(const qmk_settings_proto_t *proto, void *setting, si
         case 127: value = get_invert_scroll(); break;
         case 128: value = get_acceleration(); break;
         case 136: value = get_invert_text(); break;
+        case 327: value = get_pointing_touch_gestures(); break;
         case 133:
         case 140: value = get_sticky_mode(); break;
         case 134:
@@ -509,6 +516,8 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 151:
         case 152: set_split_pointing_side_invert_text_h(split_pointing_side_for_qsid(proto->qsid), value); break;
 #    endif
+        case 327:
+        case 328: set_split_pointing_side_touch_gestures(split_pointing_side_for_qsid(proto->qsid), value); break;
         default: return -1;
     }
 #else
@@ -516,6 +525,7 @@ static int modules_bool_set(const qmk_settings_proto_t *proto, const void *setti
         case 127: set_invert_scroll(value); break;
         case 128: set_acceleration(value); break;
         case 136: set_invert_text(value); break;
+        case 327: set_pointing_touch_gestures(value); break;
         case 133:
         case 140: set_sticky_mode(value); break;
         case 134:
@@ -544,10 +554,38 @@ static int modules_select_get(const qmk_settings_proto_t *proto, void *setting, 
         case 143:
             v = get_split_pointing_auto_mouse_layer();
             break;
+        case 324:
+            v = get_split_pointing_auto_mouse_timeout_idx();
+            break;
+        case 325:
+        case 326:
+            v = get_split_pointing_side_encoder_interval_idx(split_pointing_side_for_qsid(proto->qsid));
+            break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
+        case 324: {
+            static const uint16_t timeout_variants[] = {250, 500, 750, 1000, 1250, 1500};
+            uint16_t              timeout_ms         = 750;
+#    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+            if (qmk_settings_get(32, &timeout_ms, sizeof(timeout_ms)) < 0) {
+                timeout_ms = 750;
+            }
+#    endif
+            uint16_t best_delta = UINT16_MAX;
+            for (uint8_t i = 0; i < ARRAY_SIZE(timeout_variants); ++i) {
+                uint16_t delta = timeout_variants[i] > timeout_ms ? timeout_variants[i] - timeout_ms : timeout_ms - timeout_variants[i];
+                if (delta < best_delta) {
+                    best_delta = delta;
+                    v          = i;
+                }
+            }
+            break;
+        }
+        case 325:
+            v = get_pointing_encoder_interval_idx();
+            break;
         case 129:
         case 130:
         case 131:
@@ -586,10 +624,33 @@ static int modules_select_set(const qmk_settings_proto_t *proto, const void *set
         case 143:
             set_split_pointing_auto_mouse_layer(v);
             break;
+        case 324:
+            set_split_pointing_auto_mouse_timeout_idx(v);
+            break;
+        case 325:
+        case 326:
+            set_split_pointing_side_encoder_interval_idx(split_pointing_side_for_qsid(proto->qsid), v);
+            break;
         default: return -1;
     }
 #else
     switch (proto->qsid) {
+        case 324: {
+            static const uint16_t timeout_variants[] = {250, 500, 750, 1000, 1250, 1500};
+            if (v >= ARRAY_SIZE(timeout_variants)) {
+                v = 2;
+            }
+#    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+            uint16_t timeout_ms = timeout_variants[v];
+            if (qmk_settings_set(32, &timeout_ms, sizeof(timeout_ms)) < 0) {
+                return -1;
+            }
+#    endif
+            break;
+        }
+        case 325:
+            set_pointing_encoder_interval_idx(v);
+            break;
         case 129:
         case 130:
         case 131:
@@ -1054,5 +1115,22 @@ qmk_settings_proto_t kb_protos[KB_SETTINGS_NPROTOS] PROGMEM = {
     DECLARE_SETTING(317, leds_timeout_get, leds_timeout_set),
     DECLARE_SETTING(318, lcd_brightness_get, lcd_brightness_set),
     DECLARE_SETTING(319, lcd_timeout_get, lcd_timeout_set),
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2)
+    DECLARE_SETTING(324, modules_select_get, modules_select_set),
+    DECLARE_SETTING(325, modules_select_get, modules_select_set),
+    DECLARE_SETTING(326, modules_select_get, modules_select_set),
+    DECLARE_SETTING(327, modules_bool_get, modules_bool_set),
+    DECLARE_SETTING(328, modules_bool_get, modules_bool_set),
+#else
+#    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    DECLARE_SETTING(324, modules_select_get, modules_select_set),
+#    endif
+#    ifdef EH_ENCODER_INTERVAL_SETTINGS
+    DECLARE_SETTING(325, modules_select_get, modules_select_set),
+#    endif
+#    ifdef POINTING_DEVICE_DRIVER_azoteq_iqs5xx
+    DECLARE_SETTING(327, modules_bool_get, modules_bool_set),
+#    endif
+#endif
     // clang-format on
 };

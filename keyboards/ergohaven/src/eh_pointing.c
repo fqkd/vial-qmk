@@ -4,6 +4,9 @@
 #ifdef EH_QMK_SETTINGS_SIMPLE_JOYSTICK
 #    include "drivers/sensors/analog_joystick.h"
 #endif
+#ifdef POINTING_DEVICE_DRIVER_azoteq_iqs5xx
+#    include "drivers/sensors/azoteq_iqs5xx.h"
+#endif
 #ifdef RGBLIGHT_ENABLE
 #    include "ergohaven_rgb.h"
 #endif
@@ -17,11 +20,21 @@ static kb_settings_split_pointing_t kb_settings_phenom_devices;
 pointing_mode_t                pointing_mode = POINTING_MODE_NORMAL;
 
 #define PHENOM_AUTO_MOUSE_SUPPORTED_MODES_MASK ((1u << POINTING_MODE_NORMAL) | (1u << POINTING_MODE_SNIPER) | (1u << POINTING_MODE_SCROLL) | (1u << POINTING_MODE_TEXT))
+#define PHENOM_AUTO_MOUSE_TIMEOUT_IDX_COUNT 6
+#define PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX 2
+#define PHENOM_ENCODER_INTERVAL_IDX_COUNT 10
+#define PHENOM_ENCODER_INTERVAL_DEFAULT_IDX 4
+#define PHENOM_TOUCH_GESTURES_DEFAULT true
+#define MODULE_ENCODER_INTERVAL_IDX_COUNT 10
+#define MODULE_ENCODER_INTERVAL_DEFAULT_IDX 4
 #ifdef EH_SPLIT_POINTING_INVERT_AXES
-#    define PHENOM_SPLIT_POINTING_SETTINGS_VERSION 6
+#    define PHENOM_SPLIT_POINTING_SETTINGS_VERSION 7
 #else
-#    define PHENOM_SPLIT_POINTING_SETTINGS_VERSION 5
+#    define PHENOM_SPLIT_POINTING_SETTINGS_VERSION 6
 #endif
+
+static const uint8_t phenom_encoder_interval_ms_table[PHENOM_ENCODER_INTERVAL_IDX_COUNT] = {0, 5, 10, 15, 20, 30, 40, 60, 80, 100};
+static const uint8_t module_encoder_interval_ms_table[MODULE_ENCODER_INTERVAL_IDX_COUNT] = {0, 5, 10, 15, 20, 30, 40, 60, 80, 100};
 
 static uint8_t phenom_auto_mouse_mode_mask(pointing_mode_t mode) {
     if (mode < POINTING_MODE_NORMAL || mode > POINTING_MODE_USR3) {
@@ -45,11 +58,30 @@ static void apply_auto_mouse_settings(void) {
     auto_mouse_layer_off();
     set_auto_mouse_enable(enable);
     set_auto_mouse_layer(get_split_pointing_auto_mouse_layer());
+#    ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    set_auto_mouse_timeout((uint16_t)((get_split_pointing_auto_mouse_timeout_idx() + 1) * 250));
+#    endif
 #    ifdef RGBLIGHT_ENABLE
     layer_state_set_rgb(layer_state | default_layer_state);
 #    endif
 #endif
 }
+
+#if defined(EH_KEYBOARD_SPLIT_POINTING_V2) && defined(ENCODER_ENABLE) && defined(ENCODER_MAP_ENABLE)
+uint8_t encoder_map_key_delay(uint8_t index) {
+#    ifdef SPLIT_KEYBOARD
+    split_pointing_side_t side = index < NUM_ENCODERS_LEFT ? SPLIT_POINTING_SIDE_LEFT : SPLIT_POINTING_SIDE_RIGHT;
+#    else
+    split_pointing_side_t side = SPLIT_POINTING_SIDE_LEFT;
+#    endif
+    return get_split_pointing_side_encoder_interval_ms(side);
+}
+#elif defined(EH_ENCODER_INTERVAL_SETTINGS) && defined(ENCODER_ENABLE) && defined(ENCODER_MAP_ENABLE)
+uint8_t encoder_map_key_delay(uint8_t index) {
+    (void)index;
+    return get_pointing_encoder_interval_ms();
+}
+#endif
 
 static_assert(KB_SETTINGS_POINTING_SIZE == sizeof(kb_settings_pointing_t), "Invalid KB_SETTINGS_POINTING_SIZE");
 static_assert(KB_SETTINGS_SPLIT_POINTING_SIZE == sizeof(kb_settings_split_pointing_t), "Invalid KB_SETTINGS_SPLIT_POINTING_SIZE");
@@ -71,6 +103,8 @@ __attribute__((weak)) kb_settings_pointing_t get_settings_pointing_default(void)
         .invert_text   = false,
         .invert_scroll_h = false,
         .invert_text_h = false,
+        .encoder_interval_slot = MODULE_ENCODER_INTERVAL_DEFAULT_IDX + 1,
+        .touch_gestures_disabled = false,
     };
     return dflt;
 }
@@ -95,6 +129,9 @@ kb_settings_split_pointing_t get_split_pointing_settings_default(void) {
         .invert_scroll_h        = {false, false},
         .invert_text_h          = {false, false},
 #    endif
+        .auto_mouse_timeout_idx = PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX,
+        .encoder_interval_idx   = {PHENOM_ENCODER_INTERVAL_DEFAULT_IDX, PHENOM_ENCODER_INTERVAL_DEFAULT_IDX},
+        .touch_gestures         = {PHENOM_TOUCH_GESTURES_DEFAULT, PHENOM_TOUCH_GESTURES_DEFAULT},
 #endif
     };
     return dflt;
@@ -119,7 +156,7 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
     if (legacy_config) {
         uint8_t legacy_version = config.version;
 
-        if (legacy_version != 5) {
+        if (legacy_version < 5 || legacy_version > PHENOM_SPLIT_POINTING_SETTINGS_VERSION) {
             uint8_t legacy_auto_mouse_enable = config.auto_mouse_enable;
             uint8_t legacy_auto_mouse_layer  = config.auto_mouse_layer;
             bool    legacy_sticky_mode       = get_sticky_mode();
@@ -147,6 +184,11 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
             config.invert_text_h[side]          = false;
         }
 #endif
+        config.auto_mouse_timeout_idx = PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX;
+        for (uint8_t side = 0; side < SPLIT_POINTING_SIDE_COUNT; ++side) {
+            config.encoder_interval_idx[side] = PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+            config.touch_gestures[side]       = PHENOM_TOUCH_GESTURES_DEFAULT;
+        }
         config.version = PHENOM_SPLIT_POINTING_SETTINGS_VERSION;
     }
 #endif
@@ -167,6 +209,10 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
         if (config.side_auto_mouse_layer[side] >= DYNAMIC_KEYMAP_LAYER_COUNT) {
             config.side_auto_mouse_layer[side] = AUTO_MOUSE_DEFAULT_LAYER;
         }
+        if (config.encoder_interval_idx[side] >= PHENOM_ENCODER_INTERVAL_IDX_COUNT) {
+            config.encoder_interval_idx[side] = PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+        }
+        config.touch_gestures[side] = config.touch_gestures[side] != 0;
 #endif
     }
     if (config.auto_mouse_enable <= 1) {
@@ -178,6 +224,9 @@ static kb_settings_split_pointing_t kb_settings_split_pointing_sanitize(kb_setti
         config.auto_mouse_layer = AUTO_MOUSE_DEFAULT_LAYER;
     }
 #ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (config.auto_mouse_timeout_idx >= PHENOM_AUTO_MOUSE_TIMEOUT_IDX_COUNT) {
+        config.auto_mouse_timeout_idx = PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX;
+    }
     config.version = PHENOM_SPLIT_POINTING_SETTINGS_VERSION;
 #endif
     return config;
@@ -452,6 +501,28 @@ void set_split_pointing_auto_mouse_layer(uint8_t layer) {
     kb_settings_split_pointing_update(new_config);
 }
 
+uint8_t get_split_pointing_auto_mouse_timeout_idx(void) {
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (kb_settings_phenom_devices.auto_mouse_timeout_idx >= PHENOM_AUTO_MOUSE_TIMEOUT_IDX_COUNT) {
+        return PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX;
+    }
+    return kb_settings_phenom_devices.auto_mouse_timeout_idx;
+#else
+    return PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX;
+#endif
+}
+
+void set_split_pointing_auto_mouse_timeout_idx(uint8_t idx) {
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    if (idx >= PHENOM_AUTO_MOUSE_TIMEOUT_IDX_COUNT) {
+        idx = PHENOM_AUTO_MOUSE_TIMEOUT_DEFAULT_IDX;
+    }
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.auto_mouse_timeout_idx      = idx;
+    kb_settings_split_pointing_update(new_config);
+#endif
+}
+
 bool get_split_pointing_side_invert_text(split_pointing_side_t side) {
     if (side >= SPLIT_POINTING_SIDE_COUNT) {
         return false;
@@ -585,6 +656,58 @@ void set_split_pointing_side_auto_mouse_layer(split_pointing_side_t side, uint8_
     kb_settings_split_pointing_update(new_config);
 #else
     set_split_pointing_auto_mouse_layer(layer);
+#endif
+}
+
+uint8_t get_split_pointing_side_encoder_interval_idx(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    uint8_t idx = kb_settings_phenom_devices.encoder_interval_idx[side];
+    return idx < PHENOM_ENCODER_INTERVAL_IDX_COUNT ? idx : PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+#else
+    return PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+#endif
+}
+
+void set_split_pointing_side_encoder_interval_idx(split_pointing_side_t side, uint8_t idx) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+    if (idx >= PHENOM_ENCODER_INTERVAL_IDX_COUNT) {
+        idx = PHENOM_ENCODER_INTERVAL_DEFAULT_IDX;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.encoder_interval_idx[side]  = idx;
+    kb_settings_split_pointing_update(new_config);
+#endif
+}
+
+uint8_t get_split_pointing_side_encoder_interval_ms(split_pointing_side_t side) {
+    return phenom_encoder_interval_ms_table[get_split_pointing_side_encoder_interval_idx(side)];
+}
+
+bool get_split_pointing_side_touch_gestures(split_pointing_side_t side) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return PHENOM_TOUCH_GESTURES_DEFAULT;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    return kb_settings_phenom_devices.touch_gestures[side] != 0;
+#else
+    return PHENOM_TOUCH_GESTURES_DEFAULT;
+#endif
+}
+
+void set_split_pointing_side_touch_gestures(split_pointing_side_t side, bool enabled) {
+    if (side >= SPLIT_POINTING_SIDE_COUNT) {
+        return;
+    }
+#ifdef EH_KEYBOARD_SPLIT_POINTING_V2
+    kb_settings_split_pointing_t new_config = kb_settings_phenom_devices;
+    new_config.touch_gestures[side]        = enabled;
+    kb_settings_split_pointing_update(new_config);
 #endif
 }
 
@@ -725,6 +848,47 @@ void set_invert_text_h(bool invert) {
 bool get_invert_text_h(void) {
     return kb_settings_pointing.invert_text_h;
 }
+
+uint8_t get_pointing_encoder_interval_idx(void) {
+    uint8_t slot = kb_settings_pointing.encoder_interval_slot;
+    if (slot == 0) {
+        return MODULE_ENCODER_INTERVAL_DEFAULT_IDX;
+    }
+    slot--;
+    return slot < MODULE_ENCODER_INTERVAL_IDX_COUNT ? slot : MODULE_ENCODER_INTERVAL_DEFAULT_IDX;
+}
+
+void set_pointing_encoder_interval_idx(uint8_t idx) {
+    if (idx >= MODULE_ENCODER_INTERVAL_IDX_COUNT) {
+        idx = MODULE_ENCODER_INTERVAL_DEFAULT_IDX;
+    }
+    kb_settings_pointing_t new_config = kb_settings_pointing;
+    new_config.encoder_interval_slot  = idx + 1;
+    kb_settings_pointing_update(new_config);
+}
+
+uint8_t get_pointing_encoder_interval_ms(void) {
+    return module_encoder_interval_ms_table[get_pointing_encoder_interval_idx()];
+}
+
+bool get_pointing_touch_gestures(void) {
+    return !kb_settings_pointing.touch_gestures_disabled;
+}
+
+void set_pointing_touch_gestures(bool enabled) {
+    kb_settings_pointing_t new_config    = kb_settings_pointing;
+    new_config.touch_gestures_disabled   = !enabled;
+    kb_settings_pointing_update(new_config);
+#ifdef POINTING_DEVICE_DRIVER_azoteq_iqs5xx
+    azoteq_iqs5xx_set_gesture_config(enabled, false);
+#endif
+}
+
+#if defined(POINTING_DEVICE_DRIVER_azoteq_iqs5xx) && !defined(EH_KEYBOARD_SPLIT_POINTING_V2)
+bool azoteq_iqs5xx_gestures_enabled(void) {
+    return get_pointing_touch_gestures();
+}
+#endif
 
 void set_orientation(orientation_t o) {
     kb_settings_pointing_t new_config = kb_settings_pointing;

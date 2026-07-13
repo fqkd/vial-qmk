@@ -14,6 +14,11 @@ __attribute__((weak)) bool should_process_encoder(void) {
     return is_keyboard_master();
 }
 
+__attribute__((weak)) uint8_t encoder_map_key_delay(uint8_t index) {
+    (void)index;
+    return ENCODER_MAP_KEY_DELAY;
+}
+
 static encoder_events_t encoder_events;
 static bool             signal_queue_drain = false;
 
@@ -35,15 +40,16 @@ static bool encoder_handle_queue(void) {
 #ifdef ENCODER_MAP_ENABLE
 
         // The delays below cater for Windows and its wonderful requirements.
+        uint8_t key_delay = encoder_map_key_delay(index);
         action_exec(clockwise ? MAKE_ENCODER_CW_EVENT(index, true) : MAKE_ENCODER_CCW_EVENT(index, true));
-#    if ENCODER_MAP_KEY_DELAY > 0
-        wait_ms(ENCODER_MAP_KEY_DELAY);
-#    endif // ENCODER_MAP_KEY_DELAY > 0
+        if (key_delay > 0) {
+            wait_ms(key_delay);
+        }
 
         action_exec(clockwise ? MAKE_ENCODER_CW_EVENT(index, false) : MAKE_ENCODER_CCW_EVENT(index, false));
-#    if ENCODER_MAP_KEY_DELAY > 0
-        wait_ms(ENCODER_MAP_KEY_DELAY);
-#    endif // ENCODER_MAP_KEY_DELAY > 0
+        if (key_delay > 0) {
+            wait_ms(key_delay);
+        }
 
 #else // ENCODER_MAP_ENABLE
 
