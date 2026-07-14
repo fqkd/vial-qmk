@@ -1,19 +1,28 @@
 ## 4.0.5
 
-- добавлены клавиатуры **Phenom**, **Phenom Mini** и **Phenom Micro** с hot-swap модулями
-- для **Phenom Mini** поправлена раскладка по умолчанию: клавиша кавычки справа и Alt в правом thumb-кластере
-- для **K:03**, **K:03 PRO**, **Imperial44**, **HPD2**, **Planeta v2** добавлена вкладка настройки индикаторной подсветки:
-  - выбор цвета для каждого слоя
-  - настройка времени, через которое светодиод выключается
-- для **HPD2** настройки модулей перенесены из Layout во вкладку **Keyboard Settings**, в соответствующую вкладку модуля
-- для модулей **трекболла**, **тачпада** и **джойстика** добавлены настройки:
-  - включение автослоя
-  - выбор автослоя
-- для модуля **джойстика** добавлена настройка переключения режима работы: курсор / кнопки
-- на всех клавиатурах разрешен **Auto Shift** — теперь его можно включить в настройках
+- Added new settings for **K03 Pro**, **Trackball**, **HPD**, **Phenom**, **Phenom Mini** and **Phenom Micro**:
+  - separate vertical and horizontal scroll inversion;
+  - separate vertical and horizontal text mode inversion;
+  - auto layer timeout setting;
+  - encoder interval setting;
+  - touchpad gestures enable/disable setting.
+- Fixed display sleep on **K03 Pro**.
+- Added firmware version reporting:
+  - `EH_PRINFO` now shows Ergohaven FW version;
+  - VIA now reports firmware version.
+- Updated default layouts for **Phenom**, **Phenom Mini** and **Phenom Micro**.
 
-Для использования новых функций нужен Vial:
-https://github.com/ergohaven/vial-gui/releases/tag/0.7.5-eh-2026-03-28
+- Добавлены новые настройки для **K03 Pro**, **Trackball**, **HPD**, **Phenom**, **Phenom Mini** и **Phenom Micro**:
+  - отдельная инверсия вертикальной и горизонтальной прокрутки;
+  - отдельная инверсия вертикального и горизонтального text mode;
+  - настройка timeout для auto layer;
+  - настройка интервала энкодера;
+  - включение/выключение жестов тачпада.
+- Исправлен сон дисплея на **K03 Pro**.
+- Добавлено отображение версии прошивки:
+  - `EH_PRINFO` теперь показывает Ergohaven FW version;
+  - VIA теперь отдаёт firmware version.
+- Обновлены раскладки по умолчанию для **Phenom**, **Phenom Mini** и **Phenom Micro**.
 
 ## 4.0.3
 
