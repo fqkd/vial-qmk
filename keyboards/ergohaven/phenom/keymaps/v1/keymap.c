@@ -19,7 +19,7 @@ KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,                        
 KC_MPRV,  KC_MNXT,  KC_HOME,  KC_UP,    KC_END,   KC_INS,                                 _______,  KC_7,     KC_8,     KC_9,     _______,  KC_CAPS,
 KC_MUTE,  KC_MPLY,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_ENT,                                 _______,  KC_4,     KC_5,     KC_6,     _______,  CW_TOGG,
 KC_VOLD,  KC_VOLU,  _______,  _______,  _______,  KC_DEL,                                 KC_PSCR,  KC_1,     KC_2,     KC_3,     _______,  _______,
-                    KC_PGDN,  KC_PGUP,  _______,  _______,  _______,            _______,  _______,  _______,  KC_0,     _______,
+                    KC_PGUP,  KC_PGDN,  _______,  _______,  _______,            _______,  _______,  _______,  KC_0,     _______,
                                                             _______,            _______
     ),
 
