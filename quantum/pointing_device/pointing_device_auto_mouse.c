@@ -334,7 +334,8 @@ bool process_auto_mouse(uint16_t keycode, keyrecord_t* record) {
     if (!(AUTO_MOUSE_ENABLED)) return true;
 
     switch (keycode) {
-        // Skip Mod keys to avoid layer reset
+        // Skip empty and Mod keys to avoid layer reset
+        case KC_NO:
         case KC_LEFT_CTRL ... KC_RIGHT_GUI:
         case QK_MODS ... QK_MODS_MAX:
             break;
