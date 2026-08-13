@@ -1,0 +1,6 @@
+{
+    "name": "LEDs settings",
+    "fields": [
+        { "type": "select", "title": "LED timeout", "qsid": 317, "variants": ["Never", "1 min", "2 min", "5 min", "10 min", "15 min", "30 min", "60 min"] }
+    ]
+}

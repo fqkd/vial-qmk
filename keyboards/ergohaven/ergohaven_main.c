@@ -20,6 +20,10 @@ float caps_sound[][2] = SONG(CAPS_LOCK_ON_SOUND);
 bool     is_alt_tab_active = false;
 uint16_t alt_tab_timer     = 0;
 
+#if defined(RGB_MATRIX_ENABLE) && defined(EH_RGB_MATRIX_RUNTIME_TIMEOUT)
+static bool rgb_matrix_timeout_suspended = false;
+#endif
+
 #ifdef EH_SYNC_LED_COLORS
 static kb_settings_led_colors_t synced_led_colors;
 static bool synced_led_colors_valid = false;
@@ -379,9 +383,21 @@ void housekeeping_task_kb(void) {
 #ifdef RGBLIGHT_ENABLE
         rgb_off();
 #endif
+#if defined(RGB_MATRIX_ENABLE) && defined(EH_RGB_MATRIX_RUNTIME_TIMEOUT)
+        if (!rgb_matrix_timeout_suspended) {
+            rgb_matrix_set_suspend_state(true);
+            rgb_matrix_timeout_suspended = true;
+        }
+#endif
     } else {
 #ifdef RGBLIGHT_ENABLE
         rgb_on();
+#endif
+#if defined(RGB_MATRIX_ENABLE) && defined(EH_RGB_MATRIX_RUNTIME_TIMEOUT)
+        if (rgb_matrix_timeout_suspended) {
+            rgb_matrix_set_suspend_state(false);
+            rgb_matrix_timeout_suspended = false;
+        }
 #endif
     }
 

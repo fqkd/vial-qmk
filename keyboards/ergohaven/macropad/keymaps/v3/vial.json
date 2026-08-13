@@ -11,6 +11,8 @@
 #include "keyboards/ergohaven/src/json/settings_layer_labels.json"
 ,
 #include "keyboards/ergohaven/src/json/settings_ruen.json"
+,
+#include "keyboards/ergohaven/src/json/settings_led_timeout.json"
     ],
     "layouts": {
         "keymap": [
