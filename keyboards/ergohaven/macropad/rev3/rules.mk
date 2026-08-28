@@ -43,7 +43,8 @@ SRC += keyboards/ergohaven/src/display/eh_display.c
 SRC += keyboards/ergohaven/src/display/eh_screen_splash.c
 SRC += keyboards/ergohaven/src/display/eh_screen_home.c
 SRC += keyboards/ergohaven/src/display/eh_screen_volume.c
-SRC += keyboards/ergohaven/src/display/eh_logo.c
+OPT_DEFS += -DERGOHAVEN_MACROPAD_REV3_OZON_SPLASH
+SRC += keyboards/ergohaven/macropad/rev3/ozon_tech_gosha_splash.c
 SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_20.c
 SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_28.c
 
