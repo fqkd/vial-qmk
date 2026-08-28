@@ -4,6 +4,11 @@
 #include "ergohaven.h"
 #include "src/eh_settings.h"
 
+#ifdef ERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
+#    include <string.h>
+LV_IMG_DECLARE(ozon_layer_logo);
+#endif
+
 LV_FONT_DECLARE(eh_font_montserrat_20);
 LV_FONT_DECLARE(eh_font_montserrat_28);
 
@@ -42,10 +47,26 @@ void screen_layout_init(void) {
     use_flex_column(screen_layout);
     lv_obj_set_scrollbar_mode(screen_layout, LV_SCROLLBAR_MODE_OFF);
 
+#ifdef ERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
+    lv_obj_t *header_layer = lv_obj_create(screen_layout);
+    lv_obj_add_style(header_layer, &style_container, 0);
+    lv_obj_set_flex_flow(header_layer, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header_layer, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_top(header_layer, 25, 0);
+    lv_obj_set_style_pad_bottom(header_layer, 25, 0);
+    lv_obj_set_style_pad_column(header_layer, 8, 0);
+    lv_obj_set_scrollbar_mode(header_layer, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_t *layer_logo = lv_img_create(header_layer);
+    lv_img_set_src(layer_logo, &ozon_layer_logo);
+
+    label_layer = lv_label_create(header_layer);
+#else
     label_layer = lv_label_create(screen_layout);
-    lv_label_set_text(label_layer, "");
     lv_obj_set_style_pad_top(label_layer, 25, 0);
     lv_obj_set_style_pad_bottom(label_layer, 25, 0);
+#endif
+    lv_label_set_text(label_layer, "");
     lv_obj_set_style_text_color(label_layer, accent_color_blue, 0);
     lv_obj_set_style_text_font(label_layer, &eh_font_montserrat_28, LV_PART_MAIN);
 
@@ -103,7 +124,13 @@ void screen_layout_housekeep(void) {
     uint8_t layer = get_current_layer();
     if (layer != prev_layer || layer_name_updated) {
         prev_layer = layer;
+#ifdef ERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
+        const char *layer_label = get_layer_label(layer);
+        const char *layer_name  = strchr(layer_label, ' ');
+        lv_label_set_text(label_layer, layer_name ? layer_name + 1 : layer_label);
+#else
         lv_label_set_text(label_layer, get_layer_label(layer));
+#endif
         update_timer       = timer_read32();
         lbl_idx            = 0;
         layer_name_updated = false;

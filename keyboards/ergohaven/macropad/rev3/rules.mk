@@ -47,6 +47,11 @@ SRC += keyboards/ergohaven/src/display/eh_logo.c
 SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_20.c
 SRC += keyboards/ergohaven/src/display/fonts/eh_font_montserrat_28.c
 
+ifeq ($(KEYMAP),v3)
+OPT_DEFS += -DERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
+SRC += keyboards/ergohaven/macropad/rev3/ozon_layer_logo.c
+endif
+
 SRC += keyboards/ergohaven/ergohaven_main.c
 SRC += keyboards/ergohaven/src/eh_ruen.c
 SRC += keyboards/ergohaven/hid.c
