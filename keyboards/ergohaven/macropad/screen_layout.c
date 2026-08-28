@@ -12,9 +12,15 @@ LV_IMG_DECLARE(ozon_layer_logo);
 LV_FONT_DECLARE(eh_font_montserrat_20);
 LV_FONT_DECLARE(eh_font_montserrat_28);
 
+#ifdef ERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
+#    define MACROPAD_LAYER_ZERO_LABEL "Ozon Tech"
+#else
+#    define MACROPAD_LAYER_ZERO_LABEL "Numbers"
+#endif
+
 const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
-        "Numbers", "Navigation", "Mouse", "Media", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+        MACROPAD_LAYER_ZERO_LABEL, "Navigation", "Mouse", "Media", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
     };
     return default_layer_labels[layer];
 }
@@ -125,9 +131,13 @@ void screen_layout_housekeep(void) {
     if (layer != prev_layer || layer_name_updated) {
         prev_layer = layer;
 #ifdef ERGOHAVEN_MACROPAD_REV3_V3_OZON_LAYER_LOGO
-        const char *layer_label = get_layer_label(layer);
-        const char *layer_name  = strchr(layer_label, ' ');
-        lv_label_set_text(label_layer, layer_name ? layer_name + 1 : layer_label);
+        if (layer == 0) {
+            lv_label_set_text(label_layer, MACROPAD_LAYER_ZERO_LABEL);
+        } else {
+            const char *layer_label = get_layer_label(layer);
+            const char *layer_name  = strchr(layer_label, ' ');
+            lv_label_set_text(label_layer, layer_name ? layer_name + 1 : layer_label);
+        }
 #else
         lv_label_set_text(label_layer, get_layer_label(layer));
 #endif
