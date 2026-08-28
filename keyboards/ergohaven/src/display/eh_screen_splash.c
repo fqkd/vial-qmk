@@ -5,7 +5,6 @@
 #include "lvgl_helpers.h"
 
 static lv_obj_t *screen_splash;
-static lv_obj_t *label_version;
 
 LV_IMG_DECLARE(eh_logo);
 
@@ -19,9 +18,6 @@ void splash_screen_init(void) {
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_pad_top(img, 60, 0);
     lv_obj_set_style_pad_bottom(img, 60, 0);
-
-    label_version = lv_label_create(screen_splash);
-    lv_label_set_text(label_version, "v" EH_VERSION_STR);
 }
 
 void splash_screen_load(void) {
