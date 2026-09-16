@@ -24,4 +24,5 @@ uint32_t codex_last_rx(void);
 const codex_light_t *codex_slots(void);
 const codex_light_t *codex_keys_light(void);
 codex_light_t codex_key_light(uint8_t key);
+codex_light_t codex_animated_key_light(uint8_t key, uint32_t now);
 void codex_ui_key(uint8_t key, bool pressed);

@@ -17,6 +17,8 @@ static unsigned nesting;
 static bool in_string, escaped;
 static uint32_t last_byte, last_rx;
 static codex_light_t slots[CODEX_SLOT_COUNT], keys;
+static bool slot_initialized[CODEX_SLOT_COUNT], blinking[CODEX_SLOT_COUNT];
+static uint32_t blink_started[CODEX_SLOT_COUNT];
 static codex_send_fn send_report;
 
 static void ws(void) { while (rx[pos] == ' ' || rx[pos] == '\t' || rx[pos] == '\r' || rx[pos] == '\n') ++pos; }
@@ -146,12 +148,25 @@ static void message(uint32_t now) {
         result = "\"v0.4.1\"";
     } else if (eq(m, "v.oai.thstatus")) {
         codex_light_t next[6]; memcpy(next, slots, sizeof(next));
+        bool touched[6] = {false};
         if (p < 0 || tokens[p].type != '[') error = -32602;
         else for (unsigned i = p + 1; i < tokens[p].next; i = tokens[i].next) {
             double slot;
             if (!number(field(i, "id"), &slot) || slot < 0 || slot > 5 || slot != (int)slot || !light(i, &next[(int)slot])) { error = -32602; break; }
+            touched[(int)slot] = true;
         }
-        if (!error) memcpy(slots, next, sizeof(slots));
+        if (!error) {
+            for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) {
+                if (!touched[i]) continue;
+                if (!next[i].effect || !next[i].brightness || !next[i].color) blinking[i] = false;
+                else if (slot_initialized[i] && next[i].color != slots[i].color) {
+                    blink_started[i] = now;
+                    blinking[i] = true;
+                }
+                slot_initialized[i] = true;
+            }
+            memcpy(slots, next, sizeof(slots));
+        }
     } else if (eq(m, "v.oai.rgbcfg") || eq(m, "lights.preview")) {
         int k = field(p, eq(m, "lights.preview") ? "backlight" : "keys");
         codex_light_t next = keys;
@@ -171,6 +186,8 @@ void codex_reset(void) {
     used = 0; discard = false; host_seen = false; last_rx = last_byte = 0;
     nesting = 0; in_string = escaped = false;
     memset(slots, 0, sizeof(slots));
+    memset(slot_initialized, 0, sizeof(slot_initialized));
+    memset(blinking, 0, sizeof(blinking));
     keys = (codex_light_t){.color = 0x8090A0, .brightness = 100, .effect = 1, .speed = 128};
     for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) slots[i].speed = 128;
 }
@@ -222,6 +239,20 @@ bool codex_seen_host(void) { return host_seen; }
 uint32_t codex_last_rx(void) { return last_rx; }
 const codex_light_t *codex_slots(void) { return slots; }
 const codex_light_t *codex_keys_light(void) { return &keys; }
+codex_light_t codex_animated_key_light(uint8_t key, uint32_t now) {
+    codex_light_t light = codex_key_light(key);
+    if (key >= CODEX_SLOT_COUNT || !blinking[key]) return light;
+    uint32_t elapsed = now - blink_started[key];
+    if (elapsed >= 1500) { blinking[key] = false; return light; }
+    // Three 250ms-on / 250ms-off pulses in the new status color. Respect
+    // host dimming, and do not propagate notification flashes to command keys.
+    light = slots[key];
+    if (light.effect && light.brightness) {
+        light.effect = 1;
+        if ((elapsed / 250) & 1) light.brightness = 0;
+    }
+    return light;
+}
 // The command zone follows the host-selected thread when requested. Otherwise
 // it uses the host's keys zone. Do not gate synchronization on the base effect:
 // the base zone can be off while the selected thread supplies its illumination.

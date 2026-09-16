@@ -110,6 +110,39 @@ int main(void) {
     assert(!codex_key_light(12).effect);
     clear(); codex_key(10, true); codex_key(10, false); codex_encoder(true);
     assert(strstr(output, "ACT10") && strstr(output, "\"act\":0") && strstr(output, "ENC_CW"));
+    // Status-change notifications: initial state is quiet, duplicate updates
+    // cannot restart the three pulses, and ordinary command keys do not blink.
+    codex_reset(); clear();
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":255,\"b\":1,\"e\":6,\"sk\":1}]}", 61, 5000);
+    assert(codex_animated_key_light(0, 5250).brightness == 255);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280}]}", 7, 6000);
+    for (unsigned phase = 0; phase < 6; ++phase) {
+        codex_light_t l = codex_animated_key_light(0, 6000 + phase * 250);
+        assert(l.color == 65280 && l.effect == 1);
+        assert(l.brightness == (phase % 2 ? 0 : 255));
+    }
+    assert(codex_animated_key_light(6, 6250).brightness == 255);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280,\"b\":0.5}]}", 61, 7400);
+    assert(codex_animated_key_light(0, 7499).brightness == 0);
+    assert(codex_animated_key_light(0, 7500).effect == 6);
+    assert(codex_animated_key_light(0, 7500).brightness == 127);
+    // Invalid atomic update must not start a notification.
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":255},{\"id\":8}]}", 61, 8000);
+    assert(codex_animated_key_light(0, 8250).brightness == 127);
+    // A new color restarts the pulse; host blackout cancels it immediately.
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":255}]}", 61, 9000);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":16711680}]}", 61, 9250);
+    assert(codex_animated_key_light(0, 9250).brightness == 127);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"b\":0}]}", 61, 9260);
+    assert(codex_animated_key_light(0, 9260).brightness == 0);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"b\":1}]}", 61, 9270);
+    assert(codex_animated_key_light(0, 9520).brightness == 255);
+    // Unsigned timer wrap must preserve pulse timing.
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":255}]}", 61, UINT32_MAX - 100);
+    assert(codex_animated_key_light(0, 149).brightness == 0);
+    assert(codex_animated_key_light(0, 1399).effect == 6);
+    codex_reset();
+    assert(codex_animated_key_light(0, 1500).effect == 1);
     // Deterministic malformed input smoke fuzz under ASan/UBSan.
     for (unsigned i = 0; i < 20000; ++i) {
         uint8_t r[64]; for (unsigned j = 0; j < sizeof(r); ++j) r[j] = rand() & 255;

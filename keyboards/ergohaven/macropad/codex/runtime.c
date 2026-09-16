@@ -195,9 +195,9 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 #ifdef CODEX_HYBRID_ENABLE
         uint16_t code = codex_hybrid_keycode(i);
         if (code < CD_TASK1 || code > CD_SEND) continue; // Keep QMK/Vial RGB for ordinary keys.
-        uint32_t color = light_color(codex_key_light(code - CD_TASK1), i, now);
+        uint32_t color = light_color(codex_animated_key_light(code - CD_TASK1, now), i, now);
 #else
-        uint32_t color = light_color(codex_key_light(i), i, now);
+        uint32_t color = light_color(codex_animated_key_light(i, now), i, now);
 #endif
         rgb_matrix_set_color(led, color >> 16, color >> 8, color);
     }
