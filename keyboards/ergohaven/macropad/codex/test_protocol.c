@@ -29,6 +29,30 @@ int main(void) {
         assert(strstr(output, "\"id\":42") && strstr(output, "\"layer_index\":1"));
         assert(codex_seen_host());
     }
+    // Windows device-kit sends bare JSON, without CRLF, over the same HID
+    // reports. Exercise every split, nesting, strings and escaped quotes.
+    for (unsigned chunk = 1; chunk <= 61; ++chunk) {
+        codex_reset(); clear();
+        input("{\"method\":\"device.status\",\"params\":null,\"id\":42}", chunk, 110);
+        assert(codex_seen_host() && strstr(output, "\"id\":42"));
+        clear();
+        input("{\"method\":\"v.oai.rgbcfg\",\"params\":{\"keys\":{\"c\":255,\"b\":1,\"e\":1},\"ambient\":{}},\"id\":43}", chunk, 111);
+        assert(strstr(output, "\"id\":43") && !strstr(output, "error"));
+        assert(codex_keys_light()->color == 255);
+        clear();
+        input("{\"method\":\"v.oai.thstatus\",\"params\":[{\"id\":0,\"c\":65280,\"b\":1,\"e\":1}],\"id\":44}", chunk, 112);
+        assert(strstr(output, "\"id\":44") && codex_slots()[0].color == 65280);
+        clear();
+        input("{\"method\":\"device.status\",\"params\":{\"text\":\"} \\\" { \\\\ end\"},\"id\":45", chunk, 113);
+        assert(!output_size); // No response before the top-level object closes.
+        input("}", chunk, 114);
+        assert(strstr(output, "\"id\":45"));
+        clear();
+        input("{\"m\":\"sys.version\",\"id\":46}{\"m\":\"sys.version\",\"id\":47}\r\n", chunk, 115);
+        assert(strstr(output, "\"id\":46") && strstr(output, "\"id\":47"));
+        const char *second_line = strchr(output, '\n') + 1;
+        assert(strchr(second_line, '\n') && !strchr(strchr(second_line, '\n') + 1, '\n'));
+    }
     clear();
     input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280,\"b\":1,\"e\":1}]}\r\n", 61, 200);
     assert(!output_size && codex_slots()[0].color == 65280);

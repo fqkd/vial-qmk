@@ -13,6 +13,8 @@ static unsigned nt, pos;
 static char rx[CODEX_MESSAGE_BYTES];
 static size_t used;
 static bool discard, host_seen;
+static unsigned nesting;
+static bool in_string, escaped;
 static uint32_t last_byte, last_rx;
 static codex_light_t slots[CODEX_SLOT_COUNT], keys;
 static codex_send_fn send_report;
@@ -163,24 +165,44 @@ static void message(uint32_t now) {
 }
 void codex_reset(void) {
     used = 0; discard = false; host_seen = false; last_rx = last_byte = 0;
+    nesting = 0; in_string = escaped = false;
     memset(slots, 0, sizeof(slots));
     keys = (codex_light_t){0x303030, 80, 1};
 }
 void codex_init(codex_send_fn send) { send_report = send; codex_reset(); }
-void codex_tick(uint32_t now) { if ((used || discard) && (uint32_t)(now - last_byte) > 1000) { used = 0; discard = false; } }
+static void reset_frame(void) { used = nesting = 0; in_string = escaped = false; }
+void codex_tick(uint32_t now) { if ((used || discard) && (uint32_t)(now - last_byte) > 1000) { reset_frame(); discard = false; } }
 void codex_receive(const uint8_t *r, size_t n, uint32_t now) {
     codex_tick(now);
-    if (n != 64 || r[0] != 6 || r[1] != 2 || r[2] > 61) { used = 0; discard = true; last_byte = now; return; }
+    if (n != 64 || r[0] != 6 || r[1] != 2 || r[2] > 61) { reset_frame(); discard = true; last_byte = now; return; }
     last_byte = now;
     for (unsigned i = 0; i < r[2]; ++i) {
         char ch = (char)r[i + 3];
         if (discard) { if (ch == '\n') discard = false; continue; }
         if (ch == '\n') {
             if (used && rx[used - 1] == '\r') { rx[--used] = 0; message(now); }
-            used = 0; continue;
+            reset_frame(); continue;
         }
-        if (!ch || used >= sizeof(rx) - 1) { used = 0; discard = true; continue; }
+        if (!ch || used >= sizeof(rx) - 1) { reset_frame(); discard = true; continue; }
+        if (!used && (ch == ' ' || ch == '\t' || ch == '\r')) continue;
         rx[used++] = ch;
+        // The Windows SDK sends JSON without a line terminator. Track lexical
+        // boundaries across HID chunks; only the strict parser applies state.
+        // Do not confuse braces inside strings (including escaped quotes) with
+        // the end of the top-level object. Responses remain CRLF terminated.
+        if (in_string) {
+            if (escaped) escaped = false;
+            else if (ch == '\\') escaped = true;
+            else if (ch == '"') in_string = false;
+        } else if (ch == '"') in_string = true;
+        else if (ch == '{' || ch == '[') ++nesting;
+        else if ((ch == '}' || ch == ']') && nesting) {
+            if (--nesting == 0) {
+                rx[used] = 0;
+                message(now);
+                reset_frame();
+            }
+        }
     }
 }
 void codex_key(uint8_t key, bool pressed) {

@@ -59,8 +59,10 @@ battery value and protocol version, not physical telemetry or vendor firmware.
 ## USB and parser
 
 Interrupt OUT and 64-byte Output SET_REPORT on endpoint zero are supported.
-Feature reports are not advertised. Messages use CRLF termination and 61-byte
-chunks. A bounded 2048-byte receive buffer, bounded token count and depth,
+Feature reports are not advertised. Incoming complete JSON objects are accepted
+with or without CRLF, matching the Windows SDK's unterminated requests. Outgoing
+messages use CRLF termination. Both directions use 61-byte chunks.
+A bounded 2048-byte receive buffer, bounded token count and depth,
 strict JSON validation, timeout for incomplete input and atomic slot updates
 prevent malformed traffic from changing partial lighting state. Unknown
 methods return an error. Host-requested bootloader entry, filesystem writes
