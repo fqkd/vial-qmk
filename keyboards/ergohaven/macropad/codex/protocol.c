@@ -159,7 +159,7 @@ static void message(uint32_t now) {
             for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) {
                 if (!touched[i]) continue;
                 if (!next[i].effect || !next[i].brightness || !next[i].color) blinking[i] = false;
-                else if (slot_initialized[i] && next[i].color != slots[i].color) {
+                else if (slot_initialized[i] && (next[i].color != slots[i].color || next[i].effect != slots[i].effect)) {
                     blink_started[i] = now;
                     blinking[i] = true;
                 }
@@ -240,12 +240,19 @@ uint32_t codex_last_rx(void) { return last_rx; }
 const codex_light_t *codex_slots(void) { return slots; }
 const codex_light_t *codex_keys_light(void) { return &keys; }
 codex_light_t codex_animated_key_light(uint8_t key, uint32_t now) {
+    if (key >= 12) return (codex_light_t){0};
     codex_light_t light = codex_key_light(key);
+    // The Macropad has physical keys in every position: host zone blackout
+    // must not erase their idle illumination. QMK still owns the master switch.
+    if (!light.effect || !light.brightness || !light.color ||
+        (key < CODEX_SLOT_COUNT && (!slots[key].effect || !slots[key].brightness || !slots[key].color)))
+        light = (codex_light_t){.color = 0x607080, .brightness = 100, .effect = 1};
+    light.effect = 1; // Steady status color between notifications.
     if (key >= CODEX_SLOT_COUNT || !blinking[key]) return light;
     uint32_t elapsed = now - blink_started[key];
-    if (elapsed >= 1500) { blinking[key] = false; return light; }
-    // Three 250ms-on / 250ms-off pulses in the new status color. Respect
-    // host dimming, and do not propagate notification flashes to command keys.
+    if (elapsed >= 2500) { blinking[key] = false; return light; }
+    // Five 250ms-on / 250ms-off pulses in the new status color.
+    // Do not propagate notification flashes to command keys.
     light = slots[key];
     if (light.effect && light.brightness) {
         light.effect = 1;
