@@ -15,7 +15,7 @@
 #undef MANUFACTURER
 #define MANUFACTURER "Work Louder"
 #undef PRODUCT
-#define PRODUCT "Codex Micro"
+#define PRODUCT "Macropad"
 
 // Host owns dimming in this keymap. Avoid writing status updates to EEPROM.
 #undef EH_RGB_MATRIX_RUNTIME_TIMEOUT
