@@ -61,6 +61,9 @@ extern usb_endpoint_out_t usb_endpoints_out[USB_ENDPOINT_OUT_COUNT];
 static bool __attribute__((__unused__)) send_report_buffered(usb_endpoint_in_lut_t endpoint, void *report, size_t size);
 static void __attribute__((__unused__)) flush_report_buffered(usb_endpoint_in_lut_t endpoint, bool padded);
 static bool __attribute__((__unused__)) receive_report(usb_endpoint_out_lut_t endpoint, void *report, size_t size);
+#ifdef CODEX_MICRO_ENABLE
+static void codex_discard_control(void);
+#endif
 
 /* ---------------------------------------------------------
  *            Descriptors and USB driver objects
@@ -204,6 +207,9 @@ static void usb_event_cb(USBDriver *usbp, usbevent_t event) {
         case USB_EVENT_RESET:
             usb_event_queue_enqueue(event);
             chSysLockFromISR();
+#ifdef CODEX_MICRO_ENABLE
+            codex_discard_control();
+#endif
             for (int i = 0; i < USB_ENDPOINT_IN_COUNT; i++) {
                 usb_endpoint_in_suspend_cb(&usb_endpoints_in[i]);
             }
@@ -251,6 +257,7 @@ static uint8_t _Alignas(4) set_report_buf[2];
 static uint8_t _Alignas(4) codex_control_report[RAW_EPSIZE];
 static uint8_t codex_control_pending[RAW_EPSIZE];
 static volatile bool codex_control_ready;
+static void codex_discard_control(void) { codex_control_ready = false; }
 static void codex_control_cb(USBDriver *usbp) {
     (void)usbp;
     memcpy(codex_control_pending, codex_control_report, RAW_EPSIZE);

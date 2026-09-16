@@ -58,11 +58,17 @@ jobs:
           exit 1
         fi
 
+    - name: Firmware checksums
+      shell: bash
+      run: sha256sum "${OUTPUT}.uf2" > "${OUTPUT}.sha256"
+
     - uses: actions/upload-artifact@v4
       name: Upload
       id: upload
       with:
-        path: "*.uf2"
+        path: |
+          *.uf2
+          *.sha256
         name: ${{ env.OUTPUT }}
 
   merge:

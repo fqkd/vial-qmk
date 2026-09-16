@@ -9,6 +9,9 @@
 static lv_obj_t *screen, *status, *cells[6];
 static bool was_configured;
 static uint32_t render_time;
+void notify_usb_device_state_change_user(struct usb_device_state state) {
+    if (state.configure_state != USB_DEVICE_STATE_CONFIGURED) codex_reset();
+}
 static void transmit(const uint8_t report[64]) {
     if (usb_device_state_get_configure_state() == USB_DEVICE_STATE_CONFIGURED)
         raw_hid_send((uint8_t *)report, 64);
