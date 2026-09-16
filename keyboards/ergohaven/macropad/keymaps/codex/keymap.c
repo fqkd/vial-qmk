@@ -15,7 +15,11 @@ bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
     (void)keycode;
     uint8_t row = record->event.key.row, col = record->event.key.col;
     if (row == 0 && col == 2) codex_key(12, record->event.pressed);
-    else if (row >= 1 && row <= 4 && col < 3) codex_key((row - 1) * 3 + col, record->event.pressed);
+    else if (row >= 1 && row <= 4 && col < 3) {
+        uint8_t key = (row - 1) * 3 + col;
+        codex_ui_key(key, record->event.pressed);
+        codex_key(key, record->event.pressed);
+    }
     return false;
 }
 bool encoder_update_user(uint8_t index, bool clockwise) {

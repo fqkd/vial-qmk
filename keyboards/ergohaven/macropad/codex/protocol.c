@@ -117,6 +117,10 @@ static bool light(int i, codex_light_t *out) {
     if (c >= 0) { if (!number(c, &v) || v < 0 || v > 16777215 || v != (uint32_t)v) return false; out->color = (uint32_t)v; }
     if (b >= 0) { if (!number(b, &v) || v < 0 || v > 1) return false; out->brightness = (uint8_t)(v * 255); }
     if (e >= 0) { if (!number(e, &v) || v < 0 || v > 6 || v != (uint8_t)v) return false; out->effect = (uint8_t)v; }
+    int s = field(i, "s"), sk = field(i, "sk");
+    if (s < 0) s = field(i, "speed");
+    if (s >= 0) { if (!number(s, &v) || v < 0 || v > 1) return false; out->speed = (uint8_t)(v * 255); }
+    if (sk >= 0) { if (!number(sk, &v) || (v != 0 && v != 1)) return false; out->sync_keys = v == 1; }
     return true;
 }
 static void message(uint32_t now) {
@@ -167,7 +171,8 @@ void codex_reset(void) {
     used = 0; discard = false; host_seen = false; last_rx = last_byte = 0;
     nesting = 0; in_string = escaped = false;
     memset(slots, 0, sizeof(slots));
-    keys = (codex_light_t){0x303030, 80, 1};
+    keys = (codex_light_t){.color = 0x8090A0, .brightness = 100, .effect = 1, .speed = 128};
+    for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) slots[i].speed = 128;
 }
 void codex_init(codex_send_fn send) { send_report = send; codex_reset(); }
 static void reset_frame(void) { used = nesting = 0; in_string = escaped = false; }
@@ -217,3 +222,21 @@ bool codex_seen_host(void) { return host_seen; }
 uint32_t codex_last_rx(void) { return last_rx; }
 const codex_light_t *codex_slots(void) { return slots; }
 const codex_light_t *codex_keys_light(void) { return &keys; }
+// The command zone follows the host-selected thread when requested. Otherwise
+// it uses the host's keys zone. Do not gate synchronization on the base effect:
+// the base zone can be off while the selected thread supplies its illumination.
+codex_light_t codex_key_light(uint8_t key) {
+    if (key >= 12) return (codex_light_t){0};
+    codex_light_t base = keys;
+    for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) {
+        if (slots[i].sync_keys) { base = slots[i]; break; }
+    }
+    if (key >= 6) return base;
+    if (slots[key].effect && slots[key].brightness) return slots[key];
+    // A subdued locator makes unused physical keys visible without implying
+    // an assigned task. An off/dimmed source also turns the locators off.
+    base.color = 0x607080;
+    base.brightness /= 5;
+    base.effect = base.effect ? 1 : 0;
+    return base;
+}

@@ -9,7 +9,8 @@
 #define CODEX_SLOT_COUNT 6
 typedef struct {
     uint32_t color;
-    uint8_t brightness, effect;
+    uint8_t brightness, effect, speed;
+    bool sync_keys;
 } codex_light_t;
 typedef void (*codex_send_fn)(const uint8_t report[CODEX_REPORT_BYTES]);
 void codex_init(codex_send_fn send);
@@ -22,3 +23,5 @@ bool codex_seen_host(void);
 uint32_t codex_last_rx(void);
 const codex_light_t *codex_slots(void);
 const codex_light_t *codex_keys_light(void);
+codex_light_t codex_key_light(uint8_t key);
+void codex_ui_key(uint8_t key, bool pressed);

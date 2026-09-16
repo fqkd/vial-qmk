@@ -81,6 +81,33 @@ int main(void) {
     uint8_t bad[64] = {6,2,255}; codex_receive(bad, 64, 3000);
     input("\r\n{\"m\":\"sys.version\",\"id\":1}\r\n", 61, 3001);
     assert(strstr(output, "v0.4.1"));
+    clear();
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":2,\"c\":255,\"b\":1,\"e\":6,\"s\":0.5,\"sk\":1}],\"id\":50}", 13, 3100);
+    assert(codex_slots()[2].speed == 127 && codex_slots()[2].sync_keys);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":2,\"s\":0,\"sk\":0}],\"id\":51}", 61, 3101);
+    assert(codex_slots()[2].speed == 0 && !codex_slots()[2].sync_keys);
+    clear();
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":2,\"c\":123,\"s\":2}],\"id\":52}", 61, 3102);
+    assert(strstr(output, "Invalid params") && codex_slots()[2].color == 255);
+    clear();
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":2,\"sk\":2}],\"id\":53}", 61, 3103);
+    assert(strstr(output, "Invalid params") && !codex_slots()[2].sync_keys);
+    codex_reset(); clear();
+    for (unsigned i = 0; i < 12; ++i) {
+        codex_light_t l = codex_key_light(i);
+        assert(l.effect && l.brightness); // All physical keys have idle light.
+    }
+    input("{\"m\":\"v.oai.rgbcfg\",\"p\":{\"keys\":{\"e\":0,\"b\":0}}}", 61, 3200);
+    for (unsigned i = 0; i < 12; ++i) assert(!codex_key_light(i).brightness);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":1,\"c\":255,\"b\":1,\"e\":6,\"sk\":1}]}", 61, 3201);
+    for (unsigned i = 6; i < 12; ++i) {
+        codex_light_t l = codex_key_light(i);
+        assert(l.color == 255 && l.effect == 6 && l.brightness == 255);
+    }
+    assert(codex_key_light(0).brightness < codex_key_light(1).brightness);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":1,\"b\":0}]}", 61, 3202);
+    for (unsigned i = 0; i < 12; ++i) assert(!codex_key_light(i).brightness);
+    assert(!codex_key_light(12).effect);
     clear(); codex_key(10, true); codex_key(10, false); codex_encoder(true);
     assert(strstr(output, "ACT10") && strstr(output, "\"act\":0") && strstr(output, "ENC_CW"));
     // Deterministic malformed input smoke fuzz under ASan/UBSan.
