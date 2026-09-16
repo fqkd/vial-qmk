@@ -23,3 +23,7 @@
 
 // Separate definition/cache identity; EEPROM storage geometry stays unchanged.
 #define EH_PROCESS_RECORD_USER_FIRST
+
+// Different USB topology from the native-only target.
+#undef DEVICE_VER
+#define DEVICE_VER 0x0406
