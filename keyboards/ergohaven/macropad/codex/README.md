@@ -45,8 +45,7 @@ never substitutes an unconditional Enter for approval. Encoder uses `ENC_CW`,
 `ENC_CC` (act 2) and `ENC` press/release; reported encoder identifiers vary
 between community references and require testing against the target app.
 
-LCD displays the 4 x 3 physical key layout and receipt of a valid host
-message. It does not claim knowledge of task titles, percentages or reasoning
+LCD displays the 4 x 3 physical key layout and host status colors. It does not claim knowledge of task titles, percentages or reasoning
 level. Silence is not classified as disconnected because traffic can be
 event-driven. Suspend/deconfiguration clears cached state.
 
@@ -85,7 +84,7 @@ projects is included.
    QMK bootmagic (top-left physical key held while connecting). Bootmagic
    resets EEPROM, which is why the settings export matters.
 3. Copy the experimental UF2 to RPI-RP2. Open the Windows desktop app and
-   check whether Micro settings appear and LCD changes from Open ChatGPT.
+   check whether Micro settings appear and task cells receive status colors.
 4. Verify all six task keys, RGB, dial and voice press/release on a disposable
    task. Test approve/decline only with a request you have inspected on screen.
 5. Test reconnect, app restart and Windows sleep/resume. Record app version
@@ -104,12 +103,13 @@ gcc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined \
 
 ## Macropad interface update
 
-The LCD now mirrors the physical 4 x 3 key grid. Task numbers stay white on a
-fixed dark background; borders carry host status colors. The bottom rows show
+The LCD mirrors the physical 4 x 3 key grid under a Macropad heading. Task cells
+use full status-color fills and larger numbers. Black or white text is chosen
+automatically using relative luminance for maximum contrast. The bottom rows show
 FAST / OK / NO and NEW / MIC / SEND. These are default bindings, not live labels:
 if actions are remapped in ChatGPT, the firmware cannot read their new names.
-A held physical key highlights its screen cell. "App data received" confirms
-receipt during this USB session, not a live connection heartbeat.
+A held physical key highlights its screen cell. Connection and footer captions
+are omitted to leave more space for the keys.
 
 All 12 LEDs use the rev3 serpentine wiring map. Command keys follow the thread
 marked `sk` (sync keys), including when the base keys zone is off. Unassigned

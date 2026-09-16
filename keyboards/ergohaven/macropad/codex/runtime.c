@@ -4,9 +4,9 @@
 #include "raw_hid.h"
 #include "usb_device_state.h"
 #include "src/display/eh_display.h"
-#include <stdio.h>
+#include <math.h>
 
-static lv_obj_t *screen, *status, *cells[12];
+static lv_obj_t *screen, *cells[12], *labels[12];
 static bool was_configured;
 static uint16_t pressed_keys;
 static uint32_t render_time;
@@ -47,25 +47,24 @@ void codex_setup(void) {
     lv_obj_set_style_bg_color(screen, lv_color_hex(0x080E16), 0);
     lv_obj_set_style_pad_all(screen, 0, 0);
     lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
-    label_at(screen, "M4CR0PAD", 12, 6);
-    status = label_at(screen, "Open ChatGPT", 12, 31);
-    lv_obj_set_style_text_color(status, lv_color_hex(0x98A9BC), 0);
+    lv_obj_t *title = label_at(screen, "Macropad", 0, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
     static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND"};
     for (int i = 0; i < 12; ++i) {
         cells[i] = lv_obj_create(screen);
-        lv_obj_set_size(cells[i], 68, i < 6 ? 45 : 36);
-        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, i < 6 ? 61 + (i / 3) * 51 : 170 + ((i - 6) / 3) * 42);
+        lv_obj_set_size(cells[i], 68, i < 6 ? 58 : 42);
+        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, i < 6 ? 48 + (i / 3) * 64 : 180 + ((i - 6) / 3) * 48);
         lv_obj_set_style_pad_all(cells[i], 0, 0);
         lv_obj_set_style_radius(cells[i], 6, 0);
         lv_obj_set_style_border_width(cells[i], 2, 0);
         lv_obj_set_style_bg_opa(cells[i], LV_OPA_COVER, 0);
         lv_obj_set_style_bg_color(cells[i], lv_color_hex(0x142030), 0);
         lv_obj_clear_flag(cells[i], LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_t *label = label_at(cells[i], names[i], 0, 0);
-        if (i < 6) lv_obj_set_style_text_font(label, &lv_font_montserrat_28, 0);
-        lv_obj_center(label);
+        labels[i] = label_at(cells[i], names[i], 0, 0);
+        if (i < 6) lv_obj_set_style_text_font(labels[i], &lv_font_montserrat_40, 0);
+        lv_obj_center(labels[i]);
     }
-    label_at(screen, "Default actions", 12, 253);
     lv_scr_load(screen);
     display_turn_on();
 }
@@ -89,6 +88,17 @@ static uint32_t light_color(codex_light_t light, unsigned key, uint32_t now) {
     return ((((color >> 16) & 255) * gain / 255) << 16) |
            ((((color >> 8) & 255) * gain / 255) << 8) | ((color & 255) * gain / 255);
 }
+static float linear_channel(uint8_t channel) {
+    float c = channel / 255.0f;
+    return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
+}
+static uint32_t text_color(uint32_t background) {
+    float luminance = 0.2126f * linear_channel(background >> 16) +
+                      0.7152f * linear_channel(background >> 8) +
+                      0.0722f * linear_channel(background);
+    // Choose whichever of pure black and white gives the higher contrast.
+    return luminance > 0.179f ? 0x000000 : 0xFFFFFF;
+}
 void codex_housekeeping(void) {
     bool configured = usb_device_state_get_configure_state() == USB_DEVICE_STATE_CONFIGURED;
     if (was_configured && !configured) { codex_reset(); pressed_keys = 0; }
@@ -97,13 +107,17 @@ void codex_housekeeping(void) {
     codex_tick(now);
     if (!screen || now - render_time < 100) return;
     render_time = now;
-    // No idle timeout: host traffic is event driven, silence is not disconnect.
-    lv_label_set_text(status, !configured ? "USB inactive" : !codex_seen_host() ? "Open ChatGPT" : "App data received");
     for (unsigned i = 0; i < 12; ++i) {
         codex_light_t light = i < 6 ? codex_slots()[i] : codex_key_light(i);
         uint32_t color = light.effect && light.brightness ? light.color : 0x344153;
-        lv_obj_set_style_border_color(cells[i], lv_color_hex((pressed_keys & (1u << i)) ? 0xFFFFFF : color), 0);
-        lv_obj_set_style_bg_color(cells[i], lv_color_hex((pressed_keys & (1u << i)) ? 0x30445C : 0x142030), 0);
+        bool pressed = pressed_keys & (1u << i);
+        uint32_t background = i < 6 && light.effect && light.brightness ? light.color : 0x142030;
+        if (i >= 6 && pressed) background = 0x30445C;
+        uint32_t foreground = text_color(background);
+        lv_obj_set_style_border_color(cells[i], lv_color_hex(pressed ? foreground : color), 0);
+        lv_obj_set_style_border_width(cells[i], pressed ? 4 : 2, 0);
+        lv_obj_set_style_bg_color(cells[i], lv_color_hex(background), 0);
+        lv_obj_set_style_text_color(labels[i], lv_color_hex(foreground), 0);
     }
 }
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
