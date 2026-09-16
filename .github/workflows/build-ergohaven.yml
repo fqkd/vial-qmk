@@ -44,7 +44,7 @@ jobs:
         git config --global --add safe.directory $(pwd)
         set -o pipefail
         if ! qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }} 2>&1 | tee build.log; then
-          tail -80 build.log | while IFS= read -r line; do echo "::error::$line"; done
+          python3 util/codex_ci_summary.py build.log
           exit 1
         fi
 
@@ -54,7 +54,7 @@ jobs:
       run: |
         set -o pipefail
         if ! (gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/protocol.c keyboards/ergohaven/macropad/codex/test_protocol.c -lm -o /tmp/codex-test && /tmp/codex-test) 2>&1 | tee test.log; then
-          tail -60 test.log | while IFS= read -r line; do echo "::error::$line"; done
+          python3 util/codex_ci_summary.py test.log
           exit 1
         fi
 
