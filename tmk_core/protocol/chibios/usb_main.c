@@ -245,6 +245,19 @@ static void usb_event_cb(USBDriver *usbp, usbevent_t event) {
 
 static uint8_t _Alignas(4) set_report_buf[2];
 
+#ifdef CODEX_MICRO_ENABLE
+// Windows HID clients may use SET_REPORT on endpoint zero instead of interrupt
+// OUT. Keep parsing in the main task, never in the USB interrupt callback.
+static uint8_t _Alignas(4) codex_control_report[RAW_EPSIZE];
+static uint8_t codex_control_pending[RAW_EPSIZE];
+static volatile bool codex_control_ready;
+static void codex_control_cb(USBDriver *usbp) {
+    (void)usbp;
+    memcpy(codex_control_pending, codex_control_report, RAW_EPSIZE);
+    codex_control_ready = true;
+}
+#endif
+
 static void set_led_transfer_cb(USBDriver *usbp) {
     usb_control_request_t *setup = (usb_control_request_t *)usbp->setup;
 
@@ -285,6 +298,12 @@ static bool usb_requests_hook_cb(USBDriver *usbp) {
                 switch (setup->bRequest) {
                     case HID_REQ_SetReport:
                         switch (setup->wIndex) {
+#ifdef CODEX_MICRO_ENABLE
+                            case RAW_INTERFACE:
+                                if (setup->wLength != RAW_EPSIZE || setup->wValue.lbyte != 6 || setup->wValue.hbyte != 2 || codex_control_ready) return false;
+                                usbSetupTransfer(usbp, codex_control_report, RAW_EPSIZE, codex_control_cb);
+                                return true;
+#endif
                             case KEYBOARD_INTERFACE:
 #if defined(SHARED_EP_ENABLE) && !defined(KEYBOARD_SHARED_EP)
                             case SHARED_INTERFACE:
@@ -528,6 +547,17 @@ void send_raw_hid(uint8_t *data, uint8_t length) {
 
 void raw_hid_task(void) {
     uint8_t buffer[RAW_EPSIZE];
+#ifdef CODEX_MICRO_ENABLE
+    bool ready;
+    chSysLock();
+    ready = codex_control_ready;
+    if (ready) {
+        memcpy(buffer, codex_control_pending, sizeof(buffer));
+        codex_control_ready = false;
+    }
+    chSysUnlock();
+    if (ready) raw_hid_receive(buffer, sizeof(buffer));
+#endif
     while (receive_report(USB_ENDPOINT_OUT_RAW, buffer, sizeof(buffer))) {
         raw_hid_receive(buffer, sizeof(buffer));
     }

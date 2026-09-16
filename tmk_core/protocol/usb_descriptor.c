@@ -451,6 +451,21 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM SharedReport[] = {
 
 #ifdef RAW_ENABLE
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM RawReport[] = {
+#ifdef CODEX_MICRO_ENABLE
+    HID_RI_USAGE_PAGE(16, 0xFF00),
+    HID_RI_USAGE(8, 0x01),
+    HID_RI_COLLECTION(8, 0x01),
+        HID_RI_REPORT_ID(8, 6),
+        HID_RI_LOGICAL_MINIMUM(8, 0),
+        HID_RI_LOGICAL_MAXIMUM(16, 255),
+        HID_RI_REPORT_SIZE(8, 8),
+        HID_RI_REPORT_COUNT(8, 63),
+        HID_RI_USAGE(8, 2),
+        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+        HID_RI_USAGE(8, 3),
+        HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+    HID_RI_END_COLLECTION(0),
+#else
     HID_RI_USAGE_PAGE(16, RAW_USAGE_PAGE), // Vendor Defined
     HID_RI_USAGE(8, RAW_USAGE_ID),         // Vendor Defined
     HID_RI_COLLECTION(8, 0x01),    // Application
@@ -470,6 +485,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM RawReport[] = {
         HID_RI_REPORT_SIZE(8, 0x08),
         HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
     HID_RI_END_COLLECTION(0),
+#endif
 };
 #endif
 

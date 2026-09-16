@@ -214,6 +214,12 @@ __attribute__((weak)) void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 // raw_hid_send() is called at the end, with the same buffer, which was
 // possibly modified with returned values.
 void raw_hid_receive(uint8_t *data, uint8_t length) {
+#ifdef CODEX_MICRO_ENABLE
+    // The experimental keymap uses a different HID protocol, not VIA packets.
+    extern void codex_receive_report(uint8_t *data, uint8_t length);
+    codex_receive_report(data, length);
+    return;
+#endif
     uint8_t *command_id   = &(data[0]);
     uint8_t *command_data = &(data[1]);
 

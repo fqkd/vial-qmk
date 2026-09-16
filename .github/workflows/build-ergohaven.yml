@@ -18,6 +18,7 @@ jobs:
       matrix:
         include:
           - { kb: ergohaven/macropad/rev3, km: v3 }
+          - { kb: ergohaven/macropad/rev3, km: codex }
 
     steps:
     - name: (actions) Checkout Vial repo
@@ -41,6 +42,13 @@ jobs:
       run: |
         git config --global --add safe.directory $(pwd)
         qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }}
+
+    - name: Protocol tests
+      if: matrix.km == 'codex'
+      shell: bash
+      run: |
+        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/protocol.c keyboards/ergohaven/macropad/codex/test_protocol.c -lm -o /tmp/codex-test
+        /tmp/codex-test
 
     - uses: actions/upload-artifact@v4
       name: Upload

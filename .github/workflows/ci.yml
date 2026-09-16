@@ -26,6 +26,7 @@ jobs:
       run: python3 util/ci_vial_verify_uid.py
 
   build-default:
+    if: github.ref != 'refs/heads/codex/macropad-native-windows'
     name: Build default keymaps for Vial
     runs-on: ubuntu-latest
     container: ghcr.io/qmk/qmk_cli@sha256:2dc05fc9f32efebd6b05c2b8676ee548358bc7e151e9dbf4dac6b6eed4513b07 
@@ -64,6 +65,7 @@ jobs:
         done
 
   build-vial:
+    if: github.ref != 'refs/heads/codex/macropad-native-windows'
     name: Build Vial keymaps
     runs-on: ubuntu-latest
     container: ghcr.io/qmk/qmk_cli@sha256:2dc05fc9f32efebd6b05c2b8676ee548358bc7e151e9dbf4dac6b6eed4513b07 

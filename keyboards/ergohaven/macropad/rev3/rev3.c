@@ -59,9 +59,19 @@ uint32_t get_led_rgb_timeout_ms(void) {
 }
 
 void housekeeping_task_user(void) {
+#ifdef CODEX_MICRO_ENABLE
+    extern void codex_housekeeping(void);
+    codex_housekeeping();
+#else
     display_housekeeping_task();
+#endif
 }
 
 void keyboard_post_init_user(void) {
+#ifdef CODEX_MICRO_ENABLE
+    extern void codex_setup(void);
+    codex_setup();
+#else
     display_init_kb();
+#endif
 }
