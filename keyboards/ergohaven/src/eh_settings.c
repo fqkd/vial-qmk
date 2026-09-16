@@ -70,14 +70,18 @@ __attribute__((weak)) const char *default_layer_label(uint8_t layer) {
 
 void kb_settings_layer_labels_reset(void) {
     for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i) {
-        eeconfig_update_kb_datablock(default_layer_label(i), KB_SETTINGS_LAYER_LABELS_OFFSET + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
+        memset(layer_names[i], 0, LAYER_LABEL_SIZE);
+        snprintf(layer_names[i], LAYER_LABEL_SIZE, "%s", default_layer_label(i));
+        eeconfig_update_kb_datablock(layer_names[i], KB_SETTINGS_LAYER_LABELS_OFFSET + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
     }
     layer_name_updated = true;
 }
 
 void kb_settings_layer_labels_init(void) {
-    for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i)
+    for (int i = 0; i < DYNAMIC_KEYMAP_LAYER_COUNT; ++i) {
         eeconfig_read_kb_datablock(layer_names[i], KB_SETTINGS_LAYER_LABELS_OFFSET + i * LAYER_LABEL_SIZE, LAYER_LABEL_SIZE);
+        layer_names[i][LAYER_LABEL_SIZE - 1] = '\0';
+    }
 }
 
 void kb_settings_reset(void) {
@@ -201,7 +205,8 @@ const char *layer_name(uint8_t layer) {
 static int layer_name_get(const qmk_settings_proto_t *proto, void *setting, size_t maxsz) {
     int layer = proto->qsid - 200;
     if (layer < 0 || layer >= DYNAMIC_KEYMAP_LAYER_COUNT) return -1;
-    strcpy(setting, layer_names[layer]);
+    if (!maxsz) return -1;
+    snprintf(setting, maxsz, "%s", layer_names[layer]);
     return 0;
 }
 
@@ -210,8 +215,15 @@ bool layer_name_updated = false;
 static int layer_name_set(const qmk_settings_proto_t *proto, const void *setting, size_t maxsz) {
     int layer = proto->qsid - 200;
     if (layer < 0 || layer >= DYNAMIC_KEYMAP_LAYER_COUNT) return -1;
-    dprintf("layer_name_set %d %s\n", layer, (const char *)setting);
-    snprintf(layer_names[layer], sizeof(layer_names[layer]), (const char *)setting);
+    size_t length = 0;
+    const unsigned char *name = setting;
+    while (length < maxsz && length < LAYER_LABEL_SIZE - 1 && name[length]) ++length;
+    // Do not split a UTF-8 character at the EEPROM field boundary.
+    if (length < maxsz && (name[length] & 0xC0) == 0x80) {
+        while (length && (name[length] & 0xC0) == 0x80) --length;
+    }
+    memset(layer_names[layer], 0, LAYER_LABEL_SIZE);
+    memcpy(layer_names[layer], name, length);
     eeconfig_update_kb_datablock(layer_names[layer], KB_SETTINGS_LAYER_LABELS_OFFSET + LAYER_LABEL_SIZE * layer, LAYER_LABEL_SIZE);
     layer_name_updated = true;
     return 0;

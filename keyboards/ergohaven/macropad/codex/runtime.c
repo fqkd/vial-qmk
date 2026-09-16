@@ -7,7 +7,10 @@
 #include <math.h>
 #ifdef CODEX_HYBRID_ENABLE
 #include "hybrid.h"
+#include "src/eh_settings.h"
 #include <stdio.h>
+#include <string.h>
+LV_FONT_DECLARE(eh_font_montserrat_20);
 static lv_obj_t *layer_title;
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
@@ -64,7 +67,11 @@ void codex_setup(void) {
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
 #ifdef CODEX_HYBRID_ENABLE
     layer_title = title;
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_font(title, &eh_font_montserrat_20, 0);
+    lv_obj_set_width(title, 216);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_text(title, layer_name(get_highest_layer(layer_state | default_layer_state)));
 #endif
     static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND"};
     for (int i = 0; i < 12; ++i) {
@@ -159,9 +166,9 @@ void codex_housekeeping(void) {
     if (!screen || now - render_time < 100) return;
     render_time = now;
 #ifdef CODEX_HYBRID_ENABLE
-    char heading[32];
-    snprintf(heading, sizeof(heading), "Macropad / %u", get_highest_layer(layer_state | default_layer_state));
-    lv_label_set_text(layer_title, heading);
+    const char *heading = layer_name(get_highest_layer(layer_state | default_layer_state));
+    if (strcmp(lv_label_get_text(layer_title), heading) != 0)
+        lv_label_set_text(layer_title, heading);
 #endif
     for (unsigned i = 0; i < 12; ++i) {
 #ifdef CODEX_HYBRID_ENABLE

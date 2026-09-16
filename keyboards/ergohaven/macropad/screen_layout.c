@@ -20,7 +20,11 @@ LV_FONT_DECLARE(eh_font_montserrat_28);
 
 const char *default_layer_label(uint8_t layer) {
     static const char *PROGMEM default_layer_labels[] = {
+#ifdef CODEX_HYBRID_ENABLE
+        "Codex", "Numbers", "Navigation", "Media", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+#else
         MACROPAD_LAYER_ZERO_LABEL, "Navigation", "Mouse", "Media", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+#endif
     };
     return default_layer_labels[layer];
 }
