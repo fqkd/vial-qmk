@@ -102,7 +102,7 @@ void vial_get_unlock_combo_coords(uint8_t *rows, uint8_t *cols, size_t count) {
 #endif
 
 bool pre_process_record_kb(uint16_t keycode, keyrecord_t* record) {
-#ifdef CODEX_MICRO_ENABLE
+#if defined(CODEX_MICRO_ENABLE) && !defined(CODEX_HYBRID_ENABLE)
     // Stored language/macros must not emit ordinary keys in native mode.
     return pre_process_record_user(keycode, record);
 #else

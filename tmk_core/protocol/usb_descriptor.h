@@ -77,6 +77,12 @@ typedef struct {
     USB_Descriptor_Endpoint_t  Raw_INEndpoint;
     USB_Descriptor_Endpoint_t  Raw_OUTEndpoint;
 #endif
+#ifdef CODEX_HYBRID_ENABLE
+    USB_Descriptor_Interface_t Codex_Interface;
+    USB_HID_Descriptor_HID_t Codex_HID;
+    USB_Descriptor_Endpoint_t Codex_INEndpoint;
+    USB_Descriptor_Endpoint_t Codex_OUTEndpoint;
+#endif
 
 #if defined(MOUSE_ENABLE) && !defined(MOUSE_SHARED_EP)
     // Mouse HID Interface
@@ -163,6 +169,9 @@ enum usb_interfaces {
 #ifdef RAW_ENABLE
     RAW_INTERFACE,
 #endif
+#ifdef CODEX_HYBRID_ENABLE
+    CODEX_INTERFACE,
+#endif
 
 #if defined(MOUSE_ENABLE) && !defined(MOUSE_SHARED_EP)
     MOUSE_INTERFACE,
@@ -226,6 +235,10 @@ enum usb_endpoints {
     RAW_OUT_EPNUM         = NEXT_EPNUM,
 #    endif
 #endif
+#ifdef CODEX_HYBRID_ENABLE
+    CODEX_IN_EPNUM = NEXT_EPNUM,
+    CODEX_OUT_EPNUM = NEXT_EPNUM,
+#endif
 
 #ifdef SHARED_EP_ENABLE
     SHARED_IN_EPNUM = NEXT_EPNUM,
@@ -286,7 +299,8 @@ enum usb_endpoints {
 #define KEYBOARD_EPSIZE 8
 #define SHARED_EPSIZE 32
 #define MOUSE_EPSIZE 16
-#ifdef CODEX_MICRO_ENABLE
+#define CODEX_EPSIZE 64
+#if defined(CODEX_MICRO_ENABLE) && !defined(CODEX_HYBRID_ENABLE)
 #    define RAW_EPSIZE 64
 #else
 #    define RAW_EPSIZE 32

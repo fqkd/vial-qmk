@@ -1,0 +1,429 @@
+{
+    "firmware": {"version": "4.0.5"},
+    "firmwareVersion": "4.0.5",
+    "lighting": "vialrgb",
+    "matrix": {
+        "rows": 5,
+        "cols": 3
+    },
+"customKeycodes": [
+  {
+    "name": "EH_PRINF",
+    "shortName": "Print\nInfo",
+    "title": "Print information about firmware and modes"
+  },
+  {
+    "name": "WRD_NXT",
+    "shortName": "Next\nWord",
+    "title": "Jump to next word"
+  },
+  {
+    "name": "WRD_PRV",
+    "shortName": "Prev\nWord",
+    "title": "Jump to previous word"
+  },
+  {
+    "name": "WNEXT",
+    "shortName": "Next\nWin",
+    "title": "Holds Alt and taps Tab, then waits for 650ms, if the key is tapped again, it will send another Tab; if there is no tap, Alt will turn off. This allows you to cycle through windows with only one key"
+  },
+  {
+    "name": "WPREV",
+    "shortName": "Prev\nWin",
+    "title": "Holds Alt and taps Shift+Tab. See Alt Tab description"
+  },
+  {
+    "name": "LNEXT",
+    "shortName": "Next\nLayer",
+    "title": "Switch to the next layer"
+  },
+  {
+    "name": "LPREV",
+    "shortName": "Prev\nLayer",
+    "title": "Switch to the previous layer"
+  },
+  {
+    "name": "EH_RSRV1",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "LG_TOGGLE",
+    "shortName": "RuEn\nToggle",
+    "title": "Toggle language"
+  },
+  {
+    "name": "LG_SYNC",
+    "shortName": "RuEn\nSync",
+    "title": "Sync language"
+  },
+  {
+    "name": "LG_SET_EN",
+    "shortName": "RuEn\nEn",
+    "title": "Set English language"
+  },
+  {
+    "name": "LG_SET_RU",
+    "shortName": "RuEn\nRu",
+    "title": "Toggle Russian language"
+  },
+  {
+    "name": "LG_SET_M0",
+    "shortName": "RuEn\nM0",
+    "title": "Set toggle language to Macro 0"
+  },
+  {
+    "name": "LG_SET_M1M2",
+    "shortName": "RuEn\nM1M2",
+    "title": "Set toggle language to Macro 1 for English layout and Macro 2 for Russian layout"
+  },
+  {
+    "name": "LG_SET_DFLT",
+    "shortName": "RuEn\nDflt",
+    "title": "Set toggle language to default (Win+Space for PC and Ctrl+Space for Mac)"
+  },
+  {
+    "name": "LG_DOT",
+    "shortName": "RuEn\n.",
+    "title": "Send ."
+  },
+  {
+    "name": "LG_COMMA",
+    "shortName": "RuEn\n,",
+    "title": "Send ,"
+  },
+  {
+    "name": "LG_SCLN",
+    "shortName": "RuEn\n;",
+    "title": "Send ;"
+  },
+  {
+    "name": "LG_COLON",
+    "shortName": "RuEn\n:",
+    "title": "Send :"
+  },
+  {
+    "name": "LG_DQUO",
+    "shortName": "RuEn\n\"",
+    "title": "Send \""
+  },
+  {
+    "name": "LG_QUES",
+    "shortName": "RuEn\n?",
+    "title": "Send ?"
+  },
+  {
+    "name": "LG_SLASH",
+    "shortName": "RuEn\n/",
+    "title": "Send /"
+  },
+  {
+    "name": "LG_LBR",
+    "shortName": "RuEn\n[",
+    "title": "Send ["
+  },
+  {
+    "name": "LG_RBR",
+    "shortName": "RuEn\n]",
+    "title": "Send ]"
+  },
+  {
+    "name": "LG_LCBR",
+    "shortName": "RuEn\n{",
+    "title": "Send {"
+  },
+  {
+    "name": "LG_RCBR",
+    "shortName": "RuEn\n}",
+    "title": "Send}"
+  },
+  {
+    "name": "LG_LT",
+    "shortName": "RuEn\n<",
+    "title": "Send <"
+  },
+  {
+    "name": "LG_GT",
+    "shortName": "RuEn\n>",
+    "title": "Send >"
+  },
+  {
+    "name": "LG_GRAVE",
+    "shortName": "RuEn\n`",
+    "title": "Send `"
+  },
+  {
+    "name": "LG_TILD",
+    "shortName": "RuEn\n~",
+    "title": "Send ~"
+  },
+  {
+    "name": "LG_AT",
+    "shortName": "RuEn\n@",
+    "title": "Send @"
+  },
+  {
+    "name": "LG_HASH",
+    "shortName": "RuEn\n#",
+    "title": "Send #"
+  },
+  {
+    "name": "LG_DLR",
+    "shortName": "RuEn\n$",
+    "title": "Send $"
+  },
+  {
+    "name": "LG_CIRC",
+    "shortName": "RuEn\n^",
+    "title": "Send ^"
+  },
+  {
+    "name": "LG_AMPR",
+    "shortName": "RuEn\n&",
+    "title": "Send &"
+  },
+  {
+    "name": "LG_PIPE",
+    "shortName": "RuEn\n|",
+    "title": "Send |"
+  },
+  {
+    "name": "LG_QUOTE",
+    "shortName": "RuEn\n'",
+    "title": "Send '"
+  },
+  {
+    "name": "LG_NUM",
+    "shortName": "RuEn\n№",
+    "title": "Send №"
+  },
+  {
+    "name": "LG_WORD",
+    "shortName": "RuEn\nword",
+    "title": "Temporary turn on English layout and back to Russian layout on word's end"
+  },
+  {
+    "name": "LG_MOD",
+    "shortName": "RuEn\nTg/Mod",
+    "title": "Toggle layout on press and release"
+  },
+  {
+    "name": "LG_STORE",
+    "shortName": "RuEn\nStore",
+    "title": "Store current layout (useful for macros)"
+  },
+  {
+    "name": "LG_REVERT",
+    "shortName": "RuEn\nRevert",
+    "title": "Revert to stored layout (useful for macros)"
+  },
+  {
+    "name": "LG_PERC",
+    "shortName": "RuEn\n%",
+    "title": "Send % (differs on MacOS layout)"
+  },
+  {
+    "name": "LG_TG_MAC",
+    "shortName": "RuEn\nMac Tg",
+    "title": "Toggle to use MacOS layout for Russian instead of PC layout"
+  },
+  {
+    "name": "LG_RU_BE",
+    "shortName": "RuEn\nБ",
+    "title": "Send Б"
+  },
+  {
+    "name": "LG_RU_YU",
+    "shortName": "RuEn\nЮ",
+    "title": "Send Ю"
+  },
+  {
+    "name": "LG_RU_ZHE",
+    "shortName": "RuEn\nЖ",
+    "title": "Send Ж"
+  },
+  {
+    "name": "LG_RU_E",
+    "shortName": "RuEn\nЭ",
+    "title": "Send Э"
+  },
+  {
+    "name": "LG_RU_KHA",
+    "shortName": "RuEn\nХ",
+    "title": "Send Х"
+  },
+  {
+    "name": "LG_RU_HRD_SGN",
+    "shortName": "RuEn\nЪ",
+    "title": "Send Ъ"
+  },
+  {
+    "name": "LG_RU_YO",
+    "shortName": "RuEn\nЁ",
+    "title": "Send Ё"
+  },
+  {
+    "name": "EH_RSRV2",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_RSRV3",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_RSRV4",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_RSRV5",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_RSRV6",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_RSRV7",
+    "shortName": "",
+    "title": "Not using"
+  },
+  {
+    "name": "EH_LED_BL",
+    "shortName": "Tg Led\nBlinks",
+    "title": "Enable/disable special protocol for Ergohaven Trackball Mini with led blinking"
+  },
+  {
+    "name": "EH_SNP",
+    "shortName": "Sniper\nmode",
+    "title": "Sniper mode for trackball / touchpad"
+  },
+  {
+    "name": "EH_SCR",
+    "shortName": "Scroll\nmode",
+    "title": "Scroll mode for trackball / touchpad"
+  },
+  {
+    "name": "EH_TXT",
+    "shortName": "Text\nmode",
+    "title": "Text mode for trackball / touchpad"
+  },
+  {
+    "name": "EH_USR1",
+    "shortName": "Mode\nUser 1",
+    "title": "First user define mode for trackball"
+  },
+  {
+    "name": "EH_USR2",
+    "shortName": "Mode\nUser 2",
+    "title": "Second user define mode for trackball"
+  },
+  {
+    "name": "EH_USR3",
+    "shortName": "Mode\nUser 3",
+    "title": "Third user define mode for trackball"
+  },
+  {
+    "name": "CD_TASK1",
+    "shortName": "Task 1",
+    "title": "Codex task 1"
+  },
+  {
+    "name": "CD_TASK2",
+    "shortName": "Task 2",
+    "title": "Codex task 2"
+  },
+  {
+    "name": "CD_TASK3",
+    "shortName": "Task 3",
+    "title": "Codex task 3"
+  },
+  {
+    "name": "CD_TASK4",
+    "shortName": "Task 4",
+    "title": "Codex task 4"
+  },
+  {
+    "name": "CD_TASK5",
+    "shortName": "Task 5",
+    "title": "Codex task 5"
+  },
+  {
+    "name": "CD_TASK6",
+    "shortName": "Task 6",
+    "title": "Codex task 6"
+  },
+  {
+    "name": "CD_FAST",
+    "shortName": "Fast",
+    "title": "Codex fast mode"
+  },
+  {
+    "name": "CD_OK",
+    "shortName": "Approve",
+    "title": "Codex approve"
+  },
+  {
+    "name": "CD_NO",
+    "shortName": "Decline",
+    "title": "Codex decline"
+  },
+  {
+    "name": "CD_NEW",
+    "shortName": "New task",
+    "title": "Codex continue in new task"
+  },
+  {
+    "name": "CD_MIC",
+    "shortName": "Voice",
+    "title": "Codex push to talk"
+  },
+  {
+    "name": "CD_SEND",
+    "shortName": "Send",
+    "title": "Codex send message"
+  },
+  {
+    "name": "CD_CLICK",
+    "shortName": "Click",
+    "title": "Codex dial click"
+  },
+  {
+    "name": "CD_CCW",
+    "shortName": "Dial left",
+    "title": "Codex dial counterclockwise"
+  },
+  {
+    "name": "CD_CW",
+    "shortName": "Dial right",
+    "title": "Codex dial clockwise"
+  },
+  {
+    "name": "CD_MODE",
+    "shortName": "Mode",
+    "title": "Hold 600 ms: next layer 0-3; tap: Codex click on layer 0, mute otherwise"
+  }
+],
+    "settings": [
+#include "keyboards/ergohaven/src/json/settings_layer_labels.json"
+,
+#include "keyboards/ergohaven/src/json/settings_ruen.json"
+,
+#include "keyboards/ergohaven/src/json/settings_led_timeout.json"
+    ],
+    "layouts": {
+        "keymap": [
+            [{"x": 1.25},"1,0","1,1","1,2"],
+            ["0,1\n\n\n\n\n\n\n\n\ne",{"x": 0.25},"2,0","2,1","2,2"],
+            ["0,2",{"x": 0.25},"3,0","3,1","3,2"],
+            ["0,0\n\n\n\n\n\n\n\n\ne",{"x": 0.25},"4,0","4,1","4,2"]
+        ]
+    },
+    "vial": {
+        "midi": "off"
+    }
+}

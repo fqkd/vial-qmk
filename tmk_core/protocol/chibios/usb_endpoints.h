@@ -89,6 +89,9 @@ typedef enum {
 #if defined(RAW_ENABLE)
     USB_ENDPOINT_IN_RAW,
 #endif
+#ifdef CODEX_HYBRID_ENABLE
+    USB_ENDPOINT_IN_CODEX,
+#endif
 
 #if defined(MIDI_ENABLE)
     USB_ENDPOINT_IN_MIDI,
@@ -126,6 +129,9 @@ extern usb_endpoint_in_lut_t usb_endpoint_interface_lut[TOTAL_INTERFACES];
 typedef enum {
 #if defined(RAW_ENABLE)
     USB_ENDPOINT_OUT_RAW,
+#endif
+#ifdef CODEX_HYBRID_ENABLE
+    USB_ENDPOINT_OUT_CODEX,
 #endif
 #if defined(MIDI_ENABLE)
     USB_ENDPOINT_OUT_MIDI,

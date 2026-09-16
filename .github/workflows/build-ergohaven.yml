@@ -19,6 +19,7 @@ jobs:
         include:
           - { kb: ergohaven/macropad/rev3, km: v3 }
           - { kb: ergohaven/macropad/rev3, km: codex }
+          - { kb: ergohaven/macropad/rev3, km: codex_entropy }
 
     steps:
     - name: (actions) Checkout Vial repo

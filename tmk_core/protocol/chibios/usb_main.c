@@ -254,13 +254,13 @@ static uint8_t _Alignas(4) set_report_buf[2];
 #ifdef CODEX_MICRO_ENABLE
 // Windows HID clients may use SET_REPORT on endpoint zero instead of interrupt
 // OUT. Keep parsing in the main task, never in the USB interrupt callback.
-static uint8_t _Alignas(4) codex_control_report[RAW_EPSIZE];
-static uint8_t codex_control_pending[RAW_EPSIZE];
+static uint8_t _Alignas(4) codex_control_report[CODEX_EPSIZE];
+static uint8_t codex_control_pending[CODEX_EPSIZE];
 static volatile bool codex_control_ready;
 static void codex_discard_control(void) { codex_control_ready = false; }
 static void codex_control_cb(USBDriver *usbp) {
     (void)usbp;
-    memcpy(codex_control_pending, codex_control_report, RAW_EPSIZE);
+    memcpy(codex_control_pending, codex_control_report, CODEX_EPSIZE);
     codex_control_ready = true;
 }
 #endif
@@ -306,9 +306,13 @@ static bool usb_requests_hook_cb(USBDriver *usbp) {
                     case HID_REQ_SetReport:
                         switch (setup->wIndex) {
 #ifdef CODEX_MICRO_ENABLE
+#ifdef CODEX_HYBRID_ENABLE
+                            case CODEX_INTERFACE:
+#else
                             case RAW_INTERFACE:
-                                if (setup->wLength != RAW_EPSIZE || setup->wValue.lbyte != 6 || setup->wValue.hbyte != 2 || codex_control_ready) return false;
-                                usbSetupTransfer(usbp, codex_control_report, RAW_EPSIZE, codex_control_cb);
+#endif
+                                if (setup->wLength != CODEX_EPSIZE || setup->wValue.lbyte != 6 || setup->wValue.hbyte != 2 || codex_control_ready) return false;
+                                usbSetupTransfer(usbp, codex_control_report, CODEX_EPSIZE, codex_control_cb);
                                 return true;
 #endif
                             case KEYBOARD_INTERFACE:
@@ -552,18 +556,30 @@ void send_raw_hid(uint8_t *data, uint8_t length) {
     send_report(USB_ENDPOINT_IN_RAW, data, length);
 }
 
+#ifdef CODEX_HYBRID_ENABLE
+void codex_hid_send(uint8_t *data, uint8_t length) {
+    if (length == CODEX_EPSIZE) send_report(USB_ENDPOINT_IN_CODEX, data, length);
+}
+#endif
 void raw_hid_task(void) {
     uint8_t buffer[RAW_EPSIZE];
 #ifdef CODEX_MICRO_ENABLE
+    uint8_t micro_buffer[CODEX_EPSIZE];
+    extern void codex_receive_report(uint8_t *data, uint8_t length);
     bool ready;
     chSysLock();
     ready = codex_control_ready;
     if (ready) {
-        memcpy(buffer, codex_control_pending, sizeof(buffer));
+        memcpy(micro_buffer, codex_control_pending, sizeof(micro_buffer));
         codex_control_ready = false;
     }
     chSysUnlock();
-    if (ready) raw_hid_receive(buffer, sizeof(buffer));
+    if (ready) codex_receive_report(micro_buffer, sizeof(micro_buffer));
+#ifdef CODEX_HYBRID_ENABLE
+    while (receive_report(USB_ENDPOINT_OUT_CODEX, micro_buffer, sizeof(micro_buffer))) {
+        codex_receive_report(micro_buffer, sizeof(micro_buffer));
+    }
+#endif
 #endif
     while (receive_report(USB_ENDPOINT_OUT_RAW, buffer, sizeof(buffer))) {
         raw_hid_receive(buffer, sizeof(buffer));
