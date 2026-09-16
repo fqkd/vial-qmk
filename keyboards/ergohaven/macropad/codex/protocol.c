@@ -73,7 +73,7 @@ static int value(unsigned depth) {
     return (int)i;
 }
 static bool eq(int i, const char *s) {
-    return i >= 0 && tokens[i].type == '"' && tokens[i].end - tokens[i].start == strlen(s) + 2 && !memcmp(rx + tokens[i].start + 1, s, strlen(s));
+    return i >= 0 && tokens[i].type == '"' && (size_t)(tokens[i].end - tokens[i].start) == strlen(s) + 2 && !memcmp(rx + tokens[i].start + 1, s, strlen(s));
 }
 static int field(int object, const char *name) {
     if (object < 0 || tokens[object].type != '{') return -1;

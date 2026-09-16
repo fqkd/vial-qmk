@@ -39,16 +39,24 @@ jobs:
 
     - name: Build
       id: build
-      run: |
-        git config --global --add safe.directory $(pwd)
-        qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }}
-
-    - name: Protocol tests
-      if: matrix.km == 'codex'
       shell: bash
       run: |
-        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/protocol.c keyboards/ergohaven/macropad/codex/test_protocol.c -lm -o /tmp/codex-test
-        /tmp/codex-test
+        git config --global --add safe.directory $(pwd)
+        set -o pipefail
+        if ! qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }} 2>&1 | tee build.log; then
+          tail -80 build.log | while IFS= read -r line; do echo "::error::$line"; done
+          exit 1
+        fi
+
+    - name: Protocol tests
+      if: always() && matrix.km == 'codex'
+      shell: bash
+      run: |
+        set -o pipefail
+        if ! (gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/protocol.c keyboards/ergohaven/macropad/codex/test_protocol.c -lm -o /tmp/codex-test && /tmp/codex-test) 2>&1 | tee test.log; then
+          tail -60 test.log | while IFS= read -r line; do echo "::error::$line"; done
+          exit 1
+        fi
 
     - uses: actions/upload-artifact@v4
       name: Upload
