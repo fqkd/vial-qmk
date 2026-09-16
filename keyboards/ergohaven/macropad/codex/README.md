@@ -50,9 +50,9 @@ message. It does not claim knowledge of task titles, percentages or reasoning
 level. Silence is not classified as disconnected because traffic can be
 event-driven. Suspend/deconfiguration clears cached state.
 
-RGB supports solid/off and approximate breathing. Other documented effect IDs
-currently use solid color; speed and cross-zone synchronization are not yet
-implemented. Brightness is capped to reduce current. There is no chassis RGB
+RGB supports solid/off, locally adapted effects, speed and thread-to-key
+synchronization (details below). Brightness is capped to reduce current.
+There is no chassis RGB
 zone, joystick, Bluetooth or battery; compatibility status reports a fixed
 battery value and protocol version, not physical telemetry or vendor firmware.
 
