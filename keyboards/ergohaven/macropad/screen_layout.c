@@ -32,9 +32,16 @@ uint16_t get_keycode(int layer, int row, int col) {
 }
 
 uint16_t get_encoder_keycode(int layer, int encoder, bool clockwise) {
+#ifdef ENCODER_MAP_ENABLE
     uint16_t keycode = dynamic_keymap_get_encoder(layer, encoder, clockwise);
     if (keycode == KC_TRANSPARENT) keycode = dynamic_keymap_get_encoder(0, encoder, clockwise);
     return keycode;
+#else
+    (void)layer;
+    (void)encoder;
+    (void)clockwise;
+    return KC_NO;
+#endif
 }
 
 /* Screen layout */

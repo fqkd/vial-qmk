@@ -2,6 +2,8 @@
 #include QMK_KEYBOARD_H
 #include "../../codex/protocol.h"
 
+_Static_assert(VENDOR_ID == 0x303A && PRODUCT_ID == 0x8360, "Native discovery identity was overridden");
+
 // Physical matrix events are authoritative; no ordinary keyboard events escape
 // the native mode, including when old Vial mappings remain in EEPROM.
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
