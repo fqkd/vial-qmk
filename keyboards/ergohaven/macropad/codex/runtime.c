@@ -7,13 +7,12 @@
 #include <math.h>
 #ifdef CODEX_HYBRID_ENABLE
 #include "hybrid.h"
+#include "ergohaven.h"
 #include "src/eh_settings.h"
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
 static lv_obj_t *layer_title;
-extern void codex_layer_button_task(void);
-extern void codex_layer_button_reset(void);
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -32,9 +31,6 @@ void codex_ui_key(uint8_t key, bool pressed) {
 void notify_usb_device_state_change_user(struct usb_device_state state) {
     if (state.configure_state != USB_DEVICE_STATE_CONFIGURED) {
         codex_reset(); pressed_keys = 0;
-#ifdef CODEX_HYBRID_ENABLE
-        codex_layer_button_reset();
-#endif
     }
 }
 static void transmit(const uint8_t report[64]) {
@@ -139,6 +135,8 @@ static void hybrid_label(uint16_t code, char text[12]) {
         const char *name = "KEY";
         switch (code) {
             case KC_NO: name = "-"; break;
+            case LAYER_PREV: name = "LY <"; break;
+            case LAYER_NEXT: name = "LY >"; break;
             case KC_ENTER: name = "ENT"; break;
             case KC_DOT: name = "."; break;
             case KC_UP: name = "UP"; break;
@@ -179,9 +177,6 @@ static void hybrid_label(uint16_t code, char text[12]) {
 }
 #endif
 void codex_housekeeping(void) {
-#ifdef CODEX_HYBRID_ENABLE
-    codex_layer_button_task();
-#endif
     bool configured = usb_device_state_get_configure_state() == USB_DEVICE_STATE_CONFIGURED;
     if (was_configured && !configured) { codex_reset(); pressed_keys = 0; }
     was_configured = configured;

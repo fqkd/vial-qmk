@@ -405,7 +405,7 @@
   {
     "name": "CD_MODE",
     "shortName": "LAYER",
-    "title": "Single tap: next layer 0-4; double tap within 250 ms: previous layer"
+    "title": "Next layer 0-4 on every press; no double-tap action"
   }
 ],
     "settings": [
