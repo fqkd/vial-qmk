@@ -94,7 +94,7 @@ void codex_setup(void) {
         lv_obj_set_style_bg_color(cells[i], lv_color_hex(0x142030), 0);
         lv_obj_clear_flag(cells[i], LV_OBJ_FLAG_SCROLLABLE);
         labels[i] = label_at(cells[i], names[i], 0, 0);
-        if (i < 6) lv_obj_set_style_text_font(labels[i], &lv_font_montserrat_40, 0);
+        lv_obj_set_style_text_font(labels[i], i < 6 ? &lv_font_montserrat_28 : &lv_font_montserrat_20, 0);
         lv_obj_center(labels[i]);
     }
     lv_scr_load(screen);
@@ -149,8 +149,8 @@ static void hybrid_label(uint16_t code, char text[12]) {
             case KC_END: name = "END"; break;
             case KC_DEL: name = "DEL"; break;
             case KC_INS: name = "INS"; break;
-            case C(KC_LEFT): name = "WORD<"; break;
-            case C(KC_RIGHT): name = "WORD>"; break;
+            case C(KC_LEFT): name = "W <"; break;
+            case C(KC_RIGHT): name = "W >"; break;
             case KC_BTN1: name = "LMB"; break;
             case KC_BTN2: name = "RMB"; break;
             case KC_MS_U: name = "M UP"; break;
@@ -159,8 +159,8 @@ static void hybrid_label(uint16_t code, char text[12]) {
             case KC_MS_R: name = "M >"; break;
             case KC_PSCR: name = "SHOT"; break;
             case KC_BRID: name = "DIM"; break;
-            case KC_BRIU: name = "LIGHT"; break;
-            case KC_CPNL: name = "PANEL"; break;
+            case KC_BRIU: name = "LIT"; break;
+            case KC_CPNL: name = "CTRL"; break;
             case KC_MYCM: name = "PC"; break;
             case KC_WSCH: name = "WEB"; break;
             case KC_MAIL: name = "MAIL"; break;
@@ -201,7 +201,7 @@ void codex_housekeeping(void) {
         codex_light_t light = task ? codex_slots()[code - CD_TASK1] : (code >= CD_FAST && code <= CD_SEND ? codex_key_light(code - CD_TASK1) : (codex_light_t){0});
         char name[12]; hybrid_label(code, name);
         lv_label_set_text(labels[i], name);
-        lv_obj_set_style_text_font(labels[i], task ? &lv_font_montserrat_40 : &lv_font_montserrat_20, 0);
+        lv_obj_set_style_text_font(labels[i], task ? &lv_font_montserrat_28 : &lv_font_montserrat_20, 0);
         lv_obj_center(labels[i]);
 #else
         codex_light_t light = i < 6 ? codex_slots()[i] : codex_key_light(i);
