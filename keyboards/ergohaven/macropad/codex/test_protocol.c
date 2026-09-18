@@ -111,17 +111,19 @@ int main(void) {
     clear(); codex_key(10, true); codex_key(10, false); codex_encoder(true);
     assert(strstr(output, "ACT10") && strstr(output, "\"act\":0") && strstr(output, "ENC_CW"));
     // Status-change notifications: initial state is quiet, duplicate updates
-    // cannot restart the five pulses, and ordinary command keys do not blink.
+    // cannot restart the five pulses, and all twelve keys blink together.
     codex_reset(); clear();
     input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":255,\"b\":1,\"e\":6,\"sk\":1}]}", 61, 5000);
     assert(codex_animated_key_light(0, 5250).brightness == 255);
     input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280}]}", 7, 6000);
     for (unsigned phase = 0; phase < 10; ++phase) {
-        codex_light_t l = codex_animated_key_light(0, 6000 + phase * 250);
-        assert(l.color == 65280 && l.effect == 1);
-        assert(l.brightness == (phase % 2 ? 0 : 255));
+        for (unsigned key = 0; key < 12; ++key) {
+            codex_light_t l = codex_animated_key_light(key, 6000 + phase * 250);
+            assert(l.color == 65280 && l.effect == 1);
+            assert(l.brightness == (phase % 2 ? 0 : 255));
+        }
     }
-    assert(codex_animated_key_light(6, 6250).brightness == 255);
+    assert(codex_animated_key_light(6, 6250).brightness == 0);
     input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280,\"b\":0.5}]}", 61, 8400);
     assert(codex_animated_key_light(0, 8499).brightness == 0);
     assert(codex_animated_key_light(0, 8500).effect == 1);
@@ -159,6 +161,30 @@ int main(void) {
     assert(codex_animated_key_light(0, 2250).brightness == 0);
     assert(codex_animated_key_light(0, 4499).brightness == 0);
     assert(codex_animated_key_light(0, 4500).brightness == 255);
+    // A second task takes over the whole matrix, never an independent phase.
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":1,\"c\":255,\"b\":1,\"e\":1}]}", 61, 5000);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":0,\"c\":65280}]}", 61, 5100);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":1,\"c\":16711680}]}", 61, 5450);
+    // An unrelated inactive slot must not cancel the shared notification.
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":2,\"e\":0}]}", 61, 5500);
+    for (unsigned phase = 0; phase < 10; ++phase) {
+        codex_light_t overlay;
+        assert(codex_notification_light(5450 + phase * 250, &overlay));
+        for (unsigned key = 0; key < 12; ++key) {
+            codex_light_t l = codex_animated_key_light(key, 5450 + phase * 250);
+            assert(l.color == 16711680 && l.effect == 1);
+            assert(l.brightness == (phase % 2 ? 0 : 255));
+            assert(l.color == overlay.color && l.brightness == overlay.brightness);
+        }
+    }
+    codex_light_t overlay;
+    assert(!codex_notification_light(7950, &overlay));
+    assert(codex_animated_key_light(0, 7950).color == 65280);
+    assert(codex_animated_key_light(1, 7950).color == 16711680);
+    assert(codex_animated_key_light(11, 7950).color == 0x607080);
+    input("{\"m\":\"v.oai.thstatus\",\"p\":[{\"id\":1,\"c\":255}]}", 61, 8000);
+    codex_reset();
+    assert(!codex_notification_light(8100, &overlay));
     // Deterministic malformed input smoke fuzz under ASan/UBSan.
     for (unsigned i = 0; i < 20000; ++i) {
         uint8_t r[64]; for (unsigned j = 0; j < sizeof(r); ++j) r[j] = rand() & 255;

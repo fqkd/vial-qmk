@@ -17,8 +17,9 @@ static unsigned nesting;
 static bool in_string, escaped;
 static uint32_t last_byte, last_rx;
 static codex_light_t slots[CODEX_SLOT_COUNT], keys;
-static bool slot_initialized[CODEX_SLOT_COUNT], blinking[CODEX_SLOT_COUNT];
-static uint32_t blink_started[CODEX_SLOT_COUNT];
+static bool slot_initialized[CODEX_SLOT_COUNT], blinking;
+static uint8_t blink_slot;
+static uint32_t blink_started;
 static codex_send_fn send_report;
 
 static void ws(void) { while (rx[pos] == ' ' || rx[pos] == '\t' || rx[pos] == '\r' || rx[pos] == '\n') ++pos; }
@@ -158,10 +159,13 @@ static void message(uint32_t now) {
         if (!error) {
             for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) {
                 if (!touched[i]) continue;
-                if (!next[i].effect || !next[i].brightness || !next[i].color) blinking[i] = false;
+                if (!next[i].effect || !next[i].brightness || !next[i].color) {
+                    if (blink_slot == i) blinking = false;
+                }
                 else if (slot_initialized[i] && (next[i].color != slots[i].color || next[i].effect != slots[i].effect)) {
-                    blink_started[i] = now;
-                    blinking[i] = true;
+                    blink_started = now;
+                    blink_slot = i;
+                    blinking = true;
                 }
                 slot_initialized[i] = true;
             }
@@ -187,7 +191,8 @@ void codex_reset(void) {
     nesting = 0; in_string = escaped = false;
     memset(slots, 0, sizeof(slots));
     memset(slot_initialized, 0, sizeof(slot_initialized));
-    memset(blinking, 0, sizeof(blinking));
+    blinking = false;
+    blink_slot = 0;
     keys = (codex_light_t){.color = 0x8090A0, .brightness = 100, .effect = 1, .speed = 128};
     for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) slots[i].speed = 128;
 }
@@ -239,25 +244,26 @@ bool codex_seen_host(void) { return host_seen; }
 uint32_t codex_last_rx(void) { return last_rx; }
 const codex_light_t *codex_slots(void) { return slots; }
 const codex_light_t *codex_keys_light(void) { return &keys; }
+bool codex_notification_light(uint32_t now, codex_light_t *light) {
+    if (!blinking) return false;
+    uint32_t elapsed = now - blink_started;
+    if (elapsed >= 2500) { blinking = false; return false; }
+    // One clock and one source color for the entire physical RGB matrix.
+    *light = slots[blink_slot];
+    light->effect = 1;
+    if ((elapsed / 250) & 1) light->brightness = 0;
+    return true;
+}
 codex_light_t codex_animated_key_light(uint8_t key, uint32_t now) {
     if (key >= 12) return (codex_light_t){0};
     codex_light_t light = codex_key_light(key);
+    if (codex_notification_light(now, &light)) return light;
     // The Macropad has physical keys in every position: host zone blackout
     // must not erase their idle illumination. QMK still owns the master switch.
     if (!light.effect || !light.brightness || !light.color ||
         (key < CODEX_SLOT_COUNT && (!slots[key].effect || !slots[key].brightness || !slots[key].color)))
         light = (codex_light_t){.color = 0x607080, .brightness = 100, .effect = 1};
     light.effect = 1; // Steady status color between notifications.
-    if (key >= CODEX_SLOT_COUNT || !blinking[key]) return light;
-    uint32_t elapsed = now - blink_started[key];
-    if (elapsed >= 2500) { blinking[key] = false; return light; }
-    // Five 250ms-on / 250ms-off pulses in the new status color.
-    // Do not propagate notification flashes to command keys.
-    light = slots[key];
-    if (light.effect && light.brightness) {
-        light.effect = 1;
-        if ((elapsed / 250) & 1) light.brightness = 0;
-    }
     return light;
 }
 // The command zone follows the host-selected thread when requested. Otherwise

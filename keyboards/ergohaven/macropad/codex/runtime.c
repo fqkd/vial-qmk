@@ -196,9 +196,18 @@ void codex_housekeeping(void) {
 }
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     uint32_t now = timer_read32();
+    codex_light_t notification;
+    bool notifying = codex_notification_light(now, &notification);
     for (unsigned i = 0; i < 12; ++i) {
         uint8_t led = physical[i];
         if (led < led_min || led >= led_max) continue;
+        // Notification overrides every physical LED, including remapped keys
+        // and non-Codex layers. Normal RGB resumes after the fifth pulse.
+        if (notifying) {
+            uint32_t color = light_color(notification, i, now);
+            rgb_matrix_set_color(led, color >> 16, color >> 8, color);
+            continue;
+        }
 #ifdef CODEX_HYBRID_ENABLE
         uint16_t code = codex_hybrid_keycode(i);
         if (code < CD_TASK1 || code > CD_SEND) continue; // Keep QMK/Vial RGB for ordinary keys.
