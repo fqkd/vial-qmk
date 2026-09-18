@@ -9,6 +9,7 @@
 #include "hybrid.h"
 #include "ergohaven.h"
 #include "src/eh_settings.h"
+#include "src/display/eh_keycode_str.h"
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
@@ -83,8 +84,8 @@ void codex_setup(void) {
     for (int i = 0; i < 12; ++i) {
         cells[i] = lv_obj_create(screen);
 #ifdef CODEX_HYBRID_ENABLE
-        lv_obj_set_size(cells[i], 68, 40);
-        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, 40 + (i / 3) * 46);
+        lv_obj_set_size(cells[i], 68, 44);
+        lv_obj_set_pos(cells[i], 14 + (i % 3) * 72, 40 + (i / 3) * 48);
 #else
         lv_obj_set_size(cells[i], 68, 48);
         lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, 48 + (i / 3) * 54);
@@ -97,20 +98,22 @@ void codex_setup(void) {
         lv_obj_clear_flag(cells[i], LV_OBJ_FLAG_SCROLLABLE);
         labels[i] = label_at(cells[i], names[i], 0, 0);
         lv_obj_set_style_text_font(labels[i], i < 6 ? &lv_font_montserrat_28 : &lv_font_montserrat_20, 0);
+        lv_obj_set_style_text_align(labels[i], LV_TEXT_ALIGN_CENTER, 0);
+#ifdef CODEX_HYBRID_ENABLE
+        // Stock modifier icons occupy two lines; keep both inside the cell.
+        lv_obj_set_style_text_line_space(labels[i], -4, 0);
+#endif
         lv_obj_center(labels[i]);
     }
 #ifdef CODEX_HYBRID_ENABLE
-    static const char *const directions[] = {"<", "PRESS", ">"};
+    // Same left / push / right icon row as the stock Macropad screen.
     for (unsigned i = 0; i < 3; ++i) {
-        lv_obj_t *direction = label_at(screen, directions[i], 12 + i * 74, 224);
-        lv_obj_set_style_text_font(direction, &lv_font_montserrat_20, 0);
-        lv_obj_set_width(direction, 68);
-        lv_obj_set_style_text_align(direction, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_color(direction, lv_color_hex(0x00FFFC), 0);
-        encoder_labels[i] = label_at(screen, "-", 12 + i * 74, 248);
-        lv_obj_set_style_text_font(encoder_labels[i], &lv_font_montserrat_20, 0);
+        encoder_labels[i] = label_at(screen, "-", 14 + i * 72, 234);
+        lv_obj_set_style_text_font(encoder_labels[i], &eh_font_montserrat_20, 0);
         lv_obj_set_width(encoder_labels[i], 68);
         lv_obj_set_style_text_align(encoder_labels[i], LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(encoder_labels[i], lv_color_hex(0x00FFFC), 0);
+        lv_obj_set_style_text_line_space(encoder_labels[i], -4, 0);
         lv_label_set_long_mode(encoder_labels[i], LV_LABEL_LONG_SCROLL_CIRCULAR);
     }
 #endif
@@ -144,62 +147,16 @@ static uint32_t text_color(uint32_t background) {
     return luminance > 0.179f ? 0x000000 : 0xFFFFFF;
 }
 #ifdef CODEX_HYBRID_ENABLE
-static void hybrid_label(uint16_t code, char text[12]) {
+static void hybrid_label(uint16_t code, char text[64]) {
     static const char *const names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
-    if (code >= CD_TASK1 && code <= CD_MODE) snprintf(text, 12, "%s", names[code - CD_TASK1]);
-    else if (code >= KC_A && code <= KC_Z) snprintf(text, 12, "%c", 'A' + code - KC_A);
-    else if (code >= KC_1 && code <= KC_9) snprintf(text, 12, "%c", '1' + code - KC_1);
-    else if (code == KC_0) snprintf(text, 12, "0");
-    else if (code >= KC_F1 && code <= KC_F12) snprintf(text, 12, "F%u", code - KC_F1 + 1);
-    else if (code >= KC_F13 && code <= KC_F24) snprintf(text, 12, "F%u", code - KC_F13 + 13);
-    else {
-        const char *name = "KEY";
-        switch (code) {
-            case KC_NO: name = "-"; break;
-            case KC_VOLD: name = "VOL-"; break;
-            case KC_VOLU: name = "VOL+"; break;
-            case KC_MUTE: name = "MUTE"; break;
-            case KC_BTN3: name = "MMB"; break;
-            case KC_WH_D: name = "WH-D"; break;
-            case KC_WH_U: name = "WH-U"; break;
-            case LAYER_PREV: name = "LY <"; break;
-            case LAYER_NEXT: name = "LY >"; break;
-            case KC_ENTER: name = "ENT"; break;
-            case KC_DOT: name = "."; break;
-            case KC_UP: name = "UP"; break;
-            case KC_DOWN: name = "DN"; break;
-            case KC_LEFT: name = "LEFT"; break;
-            case KC_RIGHT: name = "RIGHT"; break;
-            case KC_HOME: name = "HOME"; break;
-            case KC_END: name = "END"; break;
-            case KC_DEL: name = "DEL"; break;
-            case KC_INS: name = "INS"; break;
-            case C(KC_LEFT): name = "W <"; break;
-            case C(KC_RIGHT): name = "W >"; break;
-            case KC_BTN1: name = "LMB"; break;
-            case KC_BTN2: name = "RMB"; break;
-            case KC_MS_U: name = "M UP"; break;
-            case KC_MS_D: name = "M DN"; break;
-            case KC_MS_L: name = "M <"; break;
-            case KC_MS_R: name = "M >"; break;
-            case KC_PSCR: name = "SHOT"; break;
-            case KC_BRID: name = "DIM"; break;
-            case KC_BRIU: name = "LIT"; break;
-            case KC_CPNL: name = "CTRL"; break;
-            case KC_MYCM: name = "PC"; break;
-            case KC_WSCH: name = "WEB"; break;
-            case KC_MAIL: name = "MAIL"; break;
-            case KC_CALC: name = "CALC"; break;
-            case KC_PGUP: name = "PGUP"; break;
-            case KC_PGDN: name = "PGDN"; break;
-            case C(KC_X): name = "CUT"; break;
-            case C(KC_C): name = "COPY"; break;
-            case C(KC_V): name = "PASTE"; break;
-            case KC_MPRV: name = "PREV"; break;
-            case KC_MPLY: name = "PLAY"; break;
-            case KC_MNXT: name = "NEXT"; break;
-        }
-        snprintf(text, 12, "%s", name);
+    if (code >= CD_TASK1 && code <= CD_MODE) {
+        snprintf(text, 64, "%s", names[code - CD_TASK1]);
+    } else {
+        // Reuse stock symbols and modifier formatting, including live Vial edits.
+        // The stock helper uses a 32-byte buffer; allow extra room for UTF-8.
+        text[0] = '\0';
+        get_keycode_str(text, code);
+        if (!text[0]) snprintf(text, 64, "-");
     }
 }
 #endif
@@ -221,7 +178,7 @@ void codex_housekeeping(void) {
                                 codex_hybrid_matrix_keycode(0, 2),
                                 codex_hybrid_encoder_keycode(true)};
     for (unsigned i = 0; i < 3; ++i) {
-        char text[12];
+        char text[64];
         hybrid_label(encoder_codes[i], text);
         if (strcmp(lv_label_get_text(encoder_labels[i]), text) != 0)
             lv_label_set_text(encoder_labels[i], text);
@@ -232,9 +189,9 @@ void codex_housekeeping(void) {
         uint16_t code = codex_hybrid_keycode(i);
         bool task = code >= CD_TASK1 && code <= CD_TASK6;
         codex_light_t light = task ? codex_slots()[code - CD_TASK1] : (code >= CD_FAST && code <= CD_SEND ? codex_key_light(code - CD_TASK1) : (codex_light_t){0});
-        char name[12]; hybrid_label(code, name);
+        char name[64]; hybrid_label(code, name);
         lv_label_set_text(labels[i], name);
-        lv_obj_set_style_text_font(labels[i], task ? &lv_font_montserrat_28 : &lv_font_montserrat_20, 0);
+        lv_obj_set_style_text_font(labels[i], task ? &lv_font_montserrat_28 : &eh_font_montserrat_20, 0);
         lv_obj_center(labels[i]);
 #else
         codex_light_t light = i < 6 ? codex_slots()[i] : codex_key_light(i);
