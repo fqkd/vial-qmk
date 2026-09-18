@@ -8,12 +8,24 @@ enum codex_hybrid_keycodes {
 };
 _Static_assert(CD_TASK1 == 0x7E00 + 64 && CD_MODE == 0x7E00 + 79,
                "Codex codes must match the appended Vial customKeycodes");
-static inline uint16_t codex_hybrid_keycode(uint8_t key) {
+static inline uint16_t codex_hybrid_matrix_keycode(uint8_t row, uint8_t col) {
     // Resolve transparent assignments just as QMK does for ordinary layers.
     layer_state_t active = layer_state | default_layer_state;
     for (int8_t layer = DYNAMIC_KEYMAP_LAYER_COUNT - 1; layer >= 0; --layer) {
         if (!(active & ((layer_state_t)1 << layer))) continue;
-        uint16_t code = dynamic_keymap_get_keycode(layer, key / 3 + 1, key % 3);
+        uint16_t code = dynamic_keymap_get_keycode(layer, row, col);
+        if (code != KC_TRNS) return code;
+    }
+    return KC_NO;
+}
+static inline uint16_t codex_hybrid_keycode(uint8_t key) {
+    return codex_hybrid_matrix_keycode(key / 3 + 1, key % 3);
+}
+static inline uint16_t codex_hybrid_encoder_keycode(bool clockwise) {
+    layer_state_t active = layer_state | default_layer_state;
+    for (int8_t layer = DYNAMIC_KEYMAP_LAYER_COUNT - 1; layer >= 0; --layer) {
+        if (!(active & ((layer_state_t)1 << layer))) continue;
+        uint16_t code = dynamic_keymap_get_encoder(layer, 0, clockwise);
         if (code != KC_TRNS) return code;
     }
     return KC_NO;

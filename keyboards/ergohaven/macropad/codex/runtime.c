@@ -13,6 +13,7 @@
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
 static lv_obj_t *layer_title;
+static lv_obj_t *encoder_labels[3];
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -81,8 +82,13 @@ void codex_setup(void) {
 #endif
     for (int i = 0; i < 12; ++i) {
         cells[i] = lv_obj_create(screen);
+#ifdef CODEX_HYBRID_ENABLE
+        lv_obj_set_size(cells[i], 68, 40);
+        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, 40 + (i / 3) * 46);
+#else
         lv_obj_set_size(cells[i], 68, 48);
         lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, 48 + (i / 3) * 54);
+#endif
         lv_obj_set_style_pad_all(cells[i], 0, 0);
         lv_obj_set_style_radius(cells[i], 6, 0);
         lv_obj_set_style_border_width(cells[i], 2, 0);
@@ -93,6 +99,21 @@ void codex_setup(void) {
         lv_obj_set_style_text_font(labels[i], i < 6 ? &lv_font_montserrat_28 : &lv_font_montserrat_20, 0);
         lv_obj_center(labels[i]);
     }
+#ifdef CODEX_HYBRID_ENABLE
+    static const char *const directions[] = {"<", "PRESS", ">"};
+    for (unsigned i = 0; i < 3; ++i) {
+        lv_obj_t *direction = label_at(screen, directions[i], 12 + i * 74, 224);
+        lv_obj_set_style_text_font(direction, &lv_font_montserrat_20, 0);
+        lv_obj_set_width(direction, 68);
+        lv_obj_set_style_text_align(direction, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(direction, lv_color_hex(0x00FFFC), 0);
+        encoder_labels[i] = label_at(screen, "-", 12 + i * 74, 248);
+        lv_obj_set_style_text_font(encoder_labels[i], &lv_font_montserrat_20, 0);
+        lv_obj_set_width(encoder_labels[i], 68);
+        lv_obj_set_style_text_align(encoder_labels[i], LV_TEXT_ALIGN_CENTER, 0);
+        lv_label_set_long_mode(encoder_labels[i], LV_LABEL_LONG_SCROLL_CIRCULAR);
+    }
+#endif
     lv_scr_load(screen);
     display_turn_on();
 }
@@ -135,6 +156,12 @@ static void hybrid_label(uint16_t code, char text[12]) {
         const char *name = "KEY";
         switch (code) {
             case KC_NO: name = "-"; break;
+            case KC_VOLD: name = "VOL-"; break;
+            case KC_VOLU: name = "VOL+"; break;
+            case KC_MUTE: name = "MUTE"; break;
+            case KC_BTN3: name = "MMB"; break;
+            case KC_WH_D: name = "WH-D"; break;
+            case KC_WH_U: name = "WH-U"; break;
             case LAYER_PREV: name = "LY <"; break;
             case LAYER_NEXT: name = "LY >"; break;
             case KC_ENTER: name = "ENT"; break;
@@ -188,6 +215,17 @@ void codex_housekeeping(void) {
     const char *heading = layer_name(get_highest_layer(layer_state | default_layer_state));
     if (strcmp(lv_label_get_text(layer_title), heading) != 0)
         lv_label_set_text(layer_title, heading);
+    // Encoder push is matrix [0,2] on Macropad rev3; directions use Vial's
+    // live encoder map, resolving transparent entries through active layers.
+    uint16_t encoder_codes[] = {codex_hybrid_encoder_keycode(false),
+                                codex_hybrid_matrix_keycode(0, 2),
+                                codex_hybrid_encoder_keycode(true)};
+    for (unsigned i = 0; i < 3; ++i) {
+        char text[12];
+        hybrid_label(encoder_codes[i], text);
+        if (strcmp(lv_label_get_text(encoder_labels[i]), text) != 0)
+            lv_label_set_text(encoder_labels[i], text);
+    }
 #endif
     for (unsigned i = 0; i < 12; ++i) {
 #ifdef CODEX_HYBRID_ENABLE
