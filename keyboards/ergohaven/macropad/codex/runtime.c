@@ -79,7 +79,7 @@ void codex_setup(void) {
     lv_label_set_text(title, layer_name(get_highest_layer(layer_state | default_layer_state)));
 #endif
 #ifdef CODEX_HYBRID_ENABLE
-    static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "YES", "NO", "SEND", "NEW", "MIC", "LAYER"};
+    static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "NO", "YES", "SEND", "NEW", "MIC", "LAYER"};
 #else
     static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND"};
 #endif

@@ -7,7 +7,7 @@
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(CD_CLICK, CD_TASK1, CD_TASK2, CD_TASK3, CD_TASK4, CD_TASK5, CD_TASK6,
-                 CD_OK, CD_NO, CD_SEND, CD_NEW, CD_MIC, CD_MODE),
+                 CD_NO, CD_OK, CD_SEND, CD_NEW, CD_MIC, CD_MODE),
     [1] = LAYOUT(KC_MUTE, KC_7, KC_8, KC_9, KC_4, KC_5, KC_6,
                  KC_1, KC_2, KC_3, KC_0, KC_ENTER, CD_MODE),
     [2] = LAYOUT(KC_MUTE, KC_HOME, KC_INS, KC_END, PREVWRD, KC_UP, NEXTWRD,

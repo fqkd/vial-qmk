@@ -29,7 +29,7 @@ Micro (64 байта, usage FF00:01, report ID 6) для ChatGPT. Штатная
 
 | Слой | Клавиши | Вращение энкодера | Короткое нажатие энкодера |
 |---|---|---|---|
-| 0 | Задачи 1–6; YES / NO / SEND; NEW / MIC / LAYER | Навигация Codex | Щелчок Codex |
+| 0 | Задачи 1–6; NO / YES / SEND; NEW / MIC / LAYER | Навигация Codex | Щелчок Codex |
 | 1 | 789 / 456 / 123 / 0, Enter, LAYER | Громкость | Mute |
 | 2 | Home, Insert, End; слова и стрелки; Delete | Page Down / Page Up | Mute |
 | 3 | Вырезать/копировать/вставить; кнопки и движение мыши; Print Screen | Колесо мыши | Средняя кнопка мыши |
