@@ -59,6 +59,13 @@ jobs:
           exit 1
         fi
 
+    - name: Layer button tests
+      if: matrix.km == 'codex_entropy'
+      shell: bash
+      run: |
+        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_layer_button.c -o /tmp/layer-button-test
+        /tmp/layer-button-test
+
     - name: Firmware checksums
       shell: bash
       run: sha256sum "${OUTPUT}.uf2" > "${OUTPUT}.sha256"

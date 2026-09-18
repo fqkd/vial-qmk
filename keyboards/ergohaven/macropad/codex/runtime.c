@@ -12,6 +12,8 @@
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
 static lv_obj_t *layer_title;
+extern void codex_layer_button_task(void);
+extern void codex_layer_button_reset(void);
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -30,6 +32,9 @@ void codex_ui_key(uint8_t key, bool pressed) {
 void notify_usb_device_state_change_user(struct usb_device_state state) {
     if (state.configure_state != USB_DEVICE_STATE_CONFIGURED) {
         codex_reset(); pressed_keys = 0;
+#ifdef CODEX_HYBRID_ENABLE
+        codex_layer_button_reset();
+#endif
     }
 }
 static void transmit(const uint8_t report[64]) {
@@ -73,11 +78,15 @@ void codex_setup(void) {
     lv_label_set_long_mode(title, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_label_set_text(title, layer_name(get_highest_layer(layer_state | default_layer_state)));
 #endif
+#ifdef CODEX_HYBRID_ENABLE
+    static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "YES", "NO", "SEND", "NEW", "MIC", "LAYER"};
+#else
     static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND"};
+#endif
     for (int i = 0; i < 12; ++i) {
         cells[i] = lv_obj_create(screen);
-        lv_obj_set_size(cells[i], 68, i < 6 ? 58 : 42);
-        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, i < 6 ? 48 + (i / 3) * 64 : 180 + ((i - 6) / 3) * 48);
+        lv_obj_set_size(cells[i], 68, 48);
+        lv_obj_set_pos(cells[i], 12 + (i % 3) * 74, 48 + (i / 3) * 54);
         lv_obj_set_style_pad_all(cells[i], 0, 0);
         lv_obj_set_style_radius(cells[i], 6, 0);
         lv_obj_set_style_border_width(cells[i], 2, 0);
@@ -119,7 +128,7 @@ static uint32_t text_color(uint32_t background) {
 }
 #ifdef CODEX_HYBRID_ENABLE
 static void hybrid_label(uint16_t code, char text[12]) {
-    static const char *const names[] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "MODE"};
+    static const char *const names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
     if (code >= CD_TASK1 && code <= CD_MODE) snprintf(text, 12, "%s", names[code - CD_TASK1]);
     else if (code >= KC_A && code <= KC_Z) snprintf(text, 12, "%c", 'A' + code - KC_A);
     else if (code >= KC_1 && code <= KC_9) snprintf(text, 12, "%c", '1' + code - KC_1);
@@ -139,6 +148,23 @@ static void hybrid_label(uint16_t code, char text[12]) {
             case KC_HOME: name = "HOME"; break;
             case KC_END: name = "END"; break;
             case KC_DEL: name = "DEL"; break;
+            case KC_INS: name = "INS"; break;
+            case C(KC_LEFT): name = "WORD<"; break;
+            case C(KC_RIGHT): name = "WORD>"; break;
+            case KC_BTN1: name = "LMB"; break;
+            case KC_BTN2: name = "RMB"; break;
+            case KC_MS_U: name = "M UP"; break;
+            case KC_MS_D: name = "M DN"; break;
+            case KC_MS_L: name = "M <"; break;
+            case KC_MS_R: name = "M >"; break;
+            case KC_PSCR: name = "SHOT"; break;
+            case KC_BRID: name = "DIM"; break;
+            case KC_BRIU: name = "LIGHT"; break;
+            case KC_CPNL: name = "PANEL"; break;
+            case KC_MYCM: name = "PC"; break;
+            case KC_WSCH: name = "WEB"; break;
+            case KC_MAIL: name = "MAIL"; break;
+            case KC_CALC: name = "CALC"; break;
             case KC_PGUP: name = "PGUP"; break;
             case KC_PGDN: name = "PGDN"; break;
             case C(KC_X): name = "CUT"; break;
@@ -153,6 +179,9 @@ static void hybrid_label(uint16_t code, char text[12]) {
 }
 #endif
 void codex_housekeeping(void) {
+#ifdef CODEX_HYBRID_ENABLE
+    codex_layer_button_task();
+#endif
     bool configured = usb_device_state_get_configure_state() == USB_DEVICE_STATE_CONFIGURED;
     if (was_configured && !configured) { codex_reset(); pressed_keys = 0; }
     was_configured = configured;

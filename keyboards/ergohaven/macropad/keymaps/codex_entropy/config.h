@@ -22,6 +22,11 @@
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 255
 #undef RGB_MATRIX_DEFAULT_VAL
 #define RGB_MATRIX_DEFAULT_VAL 255
+// Screenshot swatch #00FFFB; nearest 8-bit QMK HSV gives #00FFFC.
+#undef RGB_MATRIX_DEFAULT_HUE
+#define RGB_MATRIX_DEFAULT_HUE 127
+#undef RGB_MATRIX_DEFAULT_SAT
+#define RGB_MATRIX_DEFAULT_SAT 255
 
 // Separate definition/cache identity; EEPROM storage geometry stays unchanged.
 #define EH_PROCESS_RECORD_USER_FIRST

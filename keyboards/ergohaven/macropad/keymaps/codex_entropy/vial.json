@@ -404,8 +404,8 @@
   },
   {
     "name": "CD_MODE",
-    "shortName": "Mode",
-    "title": "Hold 600 ms: next layer 0-3; tap: Codex click on layer 0, mute otherwise"
+    "shortName": "LAYER",
+    "title": "Single tap: next layer 0-4; double tap within 250 ms: previous layer"
   }
 ],
     "settings": [
