@@ -52,9 +52,6 @@ static lv_obj_t *label_at(lv_obj_t *parent, const char *text, int x, int y) {
 }
 void codex_setup(void) {
     codex_init(transmit);
-#ifdef CODEX_HYBRID_ENABLE
-    rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 255);
-#endif
 #ifndef CODEX_HYBRID_ENABLE
     rgb_matrix_enable_noeeprom();
     rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
@@ -96,13 +93,18 @@ void codex_setup(void) {
 }
 static uint32_t light_color(codex_light_t light) {
     if (!light.effect || !light.brightness) return 0;
-    // Equal full-scale HSV value, preserving hue and saturation. Ignore host
-    // dimming for lit keys; zero brightness still represents a blink's off phase.
+    // Preserve status hue; Entropy controls notification brightness too.
+    // Zero host brightness still represents a blink's off phase.
     unsigned r = (light.color >> 16) & 255, g = (light.color >> 8) & 255, b = light.color & 255;
     unsigned peak = r > g ? r : g;
     if (b > peak) peak = b;
     if (!peak) return 0;
-    return ((r * 255 / peak) << 16) | ((g * 255 / peak) << 8) | (b * 255 / peak);
+#ifdef CODEX_HYBRID_ENABLE
+    unsigned gain = rgb_matrix_get_val();
+#else
+    unsigned gain = 255;
+#endif
+    return ((r * gain / peak) << 16) | ((g * gain / peak) << 8) | (b * gain / peak);
 }
 static float linear_channel(uint8_t channel) {
     float c = channel / 255.0f;
@@ -191,6 +193,10 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     uint32_t now = timer_read32();
     codex_light_t notification;
     bool notifying = codex_notification_light(now, &notification);
+#ifdef CODEX_HYBRID_ENABLE
+    RGB base = hsv_to_rgb(rgb_matrix_get_hsv());
+    bool codex_layer = get_highest_layer(layer_state | default_layer_state) == 0;
+#endif
     for (unsigned i = 0; i < 12; ++i) {
         uint8_t led = physical[i];
         if (led < led_min || led >= led_max) continue;
@@ -203,8 +209,9 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         }
 #ifdef CODEX_HYBRID_ENABLE
         uint16_t code = codex_hybrid_keycode(i);
-        if (code < CD_TASK1 || code > CD_SEND) continue; // Keep QMK/Vial RGB for ordinary keys.
-        uint32_t color = light_color(codex_animated_key_light(code - CD_TASK1, now));
+        if (!codex_layer && (code < CD_TASK1 || code > CD_SEND)) continue;
+        // Steady user-selected color between notifications, even for empty slots.
+        uint32_t color = ((uint32_t)base.r << 16) | ((uint32_t)base.g << 8) | base.b;
 #else
         uint32_t color = light_color(codex_animated_key_light(i, now));
 #endif
