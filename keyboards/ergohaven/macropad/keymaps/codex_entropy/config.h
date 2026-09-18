@@ -17,9 +17,11 @@
 #undef PRODUCT
 #define PRODUCT "Macropad"
 
-// Host owns dimming in this keymap. Avoid writing status updates to EEPROM.
+// Full-scale RGB output; keep the Entropy master on/off switch.
 #undef EH_RGB_MATRIX_RUNTIME_TIMEOUT
-#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 100
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 255
+#undef RGB_MATRIX_DEFAULT_VAL
+#define RGB_MATRIX_DEFAULT_VAL 255
 
 // Separate definition/cache identity; EEPROM storage geometry stays unchanged.
 #define EH_PROCESS_RECORD_USER_FIRST

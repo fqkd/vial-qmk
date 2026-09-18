@@ -52,6 +52,9 @@ static lv_obj_t *label_at(lv_obj_t *parent, const char *text, int x, int y) {
 }
 void codex_setup(void) {
     codex_init(transmit);
+#ifdef CODEX_HYBRID_ENABLE
+    rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 255);
+#endif
 #ifndef CODEX_HYBRID_ENABLE
     rgb_matrix_enable_noeeprom();
     rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
@@ -91,25 +94,15 @@ void codex_setup(void) {
     lv_scr_load(screen);
     display_turn_on();
 }
-static uint32_t light_color(codex_light_t light, unsigned key, uint32_t now) {
+static uint32_t light_color(codex_light_t light) {
     if (!light.effect || !light.brightness) return 0;
-    // Proportional 0..100 brightness (not a clamp that loses the upper range).
-    unsigned gain = ((unsigned)light.brightness * 100 + 127) / 255;
-    unsigned phase = light.speed ? ((now % 60000) * (unsigned)light.speed / 600) % 256 : 0;
-    unsigned wave = phase < 128 ? phase * 2 : (255 - phase) * 2;
-    uint32_t color = light.color;
-    if (light.effect == 4) gain = gain * wave / 255;
-    else if (light.effect == 6) gain = gain * (128 + wave / 2) / 255;
-    else if (light.effect == 2) {
-        unsigned distance = (key + 12 - phase * 12 / 256) % 12;
-        gain = gain * (distance == 0 ? 255 : distance == 1 ? 100 : 24) / 255;
-    } else if (light.effect == 3 || light.effect == 5) {
-        HSV hsv = {light.effect == 3 ? phase : (phase + key * 21) % 256, 255, 255};
-        RGB rgb = hsv_to_rgb(hsv);
-        color = ((uint32_t)rgb.r << 16) | ((uint32_t)rgb.g << 8) | rgb.b;
-    }
-    return ((((color >> 16) & 255) * gain / 255) << 16) |
-           ((((color >> 8) & 255) * gain / 255) << 8) | ((color & 255) * gain / 255);
+    // Equal full-scale HSV value, preserving hue and saturation. Ignore host
+    // dimming for lit keys; zero brightness still represents a blink's off phase.
+    unsigned r = (light.color >> 16) & 255, g = (light.color >> 8) & 255, b = light.color & 255;
+    unsigned peak = r > g ? r : g;
+    if (b > peak) peak = b;
+    if (!peak) return 0;
+    return ((r * 255 / peak) << 16) | ((g * 255 / peak) << 8) | (b * 255 / peak);
 }
 static float linear_channel(uint8_t channel) {
     float c = channel / 255.0f;
@@ -204,16 +197,16 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         // Notification overrides every physical LED, including remapped keys
         // and non-Codex layers. Normal RGB resumes after the fifth pulse.
         if (notifying) {
-            uint32_t color = light_color(notification, i, now);
+            uint32_t color = light_color(notification);
             rgb_matrix_set_color(led, color >> 16, color >> 8, color);
             continue;
         }
 #ifdef CODEX_HYBRID_ENABLE
         uint16_t code = codex_hybrid_keycode(i);
         if (code < CD_TASK1 || code > CD_SEND) continue; // Keep QMK/Vial RGB for ordinary keys.
-        uint32_t color = light_color(codex_animated_key_light(code - CD_TASK1, now), i, now);
+        uint32_t color = light_color(codex_animated_key_light(code - CD_TASK1, now));
 #else
-        uint32_t color = light_color(codex_animated_key_light(i, now), i, now);
+        uint32_t color = light_color(codex_animated_key_light(i, now));
 #endif
         rgb_matrix_set_color(led, color >> 16, color >> 8, color);
     }
