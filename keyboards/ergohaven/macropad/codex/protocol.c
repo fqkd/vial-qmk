@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Independent implementation of the publicly documented Micro HID wire format.
 #include "protocol.h"
+#ifdef CODEX_HYBRID_ENABLE
+#include "entropy_tasks.h"
+#endif
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -187,6 +190,9 @@ static void message(uint32_t now) {
     }
 }
 void codex_reset(void) {
+#ifdef CODEX_HYBRID_ENABLE
+    entropy_tasks_reset();
+#endif
     used = 0; discard = false; host_seen = false; last_rx = last_byte = 0;
     nesting = 0; in_string = escaped = false;
     memset(slots, 0, sizeof(slots));
@@ -233,6 +239,13 @@ void codex_receive(const uint8_t *r, size_t n, uint32_t now) {
     }
 }
 void codex_key(uint8_t key, bool pressed) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_active()) {
+        // Entropy owns these IDs. Native Micro actions address a different list.
+        if (key < 6) entropy_tasks_press(key, pressed);
+        return;
+    }
+#endif
     static const char *const names[] = {"AG00", "AG01", "AG02", "AG03", "AG04", "AG05", "ACT06", "ACT07", "ACT08", "ACT09", "ACT10", "ACT12", "ENC"};
     if (key >= sizeof(names) / sizeof(names[0])) return;
     char out[100];
@@ -242,9 +255,17 @@ void codex_key(uint8_t key, bool pressed) {
 void codex_encoder(bool clockwise) { emit(clockwise ? "{\"m\":\"v.oai.hid\",\"p\":{\"k\":\"ENC_CW\",\"act\":2,\"ag\":-1}}" : "{\"m\":\"v.oai.hid\",\"p\":{\"k\":\"ENC_CC\",\"act\":2,\"ag\":-1}}"); }
 bool codex_seen_host(void) { return host_seen; }
 uint32_t codex_last_rx(void) { return last_rx; }
-const codex_light_t *codex_slots(void) { return slots; }
+const codex_light_t *codex_slots(void) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_active()) return entropy_tasks_lights();
+#endif
+    return slots;
+}
 const codex_light_t *codex_keys_light(void) { return &keys; }
 bool codex_notification_light(uint32_t now, codex_light_t *light) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_active()) return entropy_tasks_notification(now, light, -1);
+#endif
     if (!blinking) return false;
     uint32_t elapsed = now - blink_started;
     if (elapsed >= 2500) { blinking = false; return false; }
@@ -255,6 +276,9 @@ bool codex_notification_light(uint32_t now, codex_light_t *light) {
     return true;
 }
 bool codex_slot_notification_light(uint8_t slot, uint32_t now, codex_light_t *light) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_active()) return entropy_tasks_notification(now, light, slot);
+#endif
     return slot == blink_slot && codex_notification_light(now, light);
 }
 codex_light_t codex_animated_key_light(uint8_t key, uint32_t now) {

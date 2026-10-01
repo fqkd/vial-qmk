@@ -6,3 +6,4 @@ MOUSEKEY_ENABLE = yes
 OPT_DEFS += -DCODEX_MICRO_ENABLE -DCODEX_HYBRID_ENABLE
 SRC += keyboards/ergohaven/macropad/codex/protocol.c
 SRC += keyboards/ergohaven/macropad/codex/runtime.c
+SRC += keyboards/ergohaven/macropad/codex/entropy_tasks.c

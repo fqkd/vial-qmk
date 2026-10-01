@@ -67,6 +67,8 @@ jobs:
         /tmp/layer-button-test
         gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_task_navigation.c -o /tmp/task-navigation-test
         /tmp/task-navigation-test
+        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/entropy_tasks.c keyboards/ergohaven/macropad/codex/test_entropy_tasks.c -o /tmp/entropy-tasks-test
+        /tmp/entropy-tasks-test
 
     - name: Firmware checksums
       shell: bash

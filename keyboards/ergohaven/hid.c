@@ -3,6 +3,9 @@
 #include "via.h"
 #include "raw_hid.h"
 #include "ergohaven_rgb.h"
+#ifdef CODEX_HYBRID_ENABLE
+#include "macropad/codex/entropy_tasks.h"
+#endif
 
 static hid_data_t hid_data;
 
@@ -156,6 +159,9 @@ static bool process_via_custom_lighting(uint8_t *data, uint8_t length) {
 #    include "transactions.h"
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_receive(data, length, timer_read32())) return;
+#endif
     if (process_via_custom_lighting(data, length)) {
         return;
     }
@@ -178,6 +184,9 @@ void keyboard_post_init_hid(void) {
 #else
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+#ifdef CODEX_HYBRID_ENABLE
+    if (entropy_tasks_receive(data, length, timer_read32())) return;
+#endif
     if (process_via_custom_lighting(data, length)) {
         return;
     }

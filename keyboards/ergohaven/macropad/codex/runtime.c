@@ -11,6 +11,7 @@
 #include "src/eh_settings.h"
 #include "src/display/eh_keycode_str.h"
 #include "task_navigation.h"
+#include "entropy_tasks.h"
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
@@ -20,6 +21,7 @@ static lv_obj_t *task_rows[6], *task_labels[6];
 static codex_navigation_t navigation = {.held = -1};
 static bool ui_dirty = true;
 static uint8_t displayed_layer = UINT8_MAX;
+static uint32_t task_selection_time;
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -178,10 +180,17 @@ static uint32_t text_color(uint32_t background) {
 void codex_ui_select_task(uint8_t slot) {
     if (slot >= CODEX_SLOT_COUNT) return;
     navigation.selected = slot;
+    entropy_tasks_interaction();
+    task_selection_time = timer_read32();
     ui_dirty = true;
 }
 void codex_ui_rotate_task(bool clockwise) {
-    codex_navigation_rotate(&navigation, clockwise);
+    for (unsigned i = 0; i < 6; ++i) {
+        codex_navigation_rotate(&navigation, clockwise);
+        if (!entropy_tasks_active() || entropy_tasks_occupied(navigation.selected)) break;
+    }
+    entropy_tasks_interaction();
+    task_selection_time = timer_read32();
     ui_dirty = true;
 }
 bool codex_ui_task_held(void) { return navigation.held >= 0; }
@@ -194,7 +203,18 @@ static void task_list_render(uint32_t now) {
         codex_light_t light = codex_slots()[i];
         codex_light_t notification;
         if (codex_slot_notification_light(i, now, &notification)) light = notification;
-        uint32_t background = codex_seen_host() && light.effect && light.brightness ? light.color : 0x142030;
+        uint32_t background = (codex_seen_host() || entropy_tasks_active()) && light.effect && light.brightness ? light.color : 0x142030;
+        char fallback[32]; snprintf(fallback, sizeof(fallback), "Задача %u", i + 1);
+        const char *title = entropy_tasks_active() ? entropy_tasks_title(i) : fallback;
+        char display[128];
+        if (entropy_tasks_active()) snprintf(display, sizeof(display), "%u  %s", i + 1, title[0] ? title : "—");
+        else snprintf(display, sizeof(display), "%s", title);
+        if (strcmp(lv_label_get_text(task_labels[i]), display)) {
+            lv_label_set_text(task_labels[i], display);
+            if (i == navigation.selected) task_selection_time = now;
+        }
+        lv_label_long_mode_t mode = i == navigation.selected && now-task_selection_time >= 800 ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_DOT;
+        if (lv_label_get_long_mode(task_labels[i]) != mode) lv_label_set_long_mode(task_labels[i], mode);
         lv_obj_set_style_bg_color(task_rows[i], lv_color_hex(background), 0);
         lv_obj_set_style_border_opa(task_rows[i], i == navigation.selected ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
         lv_obj_set_style_text_color(task_labels[i], lv_color_hex(text_color(background)), 0);
@@ -220,6 +240,7 @@ void codex_housekeeping(void) {
     uint32_t now = timer_read32();
     codex_tick(now);
 #ifdef CODEX_HYBRID_ENABLE
+    entropy_tasks_tick(now);
     uint8_t active_layer = get_highest_layer(layer_state | default_layer_state);
     if (!screen || (!ui_dirty && active_layer == displayed_layer && now - render_time < 50)) return;
     ui_dirty = false;
