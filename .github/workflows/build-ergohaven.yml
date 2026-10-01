@@ -65,6 +65,8 @@ jobs:
       run: |
         gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_layer_button.c -o /tmp/layer-button-test
         /tmp/layer-button-test
+        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_task_navigation.c -o /tmp/task-navigation-test
+        /tmp/task-navigation-test
 
     - name: Firmware checksums
       shell: bash

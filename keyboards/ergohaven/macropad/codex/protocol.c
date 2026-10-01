@@ -254,6 +254,9 @@ bool codex_notification_light(uint32_t now, codex_light_t *light) {
     if ((elapsed / 250) & 1) light->brightness = 0;
     return true;
 }
+bool codex_slot_notification_light(uint8_t slot, uint32_t now, codex_light_t *light) {
+    return slot == blink_slot && codex_notification_light(now, light);
+}
 codex_light_t codex_animated_key_light(uint8_t key, uint32_t now) {
     if (key >= 12) return (codex_light_t){0};
     codex_light_t light = codex_key_light(key);

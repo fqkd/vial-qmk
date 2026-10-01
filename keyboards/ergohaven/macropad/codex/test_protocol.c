@@ -170,6 +170,10 @@ int main(void) {
     for (unsigned phase = 0; phase < 10; ++phase) {
         codex_light_t overlay;
         assert(codex_notification_light(5450 + phase * 250, &overlay));
+        codex_light_t row;
+        assert(codex_slot_notification_light(1, 5450 + phase * 250, &row));
+        assert(row.color == overlay.color && row.brightness == overlay.brightness);
+        assert(!codex_slot_notification_light(0, 5450 + phase * 250, &row));
         for (unsigned key = 0; key < 12; ++key) {
             codex_light_t l = codex_animated_key_light(key, 5450 + phase * 250);
             assert(l.color == 16711680 && l.effect == 1);
@@ -179,6 +183,7 @@ int main(void) {
     }
     codex_light_t overlay;
     assert(!codex_notification_light(7950, &overlay));
+    assert(!codex_slot_notification_light(1, 7950, &overlay));
     assert(codex_animated_key_light(0, 7950).color == 65280);
     assert(codex_animated_key_light(1, 7950).color == 16711680);
     assert(codex_animated_key_light(11, 7950).color == 0x607080);

@@ -27,3 +27,8 @@ codex_light_t codex_key_light(uint8_t key);
 codex_light_t codex_animated_key_light(uint8_t key, uint32_t now);
 bool codex_notification_light(uint32_t now, codex_light_t *light);
 void codex_ui_key(uint8_t key, bool pressed);
+void codex_ui_select_task(uint8_t slot);
+void codex_ui_rotate_task(bool clockwise);
+void codex_ui_open_task(bool pressed);
+bool codex_ui_task_held(void);
+bool codex_slot_notification_light(uint8_t slot, uint32_t now, codex_light_t *light);

@@ -32,12 +32,26 @@ bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true; // Let Vial, macros, tap dance and normal QMK layers run.
 }
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    bool task_list = get_highest_layer(layer_state | default_layer_state) == 0;
+    if (!record->event.pressed && codex_ui_task_held() && record->event.key.row == 0 && record->event.key.col == 2) {
+        codex_ui_open_task(false);
+        return false;
+    }
+    if (keycode == CD_CLICK && (task_list || codex_ui_task_held())) {
+        codex_ui_open_task(record->event.pressed);
+        return false;
+    }
     if (keycode >= CD_TASK1 && keycode <= CD_CLICK) {
+        if (record->event.pressed && keycode <= CD_TASK6)
+            codex_ui_select_task(keycode - CD_TASK1);
         codex_key(keycode - CD_TASK1, record->event.pressed);
         return false;
     }
     if (keycode == CD_CCW || keycode == CD_CW) {
-        if (record->event.pressed) codex_encoder(keycode == CD_CW);
+        if (record->event.pressed) {
+            if (task_list) codex_ui_rotate_task(keycode == CD_CW);
+            else codex_encoder(keycode == CD_CW);
+        }
         return false;
     }
     if (keycode == CD_MODE || keycode == LAYER_NEXT || keycode == LAYER_PREV) {

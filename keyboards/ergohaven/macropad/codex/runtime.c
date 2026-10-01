@@ -10,11 +10,16 @@
 #include "ergohaven.h"
 #include "src/eh_settings.h"
 #include "src/display/eh_keycode_str.h"
+#include "task_navigation.h"
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
 static lv_obj_t *layer_title;
 static lv_obj_t *encoder_labels[3];
+static lv_obj_t *task_rows[6], *task_labels[6];
+static codex_navigation_t navigation = {.held = -1};
+static bool ui_dirty = true;
+static uint8_t displayed_layer = UINT8_MAX;
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -33,6 +38,10 @@ void codex_ui_key(uint8_t key, bool pressed) {
 void notify_usb_device_state_change_user(struct usb_device_state state) {
     if (state.configure_state != USB_DEVICE_STATE_CONFIGURED) {
         codex_reset(); pressed_keys = 0;
+#ifdef CODEX_HYBRID_ENABLE
+        navigation.held = -1;
+        ui_dirty = true;
+#endif
     }
 }
 static void transmit(const uint8_t report[64]) {
@@ -106,6 +115,25 @@ void codex_setup(void) {
         lv_obj_center(labels[i]);
     }
 #ifdef CODEX_HYBRID_ENABLE
+    for (unsigned i = 0; i < 6; ++i) {
+        task_rows[i] = lv_obj_create(screen);
+        lv_obj_set_size(task_rows[i], 216, 35);
+        lv_obj_set_pos(task_rows[i], 12, 36 + i * 39);
+        lv_obj_set_style_pad_all(task_rows[i], 0, 0);
+        lv_obj_set_style_radius(task_rows[i], 3, 0);
+        lv_obj_set_style_border_width(task_rows[i], 1, 0);
+        lv_obj_set_style_border_color(task_rows[i], lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_bg_opa(task_rows[i], LV_OPA_COVER, 0);
+        lv_obj_clear_flag(task_rows[i], LV_OBJ_FLAG_SCROLLABLE);
+        char text[32];
+        // Native Micro packets contain slot lighting, not task titles.
+        snprintf(text, sizeof(text), "Задача %u", i + 1);
+        task_labels[i] = label_at(task_rows[i], text, 0, 0);
+        lv_obj_set_style_text_font(task_labels[i], &eh_font_montserrat_20, 0);
+        lv_obj_set_width(task_labels[i], 196);
+        lv_obj_align(task_labels[i], LV_ALIGN_LEFT_MID, 8, 0);
+        lv_label_set_long_mode(task_labels[i], LV_LABEL_LONG_DOT);
+    }
     // Same left / push / right icon row as the stock Macropad screen.
     for (unsigned i = 0; i < 3; ++i) {
         encoder_labels[i] = label_at(screen, "-", 14 + i * 72, 234);
@@ -147,6 +175,31 @@ static uint32_t text_color(uint32_t background) {
     return luminance > 0.179f ? 0x000000 : 0xFFFFFF;
 }
 #ifdef CODEX_HYBRID_ENABLE
+void codex_ui_select_task(uint8_t slot) {
+    if (slot >= CODEX_SLOT_COUNT) return;
+    navigation.selected = slot;
+    ui_dirty = true;
+}
+void codex_ui_rotate_task(bool clockwise) {
+    codex_navigation_rotate(&navigation, clockwise);
+    ui_dirty = true;
+}
+bool codex_ui_task_held(void) { return navigation.held >= 0; }
+void codex_ui_open_task(bool pressed) {
+    int8_t slot = codex_navigation_press(&navigation, pressed);
+    if (slot >= 0) codex_key(slot, pressed);
+}
+static void task_list_render(uint32_t now) {
+    for (unsigned i = 0; i < CODEX_SLOT_COUNT; ++i) {
+        codex_light_t light = codex_slots()[i];
+        codex_light_t notification;
+        if (codex_slot_notification_light(i, now, &notification)) light = notification;
+        uint32_t background = codex_seen_host() && light.effect && light.brightness ? light.color : 0x142030;
+        lv_obj_set_style_bg_color(task_rows[i], lv_color_hex(background), 0);
+        lv_obj_set_style_border_opa(task_rows[i], i == navigation.selected ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
+        lv_obj_set_style_text_color(task_labels[i], lv_color_hex(text_color(background)), 0);
+    }
+}
 static void hybrid_label(uint16_t code, char text[64]) {
     static const char *const names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
     if (code >= CD_TASK1 && code <= CD_MODE) {
@@ -166,12 +219,36 @@ void codex_housekeeping(void) {
     was_configured = configured;
     uint32_t now = timer_read32();
     codex_tick(now);
+#ifdef CODEX_HYBRID_ENABLE
+    uint8_t active_layer = get_highest_layer(layer_state | default_layer_state);
+    if (!screen || (!ui_dirty && active_layer == displayed_layer && now - render_time < 50)) return;
+    ui_dirty = false;
+    displayed_layer = active_layer;
+    bool task_list = active_layer == 0;
+    for (unsigned i = 0; i < 12; ++i) {
+        if (task_list) lv_obj_add_flag(cells[i], LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_clear_flag(cells[i], LV_OBJ_FLAG_HIDDEN);
+    }
+    for (unsigned i = 0; i < 6; ++i) {
+        if (task_list) lv_obj_clear_flag(task_rows[i], LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_add_flag(task_rows[i], LV_OBJ_FLAG_HIDDEN);
+    }
+    for (unsigned i = 0; i < 3; ++i) {
+        if (task_list) lv_obj_add_flag(encoder_labels[i], LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_clear_flag(encoder_labels[i], LV_OBJ_FLAG_HIDDEN);
+    }
+#else
     if (!screen || now - render_time < 100) return;
+#endif
     render_time = now;
 #ifdef CODEX_HYBRID_ENABLE
     const char *heading = layer_name(get_highest_layer(layer_state | default_layer_state));
     if (strcmp(lv_label_get_text(layer_title), heading) != 0)
         lv_label_set_text(layer_title, heading);
+    if (task_list) {
+        task_list_render(now);
+        return;
+    }
     // Encoder push is matrix [0,2] on Macropad rev3; directions use Vial's
     // live encoder map, resolving transparent entries through active layers.
     uint16_t encoder_codes[] = {codex_hybrid_encoder_keycode(false),
