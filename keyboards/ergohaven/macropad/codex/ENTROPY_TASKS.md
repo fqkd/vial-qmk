@@ -29,7 +29,7 @@ Replies echo all eight header bytes; byte 8 is status:
 | 6 acknowledge | event sequence LE32 | none |
 | 7 release lease | none | none |
 
-States: 0 empty, 1 unknown, 2 working, 3 complete, 4 waiting (reserved;
+States: 0 empty, 1 unknown/read, 2 working, 3 complete/unopened, 4 waiting (reserved;
 current companion cannot detect this), 5 aborted/error. Empty rows have
 zero UUID and length. Occupied rows require unique nonzero UUID and 1–96
 bytes of valid UTF-8 without ASCII control characters. All six rows and all
@@ -41,6 +41,20 @@ lease alive. Poll/ACK/release must name the committed generation. Events
 are queued on press only; release doesn't open twice. The bounded queue
 holds eight events (additional presses are ignored until drained).
 Requests and replies share Entropy's existing serialized HID worker.
+
+Completion stays filled green on screen and on its assigned task key on layer 0
+after the five notification pulses. Entropy clears it to state 1 on opening that
+result. Encoder selection alone is not an acknowledgement. Per-result receipts
+are persisted by Entropy; the wire protocol and EEPROM layout are unchanged.
+Screen colors: working #38A8FF, complete #36ED95, waiting #FFBE32, aborted #FF5270.
+Text contrast is chosen automatically; RGB still respects the user's brightness.
+
+The hybrid rev3 keymap captures GP24/GP25 edges with ChibiOS PAL interrupts.
+A full quadrature cycle produces one detent, with bounce/invalid transitions
+filtered and 31 completed events buffered during SPI screen flushes. QMK key
+processing stays on the main loop. Unchanged task labels/styles are cached.
+`test_encoder_capture.c` covers direction, bounce, partial turns, invalid edges,
+buffered bursts and queue overflow/recovery.
 
 Pure C tests cover malformed/partial snapshots, UTF-8, repeated metadata,
 duplicate/empty IDs, atomic commit, interaction deferral, generation-bound

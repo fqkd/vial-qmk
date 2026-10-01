@@ -22,6 +22,11 @@ static codex_navigation_t navigation = {.held = -1};
 static bool ui_dirty = true;
 static uint8_t displayed_layer = UINT8_MAX;
 static uint32_t task_selection_time;
+// LVGL's DOT mode can modify its text buffer. Keep the full title separately
+// and invalidate only rows whose appearance changed, so SPI doesn't starve input.
+static char task_displayed_titles[6][128];
+static uint32_t task_backgrounds[6];
+static bool task_selected[6], task_painted[6];
 extern void codex_hid_send(uint8_t *data, uint8_t length);
 #endif
 
@@ -209,15 +214,26 @@ static void task_list_render(uint32_t now) {
         char display[128];
         if (entropy_tasks_active()) snprintf(display, sizeof(display), "%u  %s", i + 1, title[0] ? title : "—");
         else snprintf(display, sizeof(display), "%s", title);
-        if (strcmp(lv_label_get_text(task_labels[i]), display)) {
+        if (strcmp(task_displayed_titles[i], display)) {
+            memcpy(task_displayed_titles[i], display, strlen(display) + 1);
             lv_label_set_text(task_labels[i], display);
             if (i == navigation.selected) task_selection_time = now;
         }
         lv_label_long_mode_t mode = i == navigation.selected && now-task_selection_time >= 800 ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_DOT;
         if (lv_label_get_long_mode(task_labels[i]) != mode) lv_label_set_long_mode(task_labels[i], mode);
-        lv_obj_set_style_bg_color(task_rows[i], lv_color_hex(background), 0);
-        lv_obj_set_style_border_opa(task_rows[i], i == navigation.selected ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
-        lv_obj_set_style_text_color(task_labels[i], lv_color_hex(text_color(background)), 0);
+        if (!task_painted[i] || task_backgrounds[i] != background) {
+            uint32_t foreground = text_color(background);
+            lv_obj_set_style_bg_color(task_rows[i], lv_color_hex(background), 0);
+            lv_obj_set_style_text_color(task_labels[i], lv_color_hex(foreground), 0);
+            lv_obj_set_style_border_color(task_rows[i], lv_color_hex(foreground), 0);
+            task_backgrounds[i] = background;
+        }
+        bool selected = i == navigation.selected;
+        if (!task_painted[i] || task_selected[i] != selected) {
+            lv_obj_set_style_border_opa(task_rows[i], selected ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
+            task_selected[i] = selected;
+        }
+        task_painted[i] = true;
     }
 }
 static void hybrid_label(uint16_t code, char text[64]) {
@@ -242,10 +258,12 @@ void codex_housekeeping(void) {
 #ifdef CODEX_HYBRID_ENABLE
     entropy_tasks_tick(now);
     uint8_t active_layer = get_highest_layer(layer_state | default_layer_state);
-    if (!screen || (!ui_dirty && active_layer == displayed_layer && now - render_time < 50)) return;
+    if (!screen || (!ui_dirty && active_layer == displayed_layer && now - render_time < (active_layer == 0 ? 16u : 50u))) return;
     ui_dirty = false;
+    bool layer_changed = displayed_layer != active_layer;
     displayed_layer = active_layer;
     bool task_list = active_layer == 0;
+    if (layer_changed) {
     for (unsigned i = 0; i < 12; ++i) {
         if (task_list) lv_obj_add_flag(cells[i], LV_OBJ_FLAG_HIDDEN);
         else lv_obj_clear_flag(cells[i], LV_OBJ_FLAG_HIDDEN);
@@ -257,6 +275,7 @@ void codex_housekeeping(void) {
     for (unsigned i = 0; i < 3; ++i) {
         if (task_list) lv_obj_add_flag(encoder_labels[i], LV_OBJ_FLAG_HIDDEN);
         else lv_obj_clear_flag(encoder_labels[i], LV_OBJ_FLAG_HIDDEN);
+    }
     }
 #else
     if (!screen || now - render_time < 100) return;
@@ -329,6 +348,8 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         if (!codex_layer && (code < CD_TASK1 || code > CD_SEND)) continue;
         // Steady user-selected color between notifications, even for empty slots.
         uint32_t color = ((uint32_t)base.r << 16) | ((uint32_t)base.g << 8) | base.b;
+        if (codex_layer && code >= CD_TASK1 && code <= CD_TASK6 && entropy_tasks_completed(code - CD_TASK1))
+            color = light_color(codex_slots()[code - CD_TASK1]);
 #else
         uint32_t color = light_color(codex_animated_key_light(i, now));
 #endif

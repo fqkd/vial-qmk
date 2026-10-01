@@ -42,6 +42,7 @@ void entropy_tasks_tick(uint32_t now) {
 }
 bool entropy_tasks_active(void) { return active; }
 bool entropy_tasks_occupied(uint8_t slot) { return active && slot<6 && rows[slot].state!=0; }
+bool entropy_tasks_completed(uint8_t slot) { return entropy_tasks_occupied(slot) && rows[slot].state==3; }
 const char *entropy_tasks_title(uint8_t slot) { return entropy_tasks_occupied(slot) ? rows[slot].title : ""; }
 const codex_light_t *entropy_tasks_lights(void) { return lights; }
 void entropy_tasks_interaction(void) { interaction=clock_now; interacted=true; }
@@ -96,8 +97,9 @@ bool entropy_tasks_receive(uint8_t *p, uint8_t length, uint32_t now) {
         }
         if(!status && active && (event_count || (changed && interacted && now-interaction<3000))) status=2;
         if(!status) {
-            static const uint32_t colors[]={0,0x344153,0x194F87,0x165B43,0x815217,0x8F2839};
+            static const uint32_t colors[]={0,0x243447,0x38A8FF,0x36ED95,0xFFBE32,0xFF5270};
             for(unsigned i=0;i<6;++i) {
+                if(blinking && blink_slot==i && pending[i].state==1) blinking=false;
                 if(active && pending[i].state>=2 && rows[i].state!=pending[i].state && !memcmp(rows[i].id,pending[i].id,16)) {
                     blinking=true;blink_start=now;blink_slot=i;
                 }

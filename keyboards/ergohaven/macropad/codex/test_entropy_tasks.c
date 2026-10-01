@@ -80,10 +80,14 @@ static void status_and_blink(void) {
     entropy_tasks_interaction();stage(21,1,3);commit(21,0); // Same-ID status updates aren't frozen.
     for(unsigned i=0;i<10;++i) {
         assert(entropy_tasks_notification(now+i*250,&light,-1));
-        assert(light.brightness==(i%2 ? 0 : 255));assert(light.color==0x165B43);
+        assert(light.brightness==(i%2 ? 0 : 255));assert(light.color==0x36ED95);
     }
     assert(!entropy_tasks_notification(now+2500,&light,-1));
     assert(!entropy_tasks_notification(now,&light,1));
+    assert(entropy_tasks_completed(0)); // Completion remains after the five flashes.
+    stage(22,1,1);commit(22,0); // Host has acknowledged this result as opened.
+    assert(!entropy_tasks_completed(0));
+    assert(!entropy_tasks_notification(now,&light,-1));
     now+=3000;stage(22,2,2);commit(22,0);
     assert(!entropy_tasks_notification(now,&light,-1)); // Replacing an ID doesn't fake a transition.
     request(7,22);assert(send()==0);assert(!entropy_tasks_active());
