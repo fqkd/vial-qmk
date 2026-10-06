@@ -14,7 +14,8 @@ protocol code under AddressSanitizer and UndefinedBehaviorSanitizer.
 No companion service, custom Windows driver, API key or MCP server is used.
 The application must recognize the device and speak the Micro vendor protocol.
 This build advertises the observed Micro discovery identity (`303A:8360`,
-`Work Louder`, `Codex Micro`) and a vendor HID report 6 with 63 data bytes.
+product `Codex Micro`) and a vendor HID report 6 with 63 data bytes. The USB
+manufacturer string identifies the actual hardware manufacturer, `Ergohaven`.
 This is an experimental compatibility identity, **not an assigned Ergohaven
 product identity or evidence of official support**. Product distribution needs
 a separate identity/support decision. USB interface topology still differs

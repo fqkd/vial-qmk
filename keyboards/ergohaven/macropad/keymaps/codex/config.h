@@ -13,7 +13,7 @@
 #undef PRODUCT_ID
 #define PRODUCT_ID 0x8360
 #undef MANUFACTURER
-#define MANUFACTURER "Work Louder"
+#define MANUFACTURER "Ergohaven"
 #undef PRODUCT
 #define PRODUCT "Codex Micro"
 
