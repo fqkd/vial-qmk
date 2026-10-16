@@ -73,6 +73,10 @@ jobs:
         persist-credentials: false
         submodules: recursive
 
+    - name: Verify lossless clock fonts
+      if: matrix.kb == 'ergohaven/macropad/rev3'
+      run: python3 tests/ergohaven_display/clock_fonts.py
+
     - name: Prepare variables
       shell: bash
       env:
