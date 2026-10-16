@@ -29,10 +29,6 @@ bool eh_keycode_str_uses_mac_modifiers(void) {
 }
 
 const char *basic_keycode_to_str(uint16_t keycode) {
-#ifdef CODEX_HYBRID_ENABLE
-    static const char *const codex_names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
-    if (keycode >= CD_TASK1 && keycode <= CD_MODE) return codex_names[keycode - CD_TASK1];
-#endif
     static char buf[16];
     switch (keycode) {
         case KC_NO:
@@ -874,6 +870,13 @@ bool midi_keycode_to_str(char *str, uint16_t keycode) {
 }
 
 void get_keycode_str(char *str, uint16_t keycode) {
+#ifdef CODEX_HYBRID_ENABLE
+    static const char *const codex_names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
+    if (keycode >= CD_TASK1 && keycode <= CD_MODE) {
+        strcpy(str, codex_names[keycode - CD_TASK1]);
+        return;
+    }
+#endif
     if (special_keycode_str(str, keycode))
         return;
     else if (IS_QK_BASIC(keycode) || IS_QK_MODS(keycode))

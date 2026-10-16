@@ -128,3 +128,47 @@ with tempfile.TemporaryDirectory(prefix='codex-screen-owner-') as tmp:
                         '-fsanitize=address,undefined', *flags, str(tmp / 'routing.c'), '-o', str(exe)], check=True)
         print(name, flush=True)
         subprocess.run([str(exe)], check=True)
+
+# Custom codes are outside QMK's basic/modifier ranges. Exercise the public
+# formatter used by the stock grid, including Codex keys remapped onto layer 5.
+source = (ROOT / 'keyboards/ergohaven/src/display/eh_keycode_str.c').read_text()
+formatter = function('get_keycode_str')
+formatter_stubs = r'''
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+enum { CD_TASK1=0x7E40, CD_MODE=0x7E4F };
+#define IS_QK_BASIC(k) ((k)<256)
+#define IS_QK_MODS(k) 0
+#define IS_QK_MOD_TAP(k) 0
+#define IS_QK_ONE_SHOT_MOD(k) 0
+#define IS_QK_MIDI(k) 0
+static bool special_keycode_str(char *s,uint16_t k) {(void)s;(void)k;return false;}
+static void mods_keycode_to_str(char *s,uint16_t k) {(void)k;strcpy(s,"basic");}
+#define modtap_keycode_to_str mods_keycode_to_str
+#define osm_keycode_to_str mods_keycode_to_str
+#define midi_keycode_to_str mods_keycode_to_str
+'''
+formatter_test = r'''
+int main(void) {
+    char text[32];
+    for (unsigned k=CD_TASK1;k<=CD_MODE;k++) {
+        get_keycode_str(text,k);
+        assert(strlen(text)>0 && strcmp(text,"Undf"));
+    }
+    get_keycode_str(text,CD_MODE); assert(!strcmp(text,"LAYER"));
+    get_keycode_str(text,CD_TASK1+7); assert(!strcmp(text,"YES"));
+    get_keycode_str(text,CD_TASK1+8); assert(!strcmp(text,"NO"));
+    get_keycode_str(text,4); assert(!strcmp(text,"basic"));
+    puts("stock-grid custom Codex labels: PASS");
+}
+'''
+with tempfile.TemporaryDirectory(prefix='codex-stock-labels-') as tmp:
+    tmp = Path(tmp)
+    (tmp / 'labels.c').write_text(formatter_stubs + formatter + formatter_test)
+    exe = tmp / 'labels'
+    subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror',
+                    '-DCODEX_HYBRID_ENABLE', str(tmp / 'labels.c'), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
