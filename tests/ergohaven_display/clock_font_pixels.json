@@ -1,0 +1,242 @@
+{
+  "eh_font_clock_dejavu_mono_28.c": {
+    "compressed_bytes": 1139,
+    "original_bytes": 1521,
+    "pixels": 3036,
+    "pixels_sha256": "4879e965ad8206d4cc927d77d7aefd3bc0f83ee0dbe8eed0f40b485b2eeccdc9"
+  },
+  "eh_font_clock_dejavu_mono_40.c": {
+    "compressed_bytes": 1993,
+    "original_bytes": 3141,
+    "pixels": 6280,
+    "pixels_sha256": "ce90017f95338fdaf7fa8c1758d0c151be955590ca70d58ef3071bbbfa73af3c"
+  },
+  "eh_font_clock_dejavu_mono_48.c": {
+    "compressed_bytes": 2435,
+    "original_bytes": 4255,
+    "pixels": 8502,
+    "pixels_sha256": "d5f6a52ccfa260cf76d18391dca529945b37958d3fa2e56ce7b5c67b9d780328"
+  },
+  "eh_font_clock_dejavu_mono_64.c": {
+    "compressed_bytes": 3934,
+    "original_bytes": 8464,
+    "pixels": 16923,
+    "pixels_sha256": "9d41ea2fb1b48cc1eee0577b09bf469dc1e31d62cd5353e6a0d1e45679cbf01a"
+  },
+  "eh_font_clock_dejavu_sans_28.c": {
+    "compressed_bytes": 1148,
+    "original_bytes": 1565,
+    "pixels": 3126,
+    "pixels_sha256": "fea95e8178d8bd024bce0c52ad3b9154117df9d98e20cdd492e85673d55d9424"
+  },
+  "eh_font_clock_dejavu_sans_40.c": {
+    "compressed_bytes": 1991,
+    "original_bytes": 3239,
+    "pixels": 6477,
+    "pixels_sha256": "d2c545391c8cb8e162c7c2059b60a2ed5c8f65e3d44f4513a33bc45c2cf1fd09"
+  },
+  "eh_font_clock_dejavu_sans_48.c": {
+    "compressed_bytes": 2490,
+    "original_bytes": 4477,
+    "pixels": 8950,
+    "pixels_sha256": "571cbb4e29eee3914eea79503314a6fc12528a3db76eded3ba2d6be36f900aed"
+  },
+  "eh_font_clock_dejavu_sans_64.c": {
+    "compressed_bytes": 3947,
+    "original_bytes": 8555,
+    "pixels": 17105,
+    "pixels_sha256": "04bfcaf7bb128ac7bbac8402e4b37b4a24d80271229badbcc3ad60584ed59c06"
+  },
+  "eh_font_clock_dejavu_serif_28.c": {
+    "compressed_bytes": 1187,
+    "original_bytes": 1569,
+    "pixels": 3131,
+    "pixels_sha256": "b9dbc969e1029758f20a86eb8cfda3e254245ec9c207f1fe2b3da2551783a651"
+  },
+  "eh_font_clock_dejavu_serif_40.c": {
+    "compressed_bytes": 1987,
+    "original_bytes": 3127,
+    "pixels": 6249,
+    "pixels_sha256": "638f3b6954d5136a1f57d935a74cc17eb25d65adab8f7841486d2981de707f76"
+  },
+  "eh_font_clock_dejavu_serif_48.c": {
+    "compressed_bytes": 2692,
+    "original_bytes": 4567,
+    "pixels": 9131,
+    "pixels_sha256": "7b95f6a63f200529cf69f2402d89763dc3b3daee532f59b8646cd04e89861e29"
+  },
+  "eh_font_clock_dejavu_serif_64.c": {
+    "compressed_bytes": 4131,
+    "original_bytes": 8562,
+    "pixels": 17117,
+    "pixels_sha256": "c876421ae4fe7b0e8d1c47360bfee3c7eaac7890264d4f195488588801bb02e5"
+  },
+  "eh_font_clock_liberation_mono_28.c": {
+    "compressed_bytes": 994,
+    "original_bytes": 1308,
+    "pixels": 2616,
+    "pixels_sha256": "7075dd1f76fb05573fc521e12d5644ed0771fcfd2617724793f4cb7adb456309"
+  },
+  "eh_font_clock_liberation_mono_40.c": {
+    "compressed_bytes": 1793,
+    "original_bytes": 2753,
+    "pixels": 5505,
+    "pixels_sha256": "2aacf5b802da96a15d3cddc17aec0fd59d261849ce43b6bbc4ceb8949485843e"
+  },
+  "eh_font_clock_liberation_mono_48.c": {
+    "compressed_bytes": 2278,
+    "original_bytes": 3907,
+    "pixels": 7809,
+    "pixels_sha256": "1d0448b80e66f74af5a9108ae5f5979016588e68e443996bbd893412f04f3442"
+  },
+  "eh_font_clock_liberation_mono_64.c": {
+    "compressed_bytes": 3734,
+    "original_bytes": 7872,
+    "pixels": 15740,
+    "pixels_sha256": "0665b5d5de6b67c71ea5386e35f5d9f2de5fe97687eb9ad04ffabd8e846eb944"
+  },
+  "eh_font_clock_liberation_narrow_28.c": {
+    "compressed_bytes": 860,
+    "original_bytes": 1119,
+    "pixels": 2230,
+    "pixels_sha256": "47137621a80fb661bb9c963cb948e04c26be8e55f06f23b7712d1c0af4f5e647"
+  },
+  "eh_font_clock_liberation_narrow_40.c": {
+    "compressed_bytes": 1640,
+    "original_bytes": 2309,
+    "pixels": 4618,
+    "pixels_sha256": "f258232528112dff7c4c05b387e439cdf2a35d69d5b32eb198230c73944ca8db"
+  },
+  "eh_font_clock_liberation_narrow_48.c": {
+    "compressed_bytes": 2138,
+    "original_bytes": 3326,
+    "pixels": 6650,
+    "pixels_sha256": "986252c95ffeb7af53757d58cea6df531902308222c647d8b300f2a97c958fa0"
+  },
+  "eh_font_clock_liberation_narrow_64.c": {
+    "compressed_bytes": 3473,
+    "original_bytes": 6327,
+    "pixels": 12647,
+    "pixels_sha256": "0f0179e944ec215c842d23f38cd6bac95270c34c963a237b2b23f511ba9db904"
+  },
+  "eh_font_clock_liberation_sans_28.c": {
+    "compressed_bytes": 1016,
+    "original_bytes": 1361,
+    "pixels": 2720,
+    "pixels_sha256": "9937736411bd4e976f3a23077ed8b761b60e806fdd97db1eb44c012b80ed0ba6"
+  },
+  "eh_font_clock_liberation_sans_40.c": {
+    "compressed_bytes": 1815,
+    "original_bytes": 2813,
+    "pixels": 5626,
+    "pixels_sha256": "5b1d8975945fd41b048ad83e89d37d175395c7239f0398bc9baa7d7df32af1d9"
+  },
+  "eh_font_clock_liberation_sans_48.c": {
+    "compressed_bytes": 2337,
+    "original_bytes": 3997,
+    "pixels": 7992,
+    "pixels_sha256": "0509ca1dc7cb6f47e088775189583227d7ff0f9f1f80f198929005f03a291da4"
+  },
+  "eh_font_clock_liberation_sans_64.c": {
+    "compressed_bytes": 3787,
+    "original_bytes": 7721,
+    "pixels": 15437,
+    "pixels_sha256": "6d23afa35b9f19f26f663d730d1325e6dfa52bf31fd34be0c0e21874751679b7"
+  },
+  "eh_font_clock_liberation_serif_28.c": {
+    "compressed_bytes": 871,
+    "original_bytes": 1142,
+    "pixels": 2284,
+    "pixels_sha256": "db3cdc04cbaf21b0e64a95644e457f6e42d74f3a906a2f83ac4965727c3e5aa4"
+  },
+  "eh_font_clock_liberation_serif_40.c": {
+    "compressed_bytes": 1623,
+    "original_bytes": 2338,
+    "pixels": 4676,
+    "pixels_sha256": "320321b08100a530c7dfde0dc6f4d71e56cfbb0c6f00bc48b32da382896e9090"
+  },
+  "eh_font_clock_liberation_serif_48.c": {
+    "compressed_bytes": 2127,
+    "original_bytes": 3457,
+    "pixels": 6913,
+    "pixels_sha256": "927737023a91bf833b9d16d0a114b1c74aa755ba95ab2785b7165e94dca4b983"
+  },
+  "eh_font_clock_liberation_serif_64.c": {
+    "compressed_bytes": 3426,
+    "original_bytes": 6454,
+    "pixels": 12904,
+    "pixels_sha256": "45aa13d823576f03093d2e953fe5ef74bad636ae0e278b8443bb76dac36ce8f1"
+  },
+  "eh_font_clock_montserrat_28.c": {
+    "compressed_bytes": 1138,
+    "original_bytes": 1578,
+    "pixels": 3155,
+    "pixels_sha256": "791df8602f487ba14ae612309dc66cd7f611935b75064c0fecb420a826fcc6e1"
+  },
+  "eh_font_clock_montserrat_40.c": {
+    "compressed_bytes": 1898,
+    "original_bytes": 3225,
+    "pixels": 6447,
+    "pixels_sha256": "b97418ac31ce21bef92850103070b3532c9358917887975f5aec3cbd00cc7026"
+  },
+  "eh_font_clock_montserrat_48.c": {
+    "compressed_bytes": 2340,
+    "original_bytes": 4460,
+    "pixels": 8920,
+    "pixels_sha256": "cfecb33075d230e550b402eb81c294c1a568d4f82c6c9a69a7476125e7c57331"
+  },
+  "eh_font_clock_montserrat_64.c": {
+    "compressed_bytes": 3829,
+    "original_bytes": 8951,
+    "pixels": 17896,
+    "pixels_sha256": "0b48aedb4801d04e8a5cd0a299c36b754cacf0e1512753102b83a14dceb14290"
+  },
+  "eh_font_clock_ubuntu_mono_28.c": {
+    "compressed_bytes": 1001,
+    "original_bytes": 1345,
+    "pixels": 2690,
+    "pixels_sha256": "dc4a61e42a0a8160d3454c3c0440f3d9a47f79e9714899725bf8177ca6e38b03"
+  },
+  "eh_font_clock_ubuntu_mono_40.c": {
+    "compressed_bytes": 1762,
+    "original_bytes": 2623,
+    "pixels": 5243,
+    "pixels_sha256": "a051e02102188610df17d64bfe12a586881b953c743bef40ac61b2556387dee7"
+  },
+  "eh_font_clock_ubuntu_mono_48.c": {
+    "compressed_bytes": 2338,
+    "original_bytes": 3937,
+    "pixels": 7873,
+    "pixels_sha256": "7886bc61e73c1a69d2f6b18e1920cccd65ef992f7ab7840f35c37e37427ad35e"
+  },
+  "eh_font_clock_ubuntu_mono_64.c": {
+    "compressed_bytes": 3762,
+    "original_bytes": 7719,
+    "pixels": 15435,
+    "pixels_sha256": "42afe97239c348a08bbd7f0e614bd61e5425d1f585292bab397861b12f1810ba"
+  },
+  "eh_font_clock_ubuntu_sans_28.c": {
+    "compressed_bytes": 977,
+    "original_bytes": 1328,
+    "pixels": 2655,
+    "pixels_sha256": "c6d0aa5b14cf0126b9276de4837718b78644ef29c35091dee76a7f0a522cc492"
+  },
+  "eh_font_clock_ubuntu_sans_40.c": {
+    "compressed_bytes": 1704,
+    "original_bytes": 2560,
+    "pixels": 5117,
+    "pixels_sha256": "ec03aa6fe67d691617781129314e308a59eba46dfb545e4e0f3e92ea868fa833"
+  },
+  "eh_font_clock_ubuntu_sans_48.c": {
+    "compressed_bytes": 2275,
+    "original_bytes": 3776,
+    "pixels": 7550,
+    "pixels_sha256": "c92ad49ea90791aba6dd085435e828451362a95c00d96bab0d40895c9c145d9e"
+  },
+  "eh_font_clock_ubuntu_sans_64.c": {
+    "compressed_bytes": 3618,
+    "original_bytes": 7463,
+    "pixels": 14922,
+    "pixels_sha256": "528e25973b4c98180980edeadcc6c57fc638deb03224c9c4720c013a527d2bdb"
+  }
+}
