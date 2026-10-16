@@ -77,6 +77,7 @@ jobs:
       if: matrix.km == 'codex_entropy'
       shell: bash
       run: |
+        python3 tests/ergohaven_display/clock_fonts.py
         python3 tests/ergohaven/run_native.py /tmp/ergohaven-native
         python3 tests/ergohaven_display/run.py
         python3 tests/ergohaven_app_combo.py
