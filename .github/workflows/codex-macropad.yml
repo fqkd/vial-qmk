@@ -108,6 +108,7 @@ jobs:
             fi
           }
           run_test python3 tests/ergohaven_display/clock_fonts.py
+          run_test python3 tests/ergohaven_display/codex_screen_owner.py
           run_test python3 tests/ergohaven/run_native.py /tmp/ergohaven-native
           run_test python3 tests/ergohaven_display/run.py
           run_test python3 tests/ergohaven_app_combo.py

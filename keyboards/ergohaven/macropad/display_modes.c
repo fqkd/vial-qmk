@@ -46,6 +46,13 @@ bool display_should_wake_on_usb_resume(void) {
 }
 
 static void apply_screen_state(void) {
+#ifdef CODEX_MICRO_ENABLE
+    // runtime.c owns the active LVGL screen on every Codex keymap layer.
+    // The shared matrix/encoder hooks may wake the panel, but must not load
+    // a stock layout or volume screen over the task list.
+    if (change_screen_state != SCREEN_OFF) display_turn_on();
+    return;
+#else
     if (change_screen_state == screen_state) return;
 
     screen_timer = timer_read32();
@@ -72,6 +79,7 @@ static void apply_screen_state(void) {
             return;
     }
     current_screen.load();
+#endif
 }
 
 void display_process_matrix_press(void) {
