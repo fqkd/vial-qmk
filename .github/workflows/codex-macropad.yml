@@ -73,15 +73,6 @@ jobs:
         gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/entropy_tasks.c keyboards/ergohaven/macropad/codex/test_entropy_tasks.c -o /tmp/entropy-tasks-test
         /tmp/entropy-tasks-test
 
-    - name: Upstream display and layout regressions
-      if: matrix.km == 'codex_entropy'
-      shell: bash
-      run: |
-        python3 tests/ergohaven_display/clock_fonts.py
-        python3 tests/ergohaven/run_native.py /tmp/ergohaven-native
-        python3 tests/ergohaven_display/run.py
-        python3 tests/ergohaven_app_combo.py
-
     - name: Firmware checksums
       shell: bash
       run: sha256sum "${OUTPUT}.uf2" > "${OUTPUT}.sha256"
@@ -100,9 +91,30 @@ jobs:
           *.sha256
         name: ${{ env.OUTPUT }}
 
+  regressions:
+    name: Display and layout regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned LVGL decoder
+        run: git submodule update --init --depth 1 lib/lvgl
+      - name: Native tests
+        shell: bash
+        run: |
+          run_test() {
+            if ! "$@" 2>&1 | tee regression.log; then
+              python3 util/codex_ci_summary.py regression.log
+              exit 1
+            fi
+          }
+          run_test python3 tests/ergohaven_display/clock_fonts.py
+          run_test python3 tests/ergohaven/run_native.py /tmp/ergohaven-native
+          run_test python3 tests/ergohaven_display/run.py
+          run_test python3 tests/ergohaven_app_combo.py
+
   merge:
     runs-on: ubuntu-latest
-    needs: build-ergohaven
+    needs: [build-ergohaven, regressions]
     name: Merge Output Artifacts
     steps:
       - name: Merge Artifacts
