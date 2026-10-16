@@ -678,7 +678,9 @@ void screen_layout_init(void) {
 static uint8_t prev_layer = 255;
 static int     lbl_idx    = 0;
 static uint32_t pictogram_generation;
+#ifdef EH_APP_LAYOUT_ENABLE
 static uint32_t integration_visual_generation;
+#endif
 
 static uint8_t screen_layout_control_for_label(uint8_t index) {
     if (index < 12) return index;
@@ -687,6 +689,7 @@ static uint8_t screen_layout_control_for_label(uint8_t index) {
     return 14;
 }
 
+#ifdef EH_APP_LAYOUT_ENABLE
 static void integration_icon_pixel(uint8_t *bits, int16_t x, int16_t y) {
     if (x < 0 || y < 0 || x >= EH_ICON_RENDER_SIZE || y >= EH_ICON_RENDER_SIZE) return;
     bits[y * EH_ICON_RENDER_STRIDE + x / 8] |= 0x80u >> (x % 8);
@@ -902,6 +905,8 @@ static void screen_layout_set_integration_icon(uint8_t index, uint8_t visual, ui
     lv_obj_add_flag(key_labels[index], LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(key_icons[index], LV_OBJ_FLAG_HIDDEN);
 }
+
+#endif // EH_APP_LAYOUT_ENABLE
 
 // Built-in QMK layers and encoder actions use the same native 35x35 canvas
 // as Entropy's preset artwork. Uploaded user pictograms take precedence.
