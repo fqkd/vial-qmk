@@ -32,6 +32,6 @@
 // Separate definition/cache identity; EEPROM storage geometry stays unchanged.
 #define EH_PROCESS_RECORD_USER_FIRST
 
-// Different USB topology from the native-only target.
+// Includes the upstream fast-upload interface as well as Vial and Codex.
 #undef DEVICE_VER
-#define DEVICE_VER 0x0406
+#define DEVICE_VER 0x0407
