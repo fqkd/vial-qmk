@@ -16,7 +16,8 @@ OS_DETECTION_ENABLE = yes
 BOOTMAGIC_ENABLE = yes
 MOUSEKEY_ENABLE = yes
 EXTRAKEY_ENABLE = yes
-LTO_ENABLE = no
+# Keep the fork artwork and Codex additions inside the upstream code partition.
+LTO_ENABLE = yes
 VIA_ENABLE = yes
 TAP_DANCE_ENABLE = yes
 COMBO_ENABLE = yes
