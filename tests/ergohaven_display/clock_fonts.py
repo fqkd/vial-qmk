@@ -31,7 +31,7 @@ def function(name):
 
 program = '''#include <stdint.h>
 #include <stdio.h>
-enum {RLE_STATE_SINGLE, RLE_STATE_REPEAT, RLE_STATE_COUNTER};
+enum {RLE_STATE_SINGLE, RLE_STATE_REPEATE, RLE_STATE_COUNTER};
 static uint32_t rle_rdp;
 static const uint8_t *rle_in;
 static uint8_t rle_bpp, rle_prev_v, rle_cnt, rle_state;
