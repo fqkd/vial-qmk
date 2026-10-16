@@ -5,6 +5,25 @@
 #include "eh_symbols.h"
 #include "src/eh_ruen.h"
 #include "src/eh_pointing.h"
+#include <string.h>
+// Application-layout labels are single-line on the macropad only.
+#ifdef EH_APP_LAYOUT_ENABLE
+#    define EH_APP_LAYOUT_LABEL(macropad, other) macropad
+#else
+#    define EH_APP_LAYOUT_LABEL(macropad, other) other
+#endif
+#ifdef OS_DETECTION_ENABLE
+#    include "os_detection.h"
+#endif
+
+bool eh_keycode_str_uses_mac_modifiers(void) {
+#ifdef OS_DETECTION_ENABLE
+    os_variant_t os = detected_host_os();
+    return os == OS_MACOS || os == OS_IOS;
+#else
+    return false;
+#endif
+}
 
 const char *basic_keycode_to_str(uint16_t keycode) {
     static char buf[16];
@@ -272,10 +291,10 @@ const char *basic_keycode_to_str(uint16_t keycode) {
             return EH_SYMBOL_SFT;
         case KC_LEFT_ALT:
         case KC_RIGHT_ALT:
-            return EH_SYMBOL_ALT;
+            return eh_keycode_str_uses_mac_modifiers() ? "OPT" : EH_SYMBOL_ALT;
         case KC_LEFT_GUI:
         case KC_RIGHT_GUI:
-            return EH_SYMBOL_GUI;
+            return eh_keycode_str_uses_mac_modifiers() ? "CMD" : EH_SYMBOL_GUI;
         default:
             return "Unkn";
     }
@@ -356,39 +375,39 @@ bool special_keycode_str(char *buf, uint16_t keycode) {
             sprintf(buf, EH_SYMBOL_KEYBOARD "\nClr");
             return true;
         case QK_LAYER_LOCK:
-            sprintf(buf, EH_SYMBOL_LAYER "\nLock");
+            sprintf(buf, EH_APP_LAYOUT_LABEL(EH_SYMBOL_LAYER " Lock", EH_SYMBOL_LAYER "\nLock"));
             return true;
         case QK_TRI_LAYER_LOWER:
-            sprintf(buf, EH_SYMBOL_LAYER "Tr\nLow");
+            sprintf(buf, EH_APP_LAYOUT_LABEL(EH_SYMBOL_LAYER " Low", EH_SYMBOL_LAYER "Tr\nLow"));
             return true;
         case QK_TRI_LAYER_UPPER:
-            sprintf(buf, EH_SYMBOL_LAYER "Tr\nUp");
+            sprintf(buf, EH_APP_LAYOUT_LABEL(EH_SYMBOL_LAYER " Up", EH_SYMBOL_LAYER "Tr\nUp"));
             return true;
         case QK_TO ... QK_TO_MAX:
-            sprintf(buf, "TO\n" EH_SYMBOL_LAYER "%d", keycode - QK_TO);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("TO " EH_SYMBOL_LAYER "%d", "TO\n" EH_SYMBOL_LAYER "%d"), keycode - QK_TO);
             return true;
         case QK_MOMENTARY ... QK_MOMENTARY_MAX:
             sprintf(buf, EH_SYMBOL_LAYER "%d", keycode - QK_MOMENTARY);
             return true;
         case QK_PERSISTENT_DEF_LAYER ... QK_PERSISTENT_DEF_LAYER_MAX:
-            sprintf(buf, "PDF\n" EH_SYMBOL_LAYER "%d", keycode - QK_PERSISTENT_DEF_LAYER);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("PDF " EH_SYMBOL_LAYER "%d", "PDF\n" EH_SYMBOL_LAYER "%d"), keycode - QK_PERSISTENT_DEF_LAYER);
             return true;
         case QK_DEF_LAYER ... QK_DEF_LAYER_MAX:
-            sprintf(buf, "DF\n" EH_SYMBOL_LAYER "%d", keycode - QK_DEF_LAYER);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("DF " EH_SYMBOL_LAYER "%d", "DF\n" EH_SYMBOL_LAYER "%d"), keycode - QK_DEF_LAYER);
             return true;
         case QK_TOGGLE_LAYER ... QK_TOGGLE_LAYER_MAX:
-            sprintf(buf, "TG\n" EH_SYMBOL_LAYER "%d", keycode - QK_TOGGLE_LAYER);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("TG " EH_SYMBOL_LAYER "%d", "TG\n" EH_SYMBOL_LAYER "%d"), keycode - QK_TOGGLE_LAYER);
             return true;
         case QK_LAYER_TAP_TOGGLE ... QK_LAYER_TAP_TOGGLE_MAX:
-            sprintf(buf, "TT\n" EH_SYMBOL_LAYER "%d", keycode - QK_LAYER_TAP_TOGGLE);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("TT " EH_SYMBOL_LAYER "%d", "TT\n" EH_SYMBOL_LAYER "%d"), keycode - QK_LAYER_TAP_TOGGLE);
             return true;
         case QK_ONE_SHOT_LAYER ... QK_ONE_SHOT_LAYER_MAX:
-            sprintf(buf, "OSL\n" EH_SYMBOL_LAYER "%d", keycode - QK_ONE_SHOT_LAYER);
+            sprintf(buf, EH_APP_LAYOUT_LABEL("OSL " EH_SYMBOL_LAYER "%d", "OSL\n" EH_SYMBOL_LAYER "%d"), keycode - QK_ONE_SHOT_LAYER);
             return true;
         case QK_LAYER_TAP ... QK_LAYER_TAP_MAX: {
             int layer = QK_LAYER_TAP_GET_LAYER(keycode);
             int kc    = QK_LAYER_TAP_GET_TAP_KEYCODE(keycode);
-            sprintf(buf, EH_SYMBOL_LAYER "%d\n%s", layer, basic_keycode_to_str(kc));
+            sprintf(buf, EH_APP_LAYOUT_LABEL(EH_SYMBOL_LAYER "%d/%s", EH_SYMBOL_LAYER "%d\n%s"), layer, basic_keycode_to_str(kc));
             return true;
         }
 
@@ -707,39 +726,13 @@ const char *mods_to_str(uint8_t mods) {
     bool alt   = mods & MOD_MASK_ALT;
     bool gui   = mods & MOD_MASK_GUI;
 
-    const char *mod_str;
-    if (ctrl && shift && alt && gui)
-        mod_str = "All";
-    else if (shift && alt && gui)
-        mod_str = "󰘶󰘵";
-    else if (ctrl && alt && gui)
-        mod_str = "󰘴󰘵";
-    else if (ctrl && shift && gui)
-        mod_str = "󰘴󰘶";
-    else if (ctrl && shift && alt)
-        mod_str = "󰘴󰘶󰘵";
-    else if (alt && gui)
-        mod_str = "󰘵";
-    else if (shift && gui)
-        mod_str = "󰘶";
-    else if (shift && alt)
-        mod_str = "󰘶󰘵";
-    else if (ctrl && gui)
-        mod_str = "󰘴";
-    else if (ctrl && shift)
-        mod_str = "󰘴󰘶";
-    else if (ctrl && alt)
-        mod_str = "󰘴󰘵";
-    else if (ctrl)
-        mod_str = "󰘴";
-    else if (shift)
-        mod_str = "󰘶";
-    else if (alt)
-        mod_str = "󰘵";
-    else if (gui)
-        mod_str = "";
-    else
-        mod_str = "";
+    if (ctrl && shift && alt && gui) return "All";
+    static char mod_str[32];
+    mod_str[0] = '\0';
+    if (gui) strcat(mod_str, eh_keycode_str_uses_mac_modifiers() ? "CMD" : EH_SYMBOL_GUI);
+    if (ctrl) strcat(mod_str, EH_SYMBOL_CTL);
+    if (shift) strcat(mod_str, EH_SYMBOL_SFT);
+    if (alt) strcat(mod_str, eh_keycode_str_uses_mac_modifiers() ? "OPT" : EH_SYMBOL_ALT);
     return mod_str;
 }
 
