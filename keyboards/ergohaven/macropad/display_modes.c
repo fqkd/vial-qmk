@@ -11,6 +11,13 @@
 #include "src/display/eh_display.h"
 
 extern const eh_screen_t eh_screen_layout;
+#ifdef CODEX_HYBRID_ENABLE
+extern const eh_screen_t eh_screen_codex;
+void codex_display_theme_changed(void);
+static bool codex_layout_active(void) {
+    return get_highest_layer(layer_state | default_layer_state) == 0;
+}
+#endif
 void screen_layout_process_keyevent(uint8_t row, uint8_t col, bool pressed);
 void screen_layout_process_encoder_event(uint8_t index, bool clockwise);
 void screen_layout_apply_accent_color(void);
@@ -46,14 +53,21 @@ bool display_should_wake_on_usb_resume(void) {
 }
 
 static void apply_screen_state(void) {
-#ifdef CODEX_MICRO_ENABLE
+#if defined(CODEX_MICRO_ENABLE) && !defined(CODEX_HYBRID_ENABLE)
     // runtime.c owns the active LVGL screen on every Codex keymap layer.
     // The shared matrix/encoder hooks may wake the panel, but must not load
     // a stock layout or volume screen over the task list.
     if (change_screen_state != SCREEN_OFF) display_turn_on();
     return;
 #else
+#ifdef CODEX_HYBRID_ENABLE
+    // A layer change can select a different renderer without changing mode.
+    bool renderer_changed = change_screen_state == SCREEN_LAYOUT &&
+        current_screen.load != (codex_layout_active() ? eh_screen_codex.load : eh_screen_layout.load);
+    if (change_screen_state == screen_state && !renderer_changed) return;
+#else
     if (change_screen_state == screen_state) return;
+#endif
 
     screen_timer = timer_read32();
     screen_state = change_screen_state;
@@ -67,7 +81,11 @@ static void apply_screen_state(void) {
             display_turn_on();
             break;
         case SCREEN_LAYOUT:
+#ifdef CODEX_HYBRID_ENABLE
+            current_screen = codex_layout_active() ? eh_screen_codex : eh_screen_layout;
+#else
             current_screen = eh_screen_layout;
+#endif
             display_turn_on();
             break;
         case SCREEN_VOLUME:
@@ -97,6 +115,9 @@ void display_process_keyevent(uint8_t row, uint8_t col, bool pressed) {
         // produce a rising edge in the physical matrix scanner.
         display_process_matrix_press();
     }
+#ifdef CODEX_HYBRID_ENABLE
+    if (codex_layout_active()) return;
+#endif
     screen_layout_process_keyevent(row, col, pressed);
 }
 
@@ -117,6 +138,12 @@ void display_process_encoder_event(uint8_t index, bool clockwise, uint16_t keyco
     if (index != 0) return;
     last_user_activity_timer = timer_read32();
 
+#ifdef CODEX_HYBRID_ENABLE
+    if (codex_layout_active()) {
+        display_process_matrix_press();
+        return;
+    }
+#endif
     int8_t volume_direction = volume_direction_for_keycode(keycode);
     if (screen_state == SCREEN_LAYOUT && change_screen_state == SCREEN_LAYOUT) {
         screen_layout_process_encoder_event(index, clockwise);
@@ -140,12 +167,18 @@ void display_process_encoder_event(uint8_t index, bool clockwise, uint16_t keyco
 void display_accent_color_changed_kb(void) {
     last_user_activity_timer = timer_read32();
     screen_layout_apply_accent_color();
+#ifdef CODEX_HYBRID_ENABLE
+    codex_display_theme_changed();
+#endif
     screen_volume_apply_accent_color();
 }
 
 void display_background_color_changed_kb(void) {
     last_user_activity_timer = timer_read32();
     screen_layout_apply_background_color();
+#ifdef CODEX_HYBRID_ENABLE
+    codex_display_theme_changed();
+#endif
 }
 
 void display_button_style_changed_kb(uint8_t style) {
@@ -194,6 +227,9 @@ void display_housekeeping_task(void) {
     }
 
     bool key_animation_active = screen_state == SCREEN_LAYOUT && screen_layout_has_active_key_animation();
+#ifdef CODEX_HYBRID_ENABLE
+    key_animation_active = key_animation_active && !codex_layout_active();
+#endif
     if (key_animation_active) {
         change_screen_state = SCREEN_LAYOUT;
         screen_timer        = timer_read32();
@@ -204,7 +240,10 @@ void display_housekeeping_task(void) {
     if (layer != prev_layer) {
         prev_layer               = layer;
         last_user_activity_timer = timer_read32();
-        if (screen_state != SCREEN_OFF) change_screen_state = SCREEN_LAYOUT;
+        if (screen_state != SCREEN_OFF) {
+            change_screen_state = SCREEN_LAYOUT;
+            apply_screen_state();
+        }
     }
 
     uint32_t user_activity_elapsed = timer_elapsed32(last_user_activity_timer);

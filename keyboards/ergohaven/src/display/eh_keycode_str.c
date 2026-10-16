@@ -6,6 +6,9 @@
 #include "src/eh_ruen.h"
 #include "src/eh_pointing.h"
 #include <string.h>
+#ifdef CODEX_HYBRID_ENABLE
+#include "macropad/codex/hybrid.h"
+#endif
 // Application-layout labels are single-line on the macropad only.
 #ifdef EH_APP_LAYOUT_ENABLE
 #    define EH_APP_LAYOUT_LABEL(macropad, other) macropad
@@ -26,6 +29,10 @@ bool eh_keycode_str_uses_mac_modifiers(void) {
 }
 
 const char *basic_keycode_to_str(uint16_t keycode) {
+#ifdef CODEX_HYBRID_ENABLE
+    static const char *const codex_names[] = {"1", "2", "3", "4", "5", "6", "FAST", "YES", "NO", "NEW", "MIC", "SEND", "DIAL", "CCW", "CW", "LAYER"};
+    if (keycode >= CD_TASK1 && keycode <= CD_MODE) return codex_names[keycode - CD_TASK1];
+#endif
     static char buf[16];
     switch (keycode) {
         case KC_NO:

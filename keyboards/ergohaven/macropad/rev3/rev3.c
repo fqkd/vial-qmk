@@ -734,6 +734,9 @@ void housekeeping_task_user(void) {
 #ifdef CODEX_MICRO_ENABLE
     extern void codex_housekeeping(void);
     codex_housekeeping();
+#ifdef CODEX_HYBRID_ENABLE
+    display_housekeeping_task();
+#endif
 #else
     display_housekeeping_task();
 #endif
