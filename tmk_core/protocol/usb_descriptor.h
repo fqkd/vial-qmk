@@ -84,6 +84,7 @@ typedef struct {
     USB_Descriptor_Endpoint_t Codex_OUTEndpoint;
 #endif
 
+
 #if defined(MOUSE_ENABLE) && !defined(MOUSE_SHARED_EP)
     // Mouse HID Interface
     USB_Descriptor_Interface_t Mouse_Interface;
@@ -150,6 +151,13 @@ typedef struct {
     USB_HID_Descriptor_HID_t   Digitizer_HID;
     USB_Descriptor_Endpoint_t  Digitizer_INEndpoint;
 #endif
+#ifdef EH_FAST_UPLOAD_ENABLE
+    // Raw HID Interface
+    USB_Descriptor_Interface_t Fast_Interface;
+    USB_HID_Descriptor_HID_t   Fast_HID;
+    USB_Descriptor_Endpoint_t  Fast_INEndpoint;
+    USB_Descriptor_Endpoint_t  Fast_OUTEndpoint;
+#endif
 } USB_Descriptor_Configuration_t;
 
 /*
@@ -201,6 +209,9 @@ enum usb_interfaces {
 
 #if defined(DIGITIZER_ENABLE) && !defined(DIGITIZER_SHARED_EP)
     DIGITIZER_INTERFACE,
+#endif
+#ifdef EH_FAST_UPLOAD_ENABLE
+    FAST_INTERFACE,
 #endif
     TOTAL_INTERFACES
 };
@@ -282,6 +293,15 @@ enum usb_endpoints {
 #        define DIGITIZER_IN_EPNUM SHARED_IN_EPNUM
 #    endif
 #endif
+#ifdef EH_FAST_UPLOAD_ENABLE
+    FAST_IN_EPNUM = NEXT_EPNUM,
+#    ifdef USB_ENDPOINTS_ARE_REORDERABLE
+#        define FAST_OUT_EPNUM FAST_IN_EPNUM
+#    else
+    FAST_OUT_EPNUM = NEXT_EPNUM,
+#    endif
+#endif
+
 };
 
 #ifdef PROTOCOL_LUFA
@@ -305,6 +325,7 @@ enum usb_endpoints {
 #else
 #    define RAW_EPSIZE 32
 #endif
+#define FAST_EPSIZE 64
 #define CONSOLE_EPSIZE 32
 #define MIDI_STREAM_EPSIZE 64
 #define CDC_NOTIFICATION_EPSIZE 8

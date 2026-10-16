@@ -561,6 +561,12 @@ void codex_hid_send(uint8_t *data, uint8_t length) {
     if (length == CODEX_EPSIZE) send_report(USB_ENDPOINT_IN_CODEX, data, length);
 }
 #endif
+#ifdef EH_FAST_UPLOAD_ENABLE
+extern bool eh_background_process_hid(uint8_t *data, uint8_t length);
+#endif
+#ifdef EH_STANDBY_BACKGROUND_ENABLE
+extern void eh_background_note_config_read(uint8_t command, uint8_t subcommand);
+#endif
 void raw_hid_task(void) {
     uint8_t buffer[RAW_EPSIZE];
 #ifdef CODEX_MICRO_ENABLE
@@ -582,8 +588,20 @@ void raw_hid_task(void) {
 #endif
 #endif
     while (receive_report(USB_ENDPOINT_OUT_RAW, buffer, sizeof(buffer))) {
+#ifdef EH_STANDBY_BACKGROUND_ENABLE
+        eh_background_note_config_read(buffer[0], buffer[1]);
+#endif
         raw_hid_receive(buffer, sizeof(buffer));
     }
+#ifdef EH_FAST_UPLOAD_ENABLE
+    uint8_t fast_buffer[FAST_EPSIZE];
+    while (receive_report(USB_ENDPOINT_OUT_FAST, fast_buffer, sizeof(fast_buffer))) {
+        uint8_t command = fast_buffer[0];
+        if (eh_background_process_hid(fast_buffer, sizeof(fast_buffer)) && command != 0xB5) {
+            send_report(USB_ENDPOINT_IN_FAST, fast_buffer, sizeof(fast_buffer));
+        }
+    }
+#endif
 }
 
 #endif

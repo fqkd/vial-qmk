@@ -5,11 +5,26 @@ on:
   workflow_dispatch:
   pull_request:
   push:
+    branches-ignore: ["codex/**"]
 
 jobs:
 
+  verify-release-scope:
+    name: Verify Ergohaven release scope
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: (actions) Checkout Vial repo
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Verify release matrix and intentional exclusions
+      run: python3 util/ci_ergohaven_release_scope.py
+
   build-ergohaven:
     name: Build Ergohaven keymaps
+    needs: verify-release-scope
     runs-on: ubuntu-latest
     container: ghcr.io/qmk/qmk_cli:latest
 
@@ -17,9 +32,39 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { kb: ergohaven/macropad/rev3, km: v3 }
-          - { kb: ergohaven/macropad/rev3, km: codex }
-          - { kb: ergohaven/macropad/rev3, km: codex_entropy }
+          - { kb: ergohaven/k03/rev1, km: v1_v2}
+          - { kb: ergohaven/k03/rev3, km: v3_v4}
+          - { kb: ergohaven/imperial44/rev1, km: v1_v2}
+          - { kb: ergohaven/imperial44/rev3, km: v3_v4}
+          - { kb: ergohaven/velvet/rev1, km: v1}
+          - { kb: ergohaven/velvet/rev2, km: v2}
+          - { kb: ergohaven/velvet/rev3, km: v3}
+          - { kb: ergohaven/hpd/rev1, km: v1}
+          - { kb: ergohaven/hpd/rev2, km: v2}
+          - { kb: ergohaven/hpd/rev2, km: v2_enc_ball}
+          - { kb: ergohaven/hpd/rev2, km: v2_enc_touch}
+          - { kb: ergohaven/hpd/rev2, km: v2_ball_enc}
+          - { kb: ergohaven/hpd/rev2, km: v2_touch_enc}
+          - { kb: ergohaven/hpd/rev2, km: v2_enc_enc}
+          - { kb: ergohaven/hpd/rev2, km: v2_enc_joy}
+
+          - { kb: ergohaven/phenom/rev1, km: v1}
+          - { kb: ergohaven/phenom_mini/rev1, km: v1}
+          - { kb: ergohaven/phenom_micro/rev1, km: v1}
+          - { kb: ergohaven/k02, km: v1}
+          - { kb: ergohaven/remnant, km: v1}
+          - { kb: ergohaven/planeta/rev1, km: v1}
+          - { kb: ergohaven/planeta/rev2, km: v2}
+          - { kb: ergohaven/macropad/rev1, km: v1}
+          - { kb: ergohaven/macropad/rev2, km: v2}
+
+          - { kb: ergohaven/macropad/rev3, km: v3}
+          - { kb: ergohaven/trackball, km: v1}
+          - { kb: ergohaven/trackball, km: v2}
+          - { kb: ergohaven/k03pro/rev1/43mm, km: v1}
+          - { kb: ergohaven/k03pro/rev1/65mm, km: v1}
+          - { kb: ergohaven/k03pro/rev2, km: v2_v3}
+          - { kb: ergohaven/sm30, km: v1}
 
     steps:
     - name: (actions) Checkout Vial repo
@@ -40,54 +85,15 @@ jobs:
 
     - name: Build
       id: build
-      shell: bash
       run: |
         git config --global --add safe.directory $(pwd)
-        set -o pipefail
-        if ! qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }} 2>&1 | tee build.log; then
-          python3 util/codex_ci_summary.py build.log
-          exit 1
-        fi
-
-    - name: Protocol tests
-      if: always() && matrix.km == 'codex'
-      shell: bash
-      run: |
-        set -o pipefail
-        if ! (gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/protocol.c keyboards/ergohaven/macropad/codex/test_protocol.c -lm -o /tmp/codex-test && /tmp/codex-test) 2>&1 | tee test.log; then
-          python3 util/codex_ci_summary.py test.log
-          exit 1
-        fi
-
-    - name: Layer button tests
-      if: matrix.km == 'codex_entropy'
-      shell: bash
-      run: |
-        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_layer_button.c -o /tmp/layer-button-test
-        /tmp/layer-button-test
-        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_task_navigation.c -o /tmp/task-navigation-test
-        /tmp/task-navigation-test
-        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/test_encoder_capture.c -o /tmp/encoder-capture-test
-        /tmp/encoder-capture-test
-        gcc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined keyboards/ergohaven/macropad/codex/entropy_tasks.c keyboards/ergohaven/macropad/codex/test_entropy_tasks.c -o /tmp/entropy-tasks-test
-        /tmp/entropy-tasks-test
-
-    - name: Firmware checksums
-      shell: bash
-      run: sha256sum "${OUTPUT}.uf2" > "${OUTPUT}.sha256"
-
-    - name: Verify hybrid USB descriptors
-      if: matrix.km == 'codex_entropy'
-      shell: bash
-      run: python3 util/check_codex_hybrid_uf2.py "${OUTPUT}.uf2"
+        qmk compile -kb ${{ matrix.kb }} -km ${{ matrix.km }}
 
     - uses: actions/upload-artifact@v4
       name: Upload
       id: upload
       with:
-        path: |
-          *.uf2
-          *.sha256
+        path: "*.uf2"
         name: ${{ env.OUTPUT }}
 
   merge:
@@ -101,3 +107,25 @@ jobs:
           name: ergohaven_fw
           pattern: ergohaven_*
           delete-merged: true
+
+  required:
+    name: Ergohaven required checks
+    if: ${{ always() }}
+    needs:
+      - verify-release-scope
+      - build-ergohaven
+      - merge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required job results
+        env:
+          SCOPE_RESULT: ${{ needs.verify-release-scope.result }}
+          BUILD_RESULT: ${{ needs.build-ergohaven.result }}
+          MERGE_RESULT: ${{ needs.merge.result }}
+        run: |
+          if [[ "${SCOPE_RESULT}" != "success" || \
+                "${BUILD_RESULT}" != "success" || \
+                "${MERGE_RESULT}" != "success" ]]; then
+            echo "::error::Required Ergohaven jobs did not all succeed. scope=${SCOPE_RESULT}, build=${BUILD_RESULT}, merge=${MERGE_RESULT}"
+            exit 1
+          fi

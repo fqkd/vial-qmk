@@ -5,6 +5,7 @@
 #define VIAL_UNLOCK_COMBO_COLS { 1, 2 }
 #define ENCODER_RESOLUTION 4
 #define ENCODER_DEFAULT_POS 0x3
+#define EH_APP_LAYOUT_ENABLE
 
 // Experimental wire compatibility identity. Not an assigned Ergohaven VID/PID.
 // Required discovery compatibility must be verified on the target Windows app.
