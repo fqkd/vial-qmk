@@ -71,7 +71,7 @@ int main(void) {
     display_process_keyevent(1,0,true);
     display_process_keyevent(1,0,false);
 #ifdef CODEX_HYBRID_ENABLE
-    assert(key_events==0);
+    assert(key_events==1);
 #else
     assert(key_events==2);
 #endif
@@ -87,6 +87,9 @@ int main(void) {
     display_process_encoder_event(0,true,KC_AUDIO_VOL_UP);
     assert(active_screen==4 && volume_return_state==SCREEN_LAYOUT);
     layer_state=1;
+    unsigned releases=key_events;
+    display_process_keyevent(4,2,false);
+    assert(key_events==releases+1);
     display_process_matrix_press();
     assert(active_screen==5);
     change_screen_state=SCREEN_HOME;

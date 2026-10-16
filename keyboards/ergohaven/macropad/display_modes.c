@@ -116,7 +116,8 @@ void display_process_keyevent(uint8_t row, uint8_t col, bool pressed) {
         display_process_matrix_press();
     }
 #ifdef CODEX_HYBRID_ENABLE
-    if (codex_layout_active()) return;
+    // Release a key pressed on a stock layer even after switching to Codex.
+    if (codex_layout_active() && pressed) return;
 #endif
     screen_layout_process_keyevent(row, col, pressed);
 }
