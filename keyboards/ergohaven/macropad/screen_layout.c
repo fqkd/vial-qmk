@@ -584,6 +584,16 @@ static void screen_layout_set_layer_name(const char *name) {
     }
 }
 
+#ifdef CODEX_HYBRID_ENABLE
+lv_coord_t screen_layout_header_y(void) {
+    // Include the safe-area inset and flex placement, not just the label offset.
+    lv_obj_update_layout(screen_layout);
+    lv_area_t bounds;
+    lv_obj_get_coords(label_layer, &bounds);
+    return bounds.y1;
+}
+#endif
+
 static const char *screen_layout_header_name(uint8_t layer) {
 #ifdef EH_APP_LAYOUT_ENABLE
     if (hid_app_layout_get_name(layer, runtime_layout_name, sizeof(runtime_layout_name))) return runtime_layout_name;

@@ -18,6 +18,8 @@
 LV_FONT_DECLARE(eh_font_montserrat_20);
 LV_FONT_DECLARE(eh_font_montserrat_28);
 static lv_obj_t *layer_title, *layer_icon;
+static lv_coord_t layer_header_y;
+lv_coord_t screen_layout_header_y(void);
 static lv_obj_t *task_rows[6], *task_labels[6];
 static codex_navigation_t navigation = {.held = -1};
 static bool ui_dirty = true;
@@ -85,11 +87,11 @@ static void codex_set_layer_name(const char *name) {
     bool scroll = name_width > available;
     lv_coord_t text_width = scroll ? available : MAX(name_width, 1);
     lv_coord_t x = (240 - width) / 2 + (scroll ? 0 : (width - icon_width - gap - name_width) / 2);
-    lv_obj_set_pos(layer_icon, x, 6);
+    lv_obj_set_pos(layer_icon, x, layer_header_y);
     lv_obj_set_size(layer_icon, icon_width, height);
     lv_label_set_text(layer_title, name);
     lv_label_set_long_mode(layer_title, scroll ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_CLIP);
-    lv_obj_set_pos(layer_title, x + icon_width + gap, 6);
+    lv_obj_set_pos(layer_title, x + icon_width + gap, layer_header_y);
     lv_obj_set_size(layer_title, text_width, height);
 }
 #endif
@@ -112,6 +114,7 @@ void codex_setup(void) {
     lv_obj_set_style_text_font(layer_title, &eh_font_montserrat_28, 0);
     lv_obj_set_style_text_align(layer_icon, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_style_text_align(layer_title, LV_TEXT_ALIGN_LEFT, 0);
+    layer_header_y = screen_layout_header_y();
     codex_set_layer_name(layer_name(0));
 #else
     lv_obj_t *title = label_at(screen, "Macropad", 0, 0);
@@ -137,10 +140,13 @@ void codex_setup(void) {
     }
 #endif
 #ifdef CODEX_HYBRID_ENABLE
+    const lv_coord_t rows_y = layer_header_y + 38 + 4;
+    const lv_coord_t row_gap = 3;
+    const lv_coord_t row_height = MIN(33, (280 - 5 - rows_y - 5 * row_gap) / 6);
     for (unsigned i = 0; i < 6; ++i) {
         task_rows[i] = lv_obj_create(screen);
-        lv_obj_set_size(task_rows[i], 216, 33);
-        lv_obj_set_pos(task_rows[i], 12, 48 + i * 36);
+        lv_obj_set_size(task_rows[i], 216, row_height);
+        lv_obj_set_pos(task_rows[i], 12, rows_y + i * (row_height + row_gap));
         lv_obj_set_style_pad_all(task_rows[i], 0, 0);
         lv_obj_set_style_radius(task_rows[i], 3, 0);
         lv_obj_set_style_border_width(task_rows[i], 1, 0);
