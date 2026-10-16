@@ -246,6 +246,7 @@ static void codex_screen_load(void) {
     ui_dirty = true;
     codex_screen_render();
     lv_scr_load(screen);
+    display_apply_brightness();
 }
 const eh_screen_t eh_screen_codex = {.load = codex_screen_load, .housekeep = codex_screen_render};
 #endif
