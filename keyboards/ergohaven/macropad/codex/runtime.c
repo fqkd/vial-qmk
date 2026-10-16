@@ -10,12 +10,14 @@
 #include "ergohaven.h"
 #include "src/eh_settings.h"
 #include "src/display/eh_keycode_str.h"
+#include "src/display/eh_symbols.h"
 #include "task_navigation.h"
 #include "entropy_tasks.h"
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(eh_font_montserrat_20);
-static lv_obj_t *layer_title;
+LV_FONT_DECLARE(eh_font_montserrat_28);
+static lv_obj_t *layer_title, *layer_icon;
 static lv_obj_t *task_rows[6], *task_labels[6];
 static codex_navigation_t navigation = {.held = -1};
 static bool ui_dirty = true;
@@ -72,6 +74,25 @@ static lv_obj_t *label_at(lv_obj_t *parent, const char *text, int x, int y) {
     lv_obj_set_style_text_color(label, lv_color_hex(0xE8EEF5), 0);
     return label;
 }
+#ifdef CODEX_HYBRID_ENABLE
+static void codex_set_layer_name(const char *name) {
+    // Match the stock layer header: 28 px font, 194 px group and 6 px icon gap.
+    const lv_coord_t width = 194, gap = 6, height = 38;
+    lv_coord_t spacing = lv_obj_get_style_text_letter_space(layer_title, LV_PART_MAIN);
+    lv_coord_t icon_width = lv_txt_get_width(EH_SYMBOL_LAYER, strlen(EH_SYMBOL_LAYER), &eh_font_montserrat_28, spacing, LV_TEXT_FLAG_NONE);
+    lv_coord_t name_width = lv_txt_get_width(name, strlen(name), &eh_font_montserrat_28, spacing, LV_TEXT_FLAG_NONE);
+    lv_coord_t available = width - icon_width - gap;
+    bool scroll = name_width > available;
+    lv_coord_t text_width = scroll ? available : MAX(name_width, 1);
+    lv_coord_t x = (240 - width) / 2 + (scroll ? 0 : (width - icon_width - gap - name_width) / 2);
+    lv_obj_set_pos(layer_icon, x, 6);
+    lv_obj_set_size(layer_icon, icon_width, height);
+    lv_label_set_text(layer_title, name);
+    lv_label_set_long_mode(layer_title, scroll ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_CLIP);
+    lv_obj_set_pos(layer_title, x + icon_width + gap, 6);
+    lv_obj_set_size(layer_title, text_width, height);
+}
+#endif
 void codex_setup(void) {
     codex_init(transmit);
 #ifndef CODEX_HYBRID_ENABLE
@@ -84,16 +105,18 @@ void codex_setup(void) {
     lv_obj_set_style_bg_color(screen, lv_color_hex(0x080E16), 0);
     lv_obj_set_style_pad_all(screen, 0, 0);
     lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+#ifdef CODEX_HYBRID_ENABLE
+    layer_icon = label_at(screen, EH_SYMBOL_LAYER, 0, 0);
+    layer_title = label_at(screen, "", 0, 0);
+    lv_obj_set_style_text_font(layer_icon, &eh_font_montserrat_28, 0);
+    lv_obj_set_style_text_font(layer_title, &eh_font_montserrat_28, 0);
+    lv_obj_set_style_text_align(layer_icon, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_style_text_align(layer_title, LV_TEXT_ALIGN_LEFT, 0);
+    codex_set_layer_name(layer_name(0));
+#else
     lv_obj_t *title = label_at(screen, "Macropad", 0, 0);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
-#ifdef CODEX_HYBRID_ENABLE
-    layer_title = title;
-    lv_obj_set_style_text_font(title, &eh_font_montserrat_20, 0);
-    lv_obj_set_width(title, 216);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_long_mode(title, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_label_set_text(title, layer_name(get_highest_layer(layer_state | default_layer_state)));
 #endif
 #ifndef CODEX_HYBRID_ENABLE
     static const char *const names[12] = {"1", "2", "3", "4", "5", "6", "FAST", "OK", "NO", "NEW", "MIC", "SEND"};
@@ -116,8 +139,8 @@ void codex_setup(void) {
 #ifdef CODEX_HYBRID_ENABLE
     for (unsigned i = 0; i < 6; ++i) {
         task_rows[i] = lv_obj_create(screen);
-        lv_obj_set_size(task_rows[i], 216, 35);
-        lv_obj_set_pos(task_rows[i], 12, 36 + i * 39);
+        lv_obj_set_size(task_rows[i], 216, 33);
+        lv_obj_set_pos(task_rows[i], 12, 48 + i * 36);
         lv_obj_set_style_pad_all(task_rows[i], 0, 0);
         lv_obj_set_style_radius(task_rows[i], 3, 0);
         lv_obj_set_style_border_width(task_rows[i], 1, 0);
@@ -228,6 +251,7 @@ void codex_display_theme_changed(void) {
     if (!screen) return;
     lv_obj_set_style_bg_color(screen, display_background_color, 0);
     lv_obj_set_style_text_color(layer_title, accent_color_blue, 0);
+    lv_obj_set_style_text_color(layer_icon, accent_color_blue, 0);
     memset(task_painted, 0, sizeof(task_painted));
     ui_dirty = true;
 }
@@ -238,7 +262,7 @@ static void codex_screen_render(void) {
     ui_dirty = false;
     const char *heading = layer_name(0);
     if (strcmp(lv_label_get_text(layer_title), heading) != 0)
-        lv_label_set_text(layer_title, heading);
+        codex_set_layer_name(heading);
     task_list_render(now);
 }
 static void codex_screen_load(void) {
